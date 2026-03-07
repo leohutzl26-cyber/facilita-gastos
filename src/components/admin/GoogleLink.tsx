@@ -5,7 +5,9 @@ import { CheckCircle2, Link as LinkIcon, Folder, FileSpreadsheet, AlertCircle } 
 export default function GoogleLink() {
     const [isLinked, setIsLinked] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [folderSelected, setFolderSelected] = useState(false);
+    const [folderSelected, setFolderSelected] = useState<string | null>(null);
+    const [folders, setFolders] = useState<{ id: string, name: string }[]>([]);
+    const [isFetchingFolders, setIsFetchingFolders] = useState(false);
     const [authError, setAuthError] = useState('');
 
     useEffect(() => {
@@ -33,11 +35,31 @@ export default function GoogleLink() {
         } else {
             checkStatus();
         }
-    }, []);
+    }, [isLinked]); // Añadido isLinked como dependencia para volver a cargar estado si cambia
 
-    const simulateSelectFolder = () => {
-        setFolderSelected(true);
+    const loadDriveFolders = async () => {
+        setIsFetchingFolders(true);
+        try {
+            const res = await fetch('/api/admin/drive-folders');
+            const data = await res.json();
+            if (res.ok && data.folders) {
+                setFolders(data.folders);
+            } else {
+                console.error("No se pudieron cargar carpetas", data.error);
+            }
+        } catch (err) {
+            console.error('Error fetching drive folders:', err);
+        } finally {
+            setIsFetchingFolders(false);
+        }
     };
+
+    // Cargar carpetas automáticamente si está vinculado
+    useEffect(() => {
+        if (isLinked) {
+            loadDriveFolders();
+        }
+    }, [isLinked]);
 
     if (isLoading) {
         return (
@@ -94,18 +116,35 @@ export default function GoogleLink() {
                         <div className="flex items-center justify-between p-3 bg-zinc-900 border border-white/5 rounded-xl">
                             <div className="flex items-center gap-2 text-sm text-zinc-300">
                                 <Folder className="w-4 h-4 text-blue-400" />
-                                /Recibos_Gastos_2026
+                                /{folders.find(f => f.id === folderSelected)?.name || 'Carpeta Seleccionada'}
                             </div>
-                            <button onClick={() => setFolderSelected(false)} className="text-xs text-[#8CC63F] hover:text-[#3EAE49]">Cambiar</button>
+                            <button onClick={() => setFolderSelected(null)} className="text-xs text-[#8CC63F] hover:text-[#3EAE49]">Cambiar</button>
                         </div>
                     ) : (
-                        <button
-                            onClick={simulateSelectFolder}
-                            className="w-full border border-dashed border-white/20 hover:border-[#8CC63F]/50 hover:bg-[#8CC63F]/5 p-4 rounded-xl text-sm text-zinc-400 transition flex flex-col items-center gap-2"
-                        >
-                            <Folder className="w-5 h-5" />
-                            Seleccionar Carpeta Destino
-                        </button>
+                        <div className="space-y-2">
+                            {isFetchingFolders ? (
+                                <p className="text-xs text-zinc-500">Cargando tus carpetas de Drive...</p>
+                            ) : folders.length > 0 ? (
+                                <select
+                                    className="w-full bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-3 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-300"
+                                    onChange={(e) => setFolderSelected(e.target.value)}
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>Selecciona una carpeta para los recibos</option>
+                                    {folders.map(f => (
+                                        <option key={f.id} value={f.id}>{f.name}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <button
+                                    onClick={loadDriveFolders}
+                                    className="w-full border border-dashed border-white/20 hover:border-[#8CC63F]/50 hover:bg-[#8CC63F]/5 p-4 rounded-xl text-sm text-zinc-400 transition flex flex-col items-center gap-2"
+                                >
+                                    <Folder className="w-5 h-5" />
+                                    Buscar Carpetas
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
 

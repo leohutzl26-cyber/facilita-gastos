@@ -1,0 +1,21 @@
+{
+  "name": "Expense Tracker Worker",
+  "short_name": "Gastos",
+  "description": "App de captura de recibos via OCR",
+  "start_url": "/worker/login",
+  "display": "standalone",
+  "background_color": "#121D38",
+  "theme_color": "#121D38",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

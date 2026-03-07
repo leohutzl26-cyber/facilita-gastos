@@ -12,10 +12,30 @@ export default function UserCrud() {
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [isAdding, setIsAdding] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isFetchingWorkers, setIsFetchingWorkers] = useState(true);
     const [error, setError] = useState('');
     const [newName, setNewName] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [newPassword, setNewPassword] = useState('');
+
+    useEffect(() => {
+        fetchWorkers();
+    }, []);
+
+    const fetchWorkers = async () => {
+        setIsFetchingWorkers(true);
+        try {
+            const res = await fetch('/api/admin/workers');
+            const data = await res.json();
+            if (res.ok && data.workers) {
+                setWorkers(data.workers);
+            }
+        } catch (err) {
+            console.error('Failed to fetch workers:', err);
+        } finally {
+            setIsFetchingWorkers(false);
+        }
+    };
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -89,33 +109,39 @@ export default function UserCrud() {
                 </form>
             )}
 
-            <div className="space-y-3">
-                {workers.map(worker => (
-                    <div key={worker.id} className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900 transition group">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-[#8CC63F]/20 text-[#8CC63F] flex items-center justify-center font-bold">
-                                {worker.name.charAt(0)}
-                            </div>
-                            <div>
-                                <p className="font-medium text-sm text-zinc-200">{worker.name}</p>
-                                <div className="flex items-center gap-1 text-xs text-zinc-500">
-                                    <Mail className="w-3 h-3" /> {worker.email}
+            {isFetchingWorkers ? (
+                <div className="text-center py-8 text-zinc-500 text-sm">
+                    Cargando trabajadores desde la base de datos...
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {workers.map(worker => (
+                        <div key={worker.id} className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900 transition group">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-[#8CC63F]/20 text-[#8CC63F] flex items-center justify-center font-bold">
+                                    {worker.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <p className="font-medium text-sm text-zinc-200">{worker.name}</p>
+                                    <div className="flex items-center gap-1 text-xs text-zinc-500">
+                                        <Mail className="w-3 h-3" /> {worker.email}
+                                    </div>
                                 </div>
                             </div>
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => handleDelete(worker.id)} className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => handleDelete(worker.id)} className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition">
-                                <Trash2 className="w-4 h-4" />
-                            </button>
+                    ))}
+                    {workers.length === 0 && (
+                        <div className="text-center py-8 text-zinc-500 text-sm">
+                            No hay trabajadores registrados.
                         </div>
-                    </div>
-                ))}
-                {workers.length === 0 && (
-                    <div className="text-center py-8 text-zinc-500 text-sm">
-                        No hay trabajadores registrados.
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

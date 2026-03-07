@@ -9,30 +9,48 @@ type Worker = {
 };
 
 export default function UserCrud() {
-    const [workers, setWorkers] = useState<Worker[]>([
-        { id: '1', name: 'Juan Pérez', email: 'juan@empresa.com' },
-        { id: '2', name: 'María Gómez', email: 'maria@empresa.com' }
-    ]);
+    const [workers, setWorkers] = useState<Worker[]>([]);
     const [isAdding, setIsAdding] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
     const [newName, setNewName] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [newPassword, setNewPassword] = useState('');
 
-    const handleCreate = (e: React.FormEvent) => {
+    const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newWorker = {
-            id: Math.random().toString(36).substring(7),
-            name: newName,
-            email: newEmail,
-        };
-        setWorkers([...workers, newWorker]);
-        setIsAdding(false);
-        setNewName('');
-        setNewEmail('');
-        setNewPassword(''); // En un entorno real, enviamos esto a Supabase
+        setIsLoading(true);
+        setError('');
+
+        try {
+            const res = await fetch('/api/admin/workers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName, email: newEmail, password: newPassword })
+            });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Error al crear trabajador');
+
+            const newWorker = {
+                id: data.user.id,
+                name: newName,
+                email: newEmail,
+            };
+            setWorkers([...workers, newWorker]);
+            setIsAdding(false);
+            setNewName('');
+            setNewEmail('');
+            setNewPassword('');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleDelete = (id: string) => {
+        // Todo: Connect to real delete endpoint
         setWorkers(workers.filter(w => w.id !== id));
     };
 
@@ -64,8 +82,9 @@ export default function UserCrud() {
                             <input required value={newPassword} onChange={e => setNewPassword(e.target.value)} type="text" className="w-full bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none" placeholder="••••••••" />
                         </div>
                     </div>
-                    <button type="submit" className="w-full bg-white text-black hover:bg-zinc-200 py-2 rounded-lg text-sm font-semibold transition">
-                        Crear y Habilitar
+                    {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+                    <button disabled={isLoading} type="submit" className="w-full bg-white text-black hover:bg-zinc-200 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50">
+                        {isLoading ? 'Creando...' : 'Crear y Habilitar'}
                     </button>
                 </form>
             )}

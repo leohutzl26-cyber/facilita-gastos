@@ -2,14 +2,43 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-// Usamos el rol "service_role" para tener privilegios de Admin y poder crear usuarios.
-// Esto NUNCA debe exponerse al frontend.
 const getAdminSupabase = () => {
     return createSupabaseClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 };
+
+export async function GET() {
+    const supabaseSession = await createClient();
+    const { data: { user } } = await supabaseSession.auth.getUser();
+
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        const adminAuthClient = getAdminSupabase();
+
+        // Listamos usuarios. Importante: supabase admin listUsers no permite filtrar por email directo acá.
+        const { data: authUsers, error } = await adminAuthClient.auth.admin.listUsers();
+
+        if (error) throw error;
+
+        // Filtramos para devolver solo los que tengan rol 'worker' en su user_metadata (para no mostrar otros admins)
+        const workers = authUsers.users
+            .filter(u => u.user_metadata?.role === 'worker')
+            .map(u => ({
+                id: u.id,
+                name: u.user_metadata?.name || 'Trabajador',
+                email: u.email
+            }));
+
+        return NextResponse.json({ workers });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+}
 
 export async function POST(request: Request) {
     const supabaseSession = await createClient();
@@ -34,9 +63,6 @@ export async function POST(request: Request) {
         });
 
         if (authError) throw authError;
-
-        // 2. (Opcional pero recomendado) Guardar el perfil en una tabla pública si necesitas listarlos fácil
-        // const { error: dbError } = await adminAuthClient.from('profiles').insert({ id: newAuthUser.user.id, name, email, role: 'worker' });
 
         return NextResponse.json({ success: true, user: newAuthUser.user });
     } catch (error: any) {

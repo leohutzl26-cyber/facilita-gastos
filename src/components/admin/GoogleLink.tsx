@@ -39,6 +39,15 @@ export default function GoogleLink() {
         setFolderSelected(true);
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-8 space-y-4">
+                <div className="w-8 h-8 rounded-full border-2 border-zinc-500 border-t-white animate-spin"></div>
+                <p className="text-zinc-500 text-sm">Validando credenciales...</p>
+            </div>
+        );
+    }
+
     if (!isLinked) {
         return (
             <div className="flex flex-col items-center text-center space-y-4">

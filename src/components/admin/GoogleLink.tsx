@@ -161,7 +161,7 @@ export default function GoogleLink() {
 
             <div className="pt-4 border-t border-white/10">
                 <button
-                    onClick={() => { setIsLinked(false); setFolderSelected(false); }}
+                    onClick={() => { setIsLinked(false); setFolderSelected(null); }}
                     className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
                 >
                     <AlertCircle className="w-3 h-3" /> Desvincular cuenta

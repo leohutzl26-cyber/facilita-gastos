@@ -50,6 +50,7 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL('/admin/dashboard?success=GoogleLinked', request.url));
     } catch (err: any) {
         console.error('Error validando token con Google:', err);
-        return NextResponse.redirect(new URL('/admin/dashboard?error=GoogleAuthFailed', request.url));
+        const errorMessage = err.message ? encodeURIComponent(err.message) : 'GoogleAuthFailed';
+        return NextResponse.redirect(new URL(`/admin/dashboard?error=${errorMessage}`, request.url));
     }
 }

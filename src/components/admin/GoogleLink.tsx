@@ -4,15 +4,34 @@ import { CheckCircle2, Link as LinkIcon, Folder, FileSpreadsheet, AlertCircle } 
 
 export default function GoogleLink() {
     const [isLinked, setIsLinked] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [folderSelected, setFolderSelected] = useState(false);
     const [authError, setAuthError] = useState('');
 
     useEffect(() => {
+        const checkStatus = async () => {
+            try {
+                const res = await fetch('/api/admin/google-status');
+                const data = await res.json();
+                if (res.ok && data.isLinked) {
+                    setIsLinked(true);
+                }
+            } catch (err) {
+                console.error('Error checking Google status:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         const searchParams = new URLSearchParams(window.location.search);
         if (searchParams.get('success') === 'GoogleLinked') {
             setIsLinked(true);
+            setIsLoading(false);
         } else if (searchParams.get('error')) {
             setAuthError(searchParams.get('error') || 'Unknown');
+            setIsLoading(false);
+        } else {
+            checkStatus();
         }
     }, []);
 

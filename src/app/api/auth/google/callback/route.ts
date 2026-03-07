@@ -5,20 +5,26 @@ import { createClient } from '@/utils/supabase/server';
 export async function GET(request: Request) {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');
+    console.log('Google Auth Route Triggered. Code present:', !!code);
 
     if (!code) {
+        console.error('No code found in URL');
         return NextResponse.redirect(new URL('/admin/dashboard?error=NoCodeLog', request.url));
     }
 
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    console.log('User status:', user ? `Found (${user.email})` : 'Not Found', 'Auth Error:', authError);
 
     if (!user) {
-        return NextResponse.redirect(new URL('/admin/login', request.url));
+        return NextResponse.redirect(new URL('/admin/dashboard?error=UserNotLoggedIn', request.url));
     }
 
     try {
+        console.log('Requesting tokens from Google...');
         const { tokens } = await oauth2Client.getToken(code);
+        console.log('Tokens received from Google successfully.');
 
         // Almacenamos los tokens en Supabase, asociándolos a este Admin único.
         // Usamos refresh_token o mantenemos el existente si Google no devuelve uno nuevo

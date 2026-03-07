@@ -1,13 +1,20 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle2, Link as LinkIcon, Folder, FileSpreadsheet, AlertCircle } from 'lucide-react';
 
 export default function GoogleLink() {
-    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-    const isSuccess = searchParams?.get('success') === 'GoogleLinked';
-
-    const [isLinked, setIsLinked] = useState(isSuccess);
+    const [isLinked, setIsLinked] = useState(false);
     const [folderSelected, setFolderSelected] = useState(false);
+    const [authError, setAuthError] = useState('');
+
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.get('success') === 'GoogleLinked') {
+            setIsLinked(true);
+        } else if (searchParams.get('error')) {
+            setAuthError(searchParams.get('error') || 'Unknown');
+        }
+    }, []);
 
     const simulateSelectFolder = () => {
         setFolderSelected(true);
@@ -34,6 +41,12 @@ export default function GoogleLink() {
                 >
                     <LinkIcon className="w-4 h-4" /> Conectar con Google
                 </a>
+                {authError && (
+                    <div className="w-full mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400">
+                        Error devuelto: {authError}
+                        {authError === 'DBError' && ' (Falta crear tabla SQL en Supabase)'}
+                    </div>
+                )}
             </div>
         );
     }

@@ -16,24 +16,8 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { merchant, amount, date, category } = body;
 
-        // Parse date to YYYY-MM-DD
-        let formattedDate = new Date().toISOString().split('T')[0];
-        try {
-            // Very simple date parse attempt based on es-CL locale typical matches
-            if (date.includes('/')) {
-                const parts = date.split('/');
-                if (parts.length === 3) {
-                    if (parts[2].length === 2) parts[2] = '20' + parts[2]; // yy -> yyyy
-                    formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                }
-            } else if (date.includes('-')) {
-                const parts = date.split('-');
-                if (parts.length === 3) {
-                    if (parts[2].length === 2) parts[2] = '20' + parts[2];
-                    formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                }
-            }
-        } catch (e) { console.error("Could not parse date", e); }
+        // Ahora confiamos en el formato ISO (YYYY-MM-DD) que viene del frontend (<input type="date">)
+        let formattedDate = date;
 
 
         const cleanAmount = amount.replace(/[^\d.,]/g, '').replace(',', '.'); // Allow only digits and a dot

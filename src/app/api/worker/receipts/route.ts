@@ -60,7 +60,35 @@ export async function POST(request: Request) {
                 const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 
                 const folderId = adminToken.settings?.driveFolderId;
-                const sheetId = adminToken.settings?.spreadsheetId;
+                let sheetId = adminToken.settings?.spreadsheetId;
+
+                // Si no existe la hoja de cálculo, autocrearla
+                if (!sheetId) {
+                    const newSheet = await sheets.spreadsheets.create({
+                        requestBody: {
+                            properties: { title: 'Gastos_Reportes_Global' },
+                            sheets: [{ properties: { title: 'Registros' } }]
+                        }
+                    });
+
+                    sheetId = newSheet.data.spreadsheetId;
+
+                    // Actualizar configuracion en base de datos
+                    const updatedSettings = { ...adminToken.settings, spreadsheetId: sheetId };
+                    await supabaseSession.from('google_integrations')
+                        .update({ settings: updatedSettings })
+                        .eq('admin_id', adminToken.admin_id);
+
+                    // Insertar Cabeceras Iniciales
+                    await sheets.spreadsheets.values.append({
+                        spreadsheetId: sheetId,
+                        range: 'Registros!A1:F1',
+                        valueInputOption: 'USER_ENTERED',
+                        requestBody: {
+                            values: [['Fecha', 'Comercio', 'Categoría', 'Monto', 'Usuario Correo', 'URL Recibo']]
+                        }
+                    }).catch(e => console.error("Error setting headers:", e));
+                }
 
                 // 1. Subir a Google Drive
                 if (folderId && body.imageBase64) {
@@ -126,6 +154,7 @@ export async function POST(request: Request) {
             .insert([
                 {
                     worker_id: user.id,
+                    worker_email: user.email,
                     merchant: merchant,
                     amount: parseFloat(cleanAmount) || 0,
                     date: formattedDate,

@@ -12,7 +12,7 @@ export async function GET() {
     try {
         const { data, error } = await supabaseSession
             .from('google_integrations')
-            .select('admin_id')
+            .select('admin_id, settings')
             .eq('admin_id', user.id)
             .single();
 
@@ -20,7 +20,7 @@ export async function GET() {
             throw error;
         }
 
-        return NextResponse.json({ isLinked: !!data, email: user.email });
+        return NextResponse.json({ isLinked: !!data, email: user.email, settings: data?.settings || {} });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 400 });
     }

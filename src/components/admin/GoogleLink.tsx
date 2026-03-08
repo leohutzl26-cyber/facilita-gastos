@@ -19,6 +19,7 @@ export default function GoogleLink() {
                 if (res.ok && data.isLinked) {
                     setIsLinked(true);
                     if (data.email) setAdminEmail(data.email);
+                    if (data.settings?.driveFolderId) setFolderSelected(data.settings.driveFolderId);
                 }
             } catch (err) {
                 console.error('Error checking Google status:', err);
@@ -173,7 +174,15 @@ export default function GoogleLink() {
                             ) : folders.length > 0 ? (
                                 <select
                                     className="w-full bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-3 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-300"
-                                    onChange={(e) => setFolderSelected(e.target.value)}
+                                    onChange={async (e) => {
+                                        const newFolderId = e.target.value;
+                                        setFolderSelected(newFolderId);
+                                        await fetch('/api/admin/google-status', {
+                                            method: 'PATCH',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ driveFolderId: newFolderId })
+                                        });
+                                    }}
                                     defaultValue=""
                                 >
                                     <option value="" disabled>Selecciona una carpeta para los recibos</option>

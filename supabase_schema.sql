@@ -26,6 +26,7 @@ CREATE POLICY "Admins can delete own google tokens" ON public.google_integration
 CREATE TABLE IF NOT EXISTS public.receipts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     worker_id UUID REFERENCES auth.users(id),
+    worker_email TEXT, -- Guardaremos el correo directamente para lectura rápida
     merchant TEXT NOT NULL,
     amount NUMERIC NOT NULL,
     date DATE NOT NULL,

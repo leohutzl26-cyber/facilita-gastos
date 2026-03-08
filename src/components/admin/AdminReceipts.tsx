@@ -97,8 +97,8 @@ export default function AdminReceipts() {
                                             ${receipt.amount}
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className="text-xs text-zinc-500 font-mono bg-black/30 px-2 py-1 rounded">
-                                                {receipt.worker_id.substring(0, 8)}...
+                                            <span className="text-xs text-zinc-300 font-mono bg-black/30 px-2 py-1 rounded">
+                                                {receipt.worker_email || receipt.worker_id.substring(0, 8) + '...'}
                                             </span>
                                         </td>
                                     </tr>

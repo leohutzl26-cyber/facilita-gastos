@@ -1,5 +1,4 @@
-'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Mail, Lock, UserCheck } from 'lucide-react';
 
 type Worker = {

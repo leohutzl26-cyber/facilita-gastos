@@ -48,3 +48,38 @@ export async function DELETE() {
         return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }
+
+export async function PATCH(request: Request) {
+    const supabaseSession = await createClient();
+    const { data: { user } } = await supabaseSession.auth.getUser();
+
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        const body = await request.json();
+
+        // Obtener settings actuales
+        const { data } = await supabaseSession
+            .from('google_integrations')
+            .select('settings')
+            .eq('admin_id', user.id)
+            .single();
+
+        const currentSettings = data?.settings || {};
+        const updatedSettings = { ...currentSettings, ...body };
+
+        const { error } = await supabaseSession
+            .from('google_integrations')
+            .update({ settings: updatedSettings })
+            .eq('admin_id', user.id);
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true, settings: updatedSettings });
+    } catch (error: any) {
+        console.error("Error updating settings:", error);
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+}

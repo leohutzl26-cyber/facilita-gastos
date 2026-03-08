@@ -46,9 +46,11 @@ export default function GoogleLink() {
                 setFolders(data.folders);
             } else {
                 console.error("No se pudieron cargar carpetas", data.error);
+                setAuthError(data.error || "Asegúrate de tener habilitada la Google Drive API en tu Consola de Google Cloud");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error fetching drive folders:', err);
+            setAuthError(err.message || "Error conectando con Drive");
         } finally {
             setIsFetchingFolders(false);
         }

@@ -39,7 +39,27 @@ export async function GET() {
             pageSize: 50
         });
 
-        return NextResponse.json({ folders: response.data.files || [] });
+        let folders = response.data.files || [];
+
+        // Si el scope es drive.file, la API solo ve carpetas creadas por la app.
+        // Autocreamos una de inmediato para beneficio del usuario si hay 0 res.
+        if (folders.length === 0) {
+            console.log("No app-owned folders found. Creating default one...");
+            const folderMetadata = {
+                name: 'Facilita_Gastos_App',
+                mimeType: 'application/vnd.google-apps.folder'
+            };
+            const newFolder = await drive.files.create({
+                requestBody: folderMetadata,
+                fields: 'id, name'
+            });
+
+            if (newFolder.data) {
+                folders = [newFolder.data];
+            }
+        }
+
+        return NextResponse.json({ folders });
     } catch (error: any) {
         console.error("Error fetching drive folders:", error);
         return NextResponse.json({ error: error.message }, { status: 400 });

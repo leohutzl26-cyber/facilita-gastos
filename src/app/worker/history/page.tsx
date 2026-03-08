@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Camera, Search, Filter, History, MapPin, Receipt, ArrowLeft } from 'lucide-react';
+import { Camera, Search, Filter, History, MapPin, Receipt, ArrowLeft, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function WorkerHistory() {
@@ -26,6 +26,19 @@ export default function WorkerHistory() {
                         <History className="w-5 h-5 text-[#8CC63F]" />
                         <span className="font-semibold text-zinc-200">Historial de Gastos</span>
                     </div>
+                    {history.length > 0 && (
+                        <button
+                            onClick={() => {
+                                if (window.confirm('¿Seguro que deseas limpiar tu historial local?')) {
+                                    localStorage.removeItem('worker_history');
+                                    setHistory([]);
+                                }
+                            }}
+                            className="p-2 text-red-400 hover:text-red-300 transition"
+                        >
+                            <Trash2 className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
             </nav>
 

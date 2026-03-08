@@ -66,9 +66,21 @@ export default function WorkerCapture() {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
             const merchant = lines.length > 0 ? lines[0] : 'Desconocido';
 
+            // Format date for native HTML date input (YYYY-MM-DD)
+            let formattedDateForInput = new Date().toISOString().split('T')[0];
+            if (dateMatch) {
+                const parts = dateMatch[1].split(/[\/\-]/);
+                if (parts.length === 3) {
+                    const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+                    const month = parts[1].padStart(2, '0');
+                    const day = parts[0].padStart(2, '0');
+                    formattedDateForInput = `${year}-${month}-${day}`;
+                }
+            }
+
             setResults({
                 amount: amountMatch ? amountMatch[1] : '',
-                date: dateMatch ? dateMatch[1] : new Date().toLocaleDateString(),
+                date: formattedDateForInput,
                 merchant: merchant.length > 30 ? merchant.substring(0, 30) : merchant,
                 category: CATEGORIES[0] // Default
             });
@@ -236,6 +248,7 @@ export default function WorkerCapture() {
                                         <div>
                                             <label className="text-xs text-zinc-400 block mb-1">Fecha</label>
                                             <input
+                                                type="date"
                                                 required
                                                 value={results.date}
                                                 onChange={e => setResults({ ...results, date: e.target.value })}

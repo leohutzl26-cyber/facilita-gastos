@@ -85,30 +85,45 @@ export default function WorkerCapture() {
         e.preventDefault();
         setIsSubmitting(true);
 
-        // Simulate API call to upload to Drive and save to Sheets
-        setTimeout(() => {
-            setIsSubmitting(false);
-            setIsSuccess(true);
+        try {
+            const res = await fetch('/api/worker/receipts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(results)
+            });
 
-            // Save to local history
-            if (results) {
-                const newRecord = {
-                    id: Math.random().toString(36).substring(7),
-                    ...results,
-                    submittedAt: new Date().toISOString()
-                };
-                const existing = localStorage.getItem('worker_history');
-                const history = existing ? JSON.parse(existing) : [];
-                localStorage.setItem('worker_history', JSON.stringify([newRecord, ...history]));
+            const data = await res.json();
+
+            if (res.ok) {
+                setIsSuccess(true);
+
+                // Save to local history
+                if (results) {
+                    const newRecord = {
+                        id: Math.random().toString(36).substring(7),
+                        ...results,
+                        submittedAt: new Date().toISOString()
+                    };
+                    const existing = localStorage.getItem('worker_history');
+                    const history = existing ? JSON.parse(existing) : [];
+                    localStorage.setItem('worker_history', JSON.stringify([newRecord, ...history]));
+                }
+
+                // Reset after success
+                setTimeout(() => {
+                    setImage(null);
+                    setResults(null);
+                    setIsSuccess(false);
+                }, 3000);
+            } else {
+                throw new Error(data.error || "Error al subir recibo");
             }
-
-            // Reset after success
-            setTimeout(() => {
-                setImage(null);
-                setResults(null);
-                setIsSuccess(false);
-            }, 3000);
-        }, 2000);
+        } catch (error: any) {
+            console.error("Error submitting receipt:", error);
+            alert("No se pudo subir el recibo: " + error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (

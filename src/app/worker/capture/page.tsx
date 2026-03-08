@@ -86,10 +86,27 @@ export default function WorkerCapture() {
         setIsSubmitting(true);
 
         try {
+            // Extraer la imagen real del Blob URL si existe
+            let base64Image = null;
+            if (image) {
+                const response = await fetch(image);
+                const blob = await response.blob();
+                base64Image = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+            }
+
+            const payload = {
+                ...results,
+                imageBase64: base64Image
+            };
+
             const res = await fetch('/api/worker/receipts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(results)
+                body: JSON.stringify(payload)
             });
 
             const data = await res.json();

@@ -52,7 +52,8 @@ export default function AdminReceipts() {
                             <tr>
                                 <th className="px-6 py-4 font-medium">Fecha</th>
                                 <th className="px-6 py-4 font-medium">Comercio</th>
-                                <th className="px-6 py-4 font-medium">Categoría</th>
+                                <th className="px-6 py-4 font-medium text-left">Categoría</th>
+                                <th className="px-6 py-4 font-medium text-center">Boleta</th>
                                 <th className="px-6 py-4 font-medium text-right">Monto</th>
                                 <th className="px-6 py-4 font-medium text-center">ID Creador</th>
                             </tr>
@@ -82,6 +83,15 @@ export default function AdminReceipts() {
                                             <span className="bg-[#8CC63F]/10 text-[#8CC63F] px-2 py-1 rounded text-xs whitespace-nowrap">
                                                 {receipt.category}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            {receipt.image_url ? (
+                                                <a href={receipt.image_url} target="_blank" rel="noopener noreferrer" className="text-[#8CC63F] hover:text-[#3EAE49] inline-flex items-center gap-1">
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </a>
+                                            ) : (
+                                                <span className="text-zinc-600 text-xs">-</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-right text-white font-semibold">
                                             ${receipt.amount}

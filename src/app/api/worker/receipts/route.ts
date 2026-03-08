@@ -75,7 +75,11 @@ export async function POST(request: Request) {
                 }
 
                 // 1. Subir a Google Drive
-                if (folderId && body.imageBase64) {
+                if (!folderId) {
+                    driveImageUrl = "Error de Setup: El Administrador no eligió la carpeta de destino en su Panel";
+                } else if (!body.imageBase64) {
+                    driveImageUrl = "Error Front: No se adjuntó ninguna foto a la boleta";
+                } else {
                     driveImageUrl = "Iniciando subida... Tam: " + body.imageBase64.length;
 
                     // Extraer los datos base64 quitando el prefijo mime (data:image/jpeg;base64, o data:;base64,)
@@ -116,8 +120,6 @@ export async function POST(request: Request) {
                     } else {
                         driveImageUrl = "Error Formato B64";
                     }
-                } else if (!body.imageBase64) {
-                    driveImageUrl = "Sin imagen adjunta desde cel";
                 }
 
                 // 2. Escribir a Google Sheets

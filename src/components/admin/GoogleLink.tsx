@@ -110,6 +110,21 @@ export default function GoogleLink() {
                 <p className="text-sm">Cuenta vinculada correctamente a <strong>admin@empresa.com</strong></p>
             </div>
 
+            {authError && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 font-semibold">
+                        <AlertCircle className="w-4 h-4" />
+                        <span>Fallo de Comunicación con Google Cloud</span>
+                    </div>
+                    <p className="text-xs">Detalle técnico: {authError}</p>
+                    <p className="text-xs text-red-300 mt-1">
+                        <b>Posibles Soluciones:</b><br />
+                        1. Ve a console.cloud.google.com y asegúrate de habilitar "Google Drive API" para tu proyecto.<br />
+                        2. Si cambiaste la URL de la página, asegúrate de añadirla en Authorized Redirect URIs.
+                    </p>
+                </div>
+            )}
+
             <div className="space-y-4">
                 {/* Drive Config */}
                 <div>

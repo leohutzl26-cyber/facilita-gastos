@@ -63,6 +63,29 @@ export default function GoogleLink() {
         }
     }, [isLinked]);
 
+    const handleUnlink = async () => {
+        const confirmDelete = window.confirm('¿Seguro que deseas desvincular tu cuenta de Google? Los trabajadores no podrán guardar nuevos recibos temporalmente.');
+        if (!confirmDelete) return;
+
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/admin/google-status', { method: 'DELETE' });
+            if (res.ok) {
+                setIsLinked(false);
+                setFolderSelected(null);
+                setAuthError('');
+            } else {
+                const data = await res.json();
+                alert("Error al desvincular: " + data.error);
+            }
+        } catch (error) {
+            console.error("Error unlinking:", error);
+            alert("Error de conexión al desvincular.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center p-8 space-y-4">
@@ -178,7 +201,7 @@ export default function GoogleLink() {
 
             <div className="pt-4 border-t border-white/10">
                 <button
-                    onClick={() => { setIsLinked(false); setFolderSelected(null); }}
+                    onClick={handleUnlink}
                     className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
                 >
                     <AlertCircle className="w-3 h-3" /> Desvincular cuenta

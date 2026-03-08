@@ -221,7 +221,6 @@ export default function WorkerCapture() {
                                                     className="w-full bg-black/40 border border-white/10 text-white rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
                                                 />
                                             </div>
-                                            </div>
                                         </div>
                                         <div className="col-span-2">
                                             <label className="text-xs text-zinc-400 block mb-1">Categoría</label>
@@ -256,11 +255,10 @@ export default function WorkerCapture() {
                                     </button>
                                 </div>
                             </form>
+                        )}
+                    </div>
                 )}
+            </main>
         </div>
-    )
-}
-            </main >
-        </div >
     );
 }

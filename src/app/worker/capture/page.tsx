@@ -31,15 +31,45 @@ export default function WorkerCapture() {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Leer imagen nativa e inmediatamente encodificar a Base64 sin depender de URLs asíncronas
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImageBase64(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-
+            // Comprimir la imagen antes de guardarla en estado para evadir Límite 4MB Vercel HTTP 413
             const url = URL.createObjectURL(file);
             setImage(url);
+
+            const img = new Image();
+            img.src = url;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1000;
+                const MAX_HEIGHT = 1000;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    // Fill background with white in case of transparent PNGs
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    // Export to compressed JPEG
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                    setImageBase64(compressedBase64);
+                }
+            };
+
             processImage(url);
         }
     };

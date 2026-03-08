@@ -86,9 +86,15 @@ export default function AdminReceipts() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             {receipt.image_url ? (
-                                                <a href={receipt.image_url} target="_blank" rel="noopener noreferrer" className="text-[#8CC63F] hover:text-[#3EAE49] inline-flex items-center gap-1">
-                                                    <ExternalLink className="w-4 h-4" />
-                                                </a>
+                                                receipt.image_url.startsWith('http') ? (
+                                                    <a href={receipt.image_url} target="_blank" rel="noopener noreferrer" className="text-[#8CC63F] hover:text-[#3EAE49] inline-flex items-center gap-1">
+                                                        <ExternalLink className="w-4 h-4" />
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-red-400 text-[10px] leading-tight block max-w-[120px] font-medium" title={receipt.image_url}>
+                                                        {receipt.image_url.length > 30 ? receipt.image_url.substring(0, 30) + '...' : receipt.image_url}
+                                                    </span>
+                                                )
                                             ) : (
                                                 <span className="text-zinc-600 text-xs">-</span>
                                             )}

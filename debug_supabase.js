@@ -3,15 +3,25 @@ require('dotenv').config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error("Missing supabase URL or Key");
+    process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function check() {
-    const { data: adminToken, error } = await supabase.from('google_integrations').select('*');
-    console.log("GOOGLE INTEGRATIONS TABLE:");
-    console.log(JSON.stringify(adminToken, null, 2));
-
-    const { data: receipts } = await supabase.from('receipts').select('*');
-    console.log("\nRECEIPTS TABLE:");
-    console.log(JSON.stringify(receipts, null, 2));
+    try {
+        const { data: receipts, error } = await supabase.from('receipts').select('*').order('created_at', { ascending: false }).limit(3);
+        if (error) {
+            console.error("Supabase Query Error:", error);
+        } else {
+            console.log("RECEIPTS TABLE (Last 3):");
+            console.log(JSON.stringify(receipts, null, 2));
+        }
+    } catch (e) {
+        console.error("Exception:", e);
+    }
 }
 check();

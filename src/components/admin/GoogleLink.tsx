@@ -41,11 +41,15 @@ export default function GoogleLink() {
 
     const loadDriveFolders = async () => {
         setIsFetchingFolders(true);
+        setAuthError(''); // Limpiar errores previos
         try {
             const res = await fetch('/api/admin/drive-folders');
             const data = await res.json();
             if (res.ok && data.folders) {
                 setFolders(data.folders);
+                if (data.folders.length === 0) {
+                    setAuthError("No se encontró ninguna carpeta en tu Google Drive. Por favor, asegúrate de crear al menos una carpeta nueva en tu Drive y vuelve a intentarlo.");
+                }
             } else {
                 console.error("No se pudieron cargar carpetas", data.error);
                 setAuthError(data.error || "Asegúrate de tener habilitada la Google Drive API en tu Consola de Google Cloud");

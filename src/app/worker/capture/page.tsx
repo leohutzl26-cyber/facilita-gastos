@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
-import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt } from 'lucide-react';
+import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History } from 'lucide-react';
 import { createWorker } from 'tesseract.js';
 import { useRouter } from 'next/navigation';
 
@@ -14,7 +14,13 @@ export default function WorkerCapture() {
         date: string;
         amount: string;
         merchant: string;
+        category: string;
     } | null>(null);
+
+    const CATEGORIES = [
+        "Alimentación", "Transporte", "Combustible",
+        "Hospedaje", "Suministros Oficina", "Mantenimiento", "Otros"
+    ];
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -63,12 +69,13 @@ export default function WorkerCapture() {
             setResults({
                 amount: amountMatch ? amountMatch[1] : '',
                 date: dateMatch ? dateMatch[1] : new Date().toLocaleDateString(),
-                merchant: merchant.length > 30 ? merchant.substring(0, 30) : merchant
+                merchant: merchant.length > 30 ? merchant.substring(0, 30) : merchant,
+                category: CATEGORIES[0] // Default
             });
 
         } catch (error) {
             console.error(error);
-            setResults({ amount: '', date: '', merchant: '' });
+            setResults({ amount: '', date: '', merchant: '', category: CATEGORIES[0] });
         } finally {
             setIsProcessing(false);
         }
@@ -82,6 +89,18 @@ export default function WorkerCapture() {
         setTimeout(() => {
             setIsSubmitting(false);
             setIsSuccess(true);
+
+            // Save to local history
+            if (results) {
+                const newRecord = {
+                    id: Math.random().toString(36).substring(7),
+                    ...results,
+                    submittedAt: new Date().toISOString()
+                };
+                const existing = localStorage.getItem('worker_history');
+                const history = existing ? JSON.parse(existing) : [];
+                localStorage.setItem('worker_history', JSON.stringify([newRecord, ...history]));
+            }
 
             // Reset after success
             setTimeout(() => {
@@ -100,9 +119,14 @@ export default function WorkerCapture() {
                         <Receipt className="w-5 h-5 text-[#8CC63F]" />
                         <span className="font-semibold text-zinc-200">Mis Gastos</span>
                     </div>
-                    <button onClick={() => router.push('/worker/login')} className="p-2 text-zinc-400 hover:text-white">
-                        <LogOut className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button onClick={() => router.push('/worker/history')} className="p-2 text-zinc-400 hover:text-white flex items-center gap-1">
+                            <History className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => router.push('/worker/login')} className="p-2 text-zinc-400 hover:text-white">
+                            <LogOut className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
             </nav>
 
@@ -197,6 +221,20 @@ export default function WorkerCapture() {
                                                     className="w-full bg-black/40 border border-white/10 text-white rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
                                                 />
                                             </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="text-xs text-zinc-400 block mb-1">Categoría</label>
+                                            <select
+                                                required
+                                                value={results.category}
+                                                onChange={e => setResults({ ...results, category: e.target.value })}
+                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
+                                            >
+                                                {CATEGORIES.map(cat => (
+                                                    <option key={cat} value={cat}>{cat}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -218,10 +256,11 @@ export default function WorkerCapture() {
                                     </button>
                                 </div>
                             </form>
-                        )}
-                    </div>
                 )}
-            </main>
         </div>
+    )
+}
+            </main >
+        </div >
     );
 }

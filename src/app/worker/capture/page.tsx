@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 export default function WorkerCapture() {
     const [image, setImage] = useState<string | null>(null);
+    const [imageBase64, setImageBase64] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [progressStatus, setProgressStatus] = useState('');
@@ -30,6 +31,13 @@ export default function WorkerCapture() {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Leer imagen nativa e inmediatamente encodificar a Base64 sin depender de URLs asíncronas
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImageBase64(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+
             const url = URL.createObjectURL(file);
             setImage(url);
             processImage(url);
@@ -98,21 +106,9 @@ export default function WorkerCapture() {
         setIsSubmitting(true);
 
         try {
-            // Extraer la imagen real del Blob URL si existe
-            let base64Image = null;
-            if (image) {
-                const response = await fetch(image);
-                const blob = await response.blob();
-                base64Image = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-            }
-
             const payload = {
                 ...results,
-                imageBase64: base64Image
+                imageBase64: imageBase64
             };
 
             const res = await fetch('/api/worker/receipts', {

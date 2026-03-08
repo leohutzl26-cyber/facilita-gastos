@@ -92,35 +92,48 @@ export async function POST(request: Request) {
 
                 // 1. Subir a Google Drive
                 if (folderId && body.imageBase64) {
-                    // Extraer los datos base64 quitando el prefijo mime (data:image/jpeg;base64,...)
-                    const matches = body.imageBase64.match(/^data:(.+);base64,(.+)$/);
+                    driveImageUrl = "Iniciando subida... Tam: " + body.imageBase64.length;
+
+                    // Extraer los datos base64 quitando el prefijo mime (data:image/jpeg;base64, o data:;base64,)
+                    const matches = body.imageBase64.match(/^data:(.*?);base64,(.+)$/);
                     if (matches && matches.length === 3) {
-                        const mimeType = matches[1];
+                        const mimeType = matches[1] || 'image/jpeg';
                         const base64Data = matches[2];
                         const buffer = Buffer.from(base64Data, 'base64');
 
-                        const driveRes = await drive.files.create({
-                            requestBody: {
-                                name: `Recibo_${merchant}_${formattedDate}`,
-                                parents: [folderId],
-                            },
-                            media: {
-                                mimeType: mimeType,
-                                body: Readable.from(buffer),
-                            },
-                            fields: 'id, webViewLink'
-                        });
-
-                        if (driveRes.data && driveRes.data.webViewLink) {
-                            driveImageUrl = driveRes.data.webViewLink;
-
-                            // Hacer el archivo público dentro de la app para que el admin pueda verlo sin problemas
-                            await drive.permissions.create({
-                                fileId: driveRes.data.id!,
-                                requestBody: { role: 'reader', type: 'anyone' }
+                        try {
+                            const driveRes = await drive.files.create({
+                                requestBody: {
+                                    name: `Recibo_${merchant}_${formattedDate}`,
+                                    parents: [folderId],
+                                },
+                                media: {
+                                    mimeType: mimeType,
+                                    body: Readable.from(buffer),
+                                },
+                                fields: 'id, webViewLink'
                             });
+
+                            if (driveRes.data && driveRes.data.webViewLink) {
+                                driveImageUrl = driveRes.data.webViewLink;
+
+                                // Hacer el archivo público dentro de la app para que el admin pueda verlo sin problemas
+                                await drive.permissions.create({
+                                    fileId: driveRes.data.id!,
+                                    requestBody: { role: 'reader', type: 'anyone' }
+                                });
+                            } else {
+                                driveImageUrl = "GCP Falló: No se retornó WebLink";
+                            }
+                        } catch (e: any) {
+                            console.error("Fallo interno en Drive Create:", e);
+                            driveImageUrl = "Error API Drive: " + e.message;
                         }
+                    } else {
+                        driveImageUrl = "Error Formato B64";
                     }
+                } else if (!body.imageBase64) {
+                    driveImageUrl = "Sin imagen adjunta desde cel";
                 }
 
                 // 2. Escribir a Google Sheets

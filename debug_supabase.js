@@ -13,12 +13,12 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function check() {
     try {
-        const { data: receipts, error } = await supabase.from('receipts').select('*').order('created_at', { ascending: false }).limit(3);
+        const { data: integrations, error } = await supabase.from('google_integrations').select('*');
         if (error) {
             console.error("Supabase Query Error:", error);
         } else {
-            console.log("RECEIPTS TABLE (Last 3):");
-            console.log(JSON.stringify(receipts, null, 2));
+            console.log("GOOGLE INTEGRATIONS TABLE:");
+            console.log(JSON.stringify(integrations, null, 2));
         }
     } catch (e) {
         console.error("Exception:", e);

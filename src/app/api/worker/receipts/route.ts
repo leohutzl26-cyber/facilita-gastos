@@ -23,12 +23,14 @@ export async function POST(request: Request) {
         const cleanAmount = amount.replace(/[^\d.,]/g, '').replace(',', '.'); // Allow only digits and a dot
 
         // Buscar el administrador afiliado al trabajador y su token de Google
-        // En esta PWA sencilla, usamos el primer admin disponible que tenga tokens (lo ideal es vincular worker->admin en una app mutitenant)
-        const { data: adminToken } = await supabaseSession
+        // Al existir múltiples cuentas de prueba o relinkeos, traeremos todas y preferiremos la que tenga un FolderId sano
+        const { data: adminTokens } = await supabaseSession
             .from('google_integrations')
             .select('*')
-            .limit(1)
-            .single();
+            .order('created_at', { ascending: false });
+
+        // Preferir token con carpeta configurada, sino tomar el primero disponible.
+        const adminToken = adminTokens?.find(t => t.settings && t.settings.driveFolderId) || (adminTokens ? adminTokens[0] : null);
 
         let driveImageUrl = '';
 

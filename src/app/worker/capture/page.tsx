@@ -2,8 +2,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import ReactCrop, { type Crop as ReactCropType, type PixelCrop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
 
 export default function WorkerCapture() {
     const [image, setImage] = useState<string | null>(null);
@@ -13,11 +11,6 @@ export default function WorkerCapture() {
     const [progressStatus, setProgressStatus] = useState('');
 
     const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
-
-    const [isCropping, setIsCropping] = useState(false);
-    const [crop, setCrop] = useState<ReactCropType>();
-    const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-    const imgRef = useRef<HTMLImageElement>(null);
 
     const [results, setResults] = useState<{
         date: string;
@@ -47,96 +40,19 @@ export default function WorkerCapture() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
+        if (!file) return;
+
+        setIsProcessing(true);
+        setProgressStatus('Procesando la imagen original...');
+
+        try {
             const url = URL.createObjectURL(file);
             setImage(url);
-            setIsCropping(true); // Activa la vista de Recorte (Cropper)
-        }
-    };
 
-    const confirmCrop = async () => {
-        if (!image) return;
-        if (!completedCrop || !imgRef.current || completedCrop.width <= 0 || completedCrop.height <= 0) {
-            handleNoCrop();
-            return;
-        }
-
-        setIsProcessing(true);
-        setProgressStatus('Optimizando recorte...');
-
-        try {
-            const canvas = document.createElement('canvas');
-            const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
-            const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
-
-            const pixelRatio = window.devicePixelRatio || 1;
-            canvas.width = Math.floor(completedCrop.width * scaleX * pixelRatio);
-            canvas.height = Math.floor(completedCrop.height * scaleY * pixelRatio);
-
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
-            ctx.scale(pixelRatio, pixelRatio);
-            ctx.imageSmoothingQuality = 'high';
-
-            const cropX = completedCrop.x * scaleX;
-            const cropY = completedCrop.y * scaleY;
-            const cropWidth = completedCrop.width * scaleX;
-            const cropHeight = completedCrop.height * scaleY;
-
-            ctx.drawImage(
-                imgRef.current,
-                cropX,
-                cropY,
-                cropWidth,
-                cropHeight,
-                0,
-                0,
-                cropWidth,
-                cropHeight
-            );
-
-            const MAX_DIMENSION = 2000;
-            let finalWidth = cropWidth;
-            let finalHeight = cropHeight;
-
-            if (finalWidth > MAX_DIMENSION || finalHeight > MAX_DIMENSION) {
-                const ratio = Math.min(MAX_DIMENSION / finalWidth, MAX_DIMENSION / finalHeight);
-                finalWidth *= ratio;
-                finalHeight *= ratio;
-            }
-
-            const finalCanvas = document.createElement('canvas');
-            finalCanvas.width = finalWidth;
-            finalCanvas.height = finalHeight;
-            const finalCtx = finalCanvas.getContext('2d');
-            if (finalCtx) {
-                finalCtx.fillStyle = "#FFFFFF";
-                finalCtx.fillRect(0, 0, finalWidth, finalHeight);
-                finalCtx.drawImage(canvas, 0, 0, finalWidth, finalHeight);
-            }
-
-            const compressedBase64 = finalCanvas.toDataURL('image/jpeg', 0.9);
-            setImageBase64(compressedBase64);
-            setImage(compressedBase64);
-            setIsCropping(false);
-
-            processImage(compressedBase64);
-        } catch (e) {
-            console.error(e);
-            alert("Error al recortar la imagen");
-            setIsProcessing(false);
-        }
-    };
-
-    const handleNoCrop = async () => {
-        setIsProcessing(true);
-        setProgressStatus('Procesando imagen original...');
-        try {
             const img = new Image();
-            img.src = image!;
+            img.src = url;
             await new Promise((resolve) => { img.onload = resolve; });
 
             const MAX_DIMENSION = 2000;
@@ -162,11 +78,13 @@ export default function WorkerCapture() {
             const compressedBase64 = canvas.toDataURL('image/jpeg', 0.9);
             setImageBase64(compressedBase64);
             setImage(compressedBase64);
-            setIsCropping(false);
+
+            // Send directly to the AI
             processImage(compressedBase64);
-        } catch (e) {
-            console.error(e);
+        } catch (error) {
+            console.error(error);
             setIsProcessing(false);
+            alert("Hubo un error al preparar la imagen.");
         }
     };
 
@@ -311,55 +229,6 @@ export default function WorkerCapture() {
                                 <p className="font-medium">Tomar foto o subir imagen</p>
                                 <p className="text-xs text-zinc-500 mt-1">Soporta JPG, PNG, WEBP</p>
                             </div>
-                        </div>
-                    </div>
-                ) : isCropping ? (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black min-h-[50vh] flex items-center justify-center p-4">
-                            <ReactCrop
-                                crop={crop}
-                                onChange={(_, percentCrop) => setCrop(percentCrop)}
-                                onComplete={(c) => setCompletedCrop(c)}
-                                className="max-h-[60vh] mx-auto overflow-hidden object-contain"
-                            >
-                                <img
-                                    ref={imgRef}
-                                    src={image}
-                                    alt="Recorte"
-                                    className="max-h-[60vh] max-w-full object-contain pointer-events-none"
-                                    onLoad={(e) => {
-                                        setCrop({
-                                            unit: '%',
-                                            x: 5,
-                                            y: 5,
-                                            width: 90,
-                                            height: 90
-                                        });
-                                    }}
-                                />
-                            </ReactCrop>
-                            {isProcessing && (
-                                <div className="absolute inset-0 z-50 bg-[#121D38]/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
-                                    <Loader2 className="w-10 h-10 text-[#8CC63F] animate-spin mb-4" />
-                                    <p className="font-medium text-[#8CC63F]">{progressStatus}</p>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex gap-3 px-2">
-                            <button
-                                type="button"
-                                onClick={() => { setImage(null); setIsCropping(false); }}
-                                className="flex-1 bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl font-medium transition"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={confirmCrop}
-                                className="flex-[2] bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
-                            >
-                                <Crop className="w-5 h-5" /> Listo, Recortar
-                            </button>
                         </div>
                     </div>
                 ) : (

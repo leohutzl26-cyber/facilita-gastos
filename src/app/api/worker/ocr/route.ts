@@ -27,9 +27,10 @@ export async function POST(request: Request) {
 
         const fallbackModels = [
             "gemini-1.5-flash",
+            "gemini-1.5-pro",
+            "gemini-pro-vision", // Legacy model, pero muy seguro que está en todas las cuentas
             "gemini-1.5-flash-latest",
-            "gemini-2.0-flash",
-            "gemini-1.5-pro"
+            "gemini-1.5-pro-latest"
         ];
 
         let responseText = "";

@@ -1,8 +1,7 @@
 'use client';
-import { ShieldUser, LogOut, Users, HardDrive } from 'lucide-react';
+import { ShieldUser, LogOut, Users, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import UserCrud from '@/components/admin/UserCrud';
-import GoogleLink from '@/components/admin/GoogleLink';
 import AdminReceipts from '@/components/admin/AdminReceipts';
 
 export default function AdminDashboard() {
@@ -33,9 +32,9 @@ export default function AdminDashboard() {
             </nav>
 
             <main className="max-w-7xl mx-auto px-6 py-8">
-                {/* Primer Fila: Trabajadores vs Google Drive/Sheets */}
-                <div className="grid lg:grid-cols-3 gap-8 mb-8">
-                    <div className="lg:col-span-2 space-y-6">
+                {/* Primer Fila: Trabajadores */}
+                <div className="mb-8">
+                    <div className="space-y-6">
                         <div className="flex items-center gap-2 mb-4">
                             <Users className="w-5 h-5 text-[#8CC63F]" />
                             <h2 className="text-xl font-semibold">Gestión de Trabajadores</h2>
@@ -44,22 +43,12 @@ export default function AdminDashboard() {
                             <UserCrud />
                         </div>
                     </div>
-
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <HardDrive className="w-5 h-5 text-[#3EAE49]" />
-                            <h2 className="text-xl font-semibold">Integración Google</h2>
-                        </div>
-                        <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                            <GoogleLink />
-                        </div>
-                    </div>
                 </div>
 
                 {/* Segunda Fila: Tabla de Reportes Completos */}
                 <div className="space-y-6">
                     <div className="flex items-center gap-2 mb-4">
-                        <HardDrive className="w-5 h-5 text-[#8CC63F]" />
+                        <FileText className="w-5 h-5 text-[#8CC63F]" />
                         <h2 className="text-xl font-semibold">Histórico Global de Gastos</h2>
                     </div>
                     <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl">

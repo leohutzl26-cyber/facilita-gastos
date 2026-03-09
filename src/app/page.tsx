@@ -50,7 +50,7 @@ export default function Home() {
               </div>
               <div>
                 <h2 className="text-xl font-semibold mb-2 text-white">Administración</h2>
-                <p className="text-sm text-zinc-300">Gestiona usuarios y sincroniza todo con Google Workspace</p>
+                <p className="text-sm text-zinc-300">Gestiona usuarios y revisa el historial de gastos corporativo</p>
               </div>
             </div>
           </Link>

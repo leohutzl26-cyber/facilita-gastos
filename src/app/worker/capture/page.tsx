@@ -248,7 +248,7 @@ export default function WorkerCapture() {
                                 <div className="absolute inset-0 bg-green-500/90 backdrop-blur-md flex flex-col items-center justify-center text-white">
                                     <CheckCircle2 className="w-16 h-16 mb-4 animate-bounce" />
                                     <h3 className="text-2xl font-bold">¡Gasto Registrado!</h3>
-                                    <p className="opacity-90 mt-2">Enviado a Google Drive y Sheets</p>
+                                    <p className="opacity-90 mt-2">Enviado al sistema central</p>
                                 </div>
                             )}
                         </div>

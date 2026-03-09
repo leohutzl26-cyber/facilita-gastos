@@ -12,6 +12,12 @@ export default function WorkerCapture() {
     const [progress, setProgress] = useState(0);
     const [progressStatus, setProgressStatus] = useState('');
 
+    const handleLogout = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push('/worker/login');
+    };
+
     const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
 
     const [results, setResults] = useState<{
@@ -309,7 +315,7 @@ export default function WorkerCapture() {
                         <button onClick={() => router.push('/worker/history')} className="p-2 text-zinc-400 hover:text-white flex items-center gap-1">
                             <History className="w-5 h-5" />
                         </button>
-                        <button onClick={() => router.push('/worker/login')} className="p-2 text-zinc-400 hover:text-white">
+                        <button onClick={handleLogout} className="p-2 text-zinc-400 hover:text-white">
                             <LogOut className="w-5 h-5" />
                         </button>
                     </div>

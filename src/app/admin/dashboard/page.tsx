@@ -1,6 +1,7 @@
 'use client';
 import { ShieldUser, LogOut, Users, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 import UserCrud from '@/components/admin/UserCrud';
 import AdminReceipts from '@/components/admin/AdminReceipts';
 import ProjectCrud from '@/components/admin/ProjectCrud';
@@ -8,7 +9,9 @@ import ProjectCrud from '@/components/admin/ProjectCrud';
 export default function AdminDashboard() {
     const router = useRouter();
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
         router.push('/admin/login');
     };
 

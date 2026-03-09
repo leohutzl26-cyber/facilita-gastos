@@ -1,8 +1,9 @@
 'use client';
-import { useState, useRef } from 'react';
-import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop } from 'lucide-react';
 import { createWorker } from 'tesseract.js';
 import { useRouter } from 'next/navigation';
+import Cropper from 'react-easy-crop';
 
 export default function WorkerCapture() {
     const [image, setImage] = useState<string | null>(null);
@@ -10,6 +11,15 @@ export default function WorkerCapture() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [progressStatus, setProgressStatus] = useState('');
+
+    const [isCropping, setIsCropping] = useState(false);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+    const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    }, []);
 
     const [results, setResults] = useState<{
         date: string;
@@ -31,46 +41,75 @@ export default function WorkerCapture() {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Comprimir la imagen antes de guardarla en estado para evadir Límite 4MB Vercel HTTP 413
             const url = URL.createObjectURL(file);
             setImage(url);
+            setIsCropping(true); // Activa la vista de Recorte (Cropper)
+        }
+    };
 
+    const confirmCrop = async () => {
+        if (!image || !croppedAreaPixels) return;
+        setIsProcessing(true);
+        setProgressStatus('Optimizando recorte...');
+
+        try {
             const img = new Image();
-            img.src = url;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1000;
-                const MAX_HEIGHT = 1000;
-                let width = img.width;
-                let height = img.height;
+            img.src = image;
+            await new Promise((resolve) => { img.onload = resolve; });
 
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const targetWidth = croppedAreaPixels.width;
+            const targetHeight = croppedAreaPixels.height;
+            const MAX_WIDTH = 1000;
+            const MAX_HEIGHT = 1000;
+
+            let finalWidth = targetWidth;
+            let finalHeight = targetHeight;
+
+            if (finalWidth > finalHeight) {
+                if (finalWidth > MAX_WIDTH) {
+                    finalHeight *= MAX_WIDTH / finalWidth;
+                    finalWidth = MAX_WIDTH;
                 }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                    // Fill background with white in case of transparent PNGs
-                    ctx.fillStyle = "#FFFFFF";
-                    ctx.fillRect(0, 0, width, height);
-                    ctx.drawImage(img, 0, 0, width, height);
-                    // Export to compressed JPEG
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    setImageBase64(compressedBase64);
+            } else {
+                if (finalHeight > MAX_HEIGHT) {
+                    finalWidth *= MAX_HEIGHT / finalHeight;
+                    finalHeight = MAX_HEIGHT;
                 }
-            };
+            }
 
-            processImage(url);
+            canvas.width = finalWidth;
+            canvas.height = finalHeight;
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, finalWidth, finalHeight);
+
+            // Dibujar solo la porción recortada
+            ctx.drawImage(
+                img,
+                croppedAreaPixels.x,
+                croppedAreaPixels.y,
+                croppedAreaPixels.width,
+                croppedAreaPixels.height,
+                0,
+                0,
+                finalWidth,
+                finalHeight
+            );
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            setImageBase64(compressedBase64);
+            setImage(compressedBase64); // Actualizar prev. con la imagen final
+            setIsCropping(false);
+
+            // Correr el OCR sobre el recorte límpio
+            processImage(compressedBase64);
+        } catch (e) {
+            console.error(e);
+            alert("Error al recortar la imagen");
+            setIsProcessing(false);
         }
     };
 
@@ -227,6 +266,42 @@ export default function WorkerCapture() {
                                 <p className="font-medium">Tomar foto o subir imagen</p>
                                 <p className="text-xs text-zinc-500 mt-1">Soporta JPG, PNG, WEBP</p>
                             </div>
+                        </div>
+                    </div>
+                ) : isCropping ? (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black h-[60vh] flex items-center justify-center">
+                            <Cropper
+                                image={image}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={undefined} // Proporción libre para recibos largos
+                                onCropChange={setCrop}
+                                onCropComplete={onCropComplete}
+                                onZoomChange={setZoom}
+                            />
+                            {isProcessing && (
+                                <div className="absolute inset-0 z-50 bg-[#121D38]/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+                                    <Loader2 className="w-10 h-10 text-[#8CC63F] animate-spin mb-4" />
+                                    <p className="font-medium text-[#8CC63F]">{progressStatus}</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex gap-3 px-2">
+                            <button
+                                type="button"
+                                onClick={() => { setImage(null); setIsCropping(false); }}
+                                className="flex-1 bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl font-medium transition"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmCrop}
+                                className="flex-[2] bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
+                            >
+                                <Crop className="w-5 h-5" /> Listo, Recortar
+                            </button>
                         </div>
                     </div>
                 ) : (

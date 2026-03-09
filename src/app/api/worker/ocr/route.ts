@@ -26,11 +26,17 @@ export async function POST(request: Request) {
         const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
         const fallbackModels = [
+            // Newer models that the user's key specifically supports
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-001",
+            "gemini-2.5-flash-lite",
+            "gemini-3.1-pro-preview",
+            // Standard/older fallbacks for completeness
             "gemini-1.5-flash",
             "gemini-1.5-pro",
-            "gemini-pro-vision", // Legacy model, pero muy seguro que está en todas las cuentas
-            "gemini-1.5-flash-latest",
-            "gemini-1.5-pro-latest"
+            "gemini-pro-vision"
         ];
 
         let responseText = "";

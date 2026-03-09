@@ -15,7 +15,8 @@ export default function DangerZone() {
     };
 
     const handleClean = async () => {
-        if (confirmText !== 'ELIMINAR' || !targetFeature) return;
+        const isConfirmed = confirmText.trim().toUpperCase() === 'ELIMINAR';
+        if (!isConfirmed || !targetFeature) return;
 
         setIsLoading(true);
         try {
@@ -139,7 +140,7 @@ export default function DangerZone() {
                                 </button>
                                 <button
                                     onClick={handleClean}
-                                    disabled={confirmText !== 'ELIMINAR' || isLoading}
+                                    disabled={confirmText.trim().toUpperCase() !== 'ELIMINAR' || isLoading}
                                     className="flex-1 py-2.5 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50 disabled:bg-zinc-600 disabled:text-zinc-400 transition flex justify-center items-center gap-2"
                                 >
                                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirmar'}

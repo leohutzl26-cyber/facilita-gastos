@@ -45,14 +45,9 @@ export async function updateSession(request: NextRequest) {
             url.pathname = '/admin/login';
             return NextResponse.redirect(url);
         }
-        if (path.startsWith('/worker') && path !== '/worker/login') {
+        if (path.startsWith('/worker') && path !== '/worker/login' && path !== '/worker/change-password') {
             const url = request.nextUrl.clone();
             url.pathname = '/worker/login';
-            return NextResponse.redirect(url);
-        }
-        if (path === '/') {
-            const url = request.nextUrl.clone();
-            url.pathname = '/worker/login'; // Default landing
             return NextResponse.redirect(url);
         }
     } else {

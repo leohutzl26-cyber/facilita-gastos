@@ -22,8 +22,19 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'No se envió ninguna imagen' }, { status: 400 });
         }
 
-        // Obtener la parte limpia de Base64
-        const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        // Obtener la parte limpia de Base64 y el mimeType
+        const matches = imageBase64.match(/^data:(.*?);base64,(.+)$/);
+
+        let mimeType = "image/jpeg";
+        let base64Data = imageBase64;
+
+        if (matches && matches.length === 3) {
+            mimeType = matches[1];
+            base64Data = matches[2];
+        } else {
+            // Fallback si viene mal formateado (asumimos imagen antigua)
+            base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        }
 
         const fallbackModels = [
             // Newer models that the user's key specifically supports
@@ -42,6 +53,16 @@ export async function POST(request: Request) {
         let responseText = "";
         let lastError = null;
 
+        // 2. Fetch active categories from DB to inject into the AI prompt
+        const { data: dbCategories, error: dbError } = await supabaseSession
+            .from('categories')
+            .select('name');
+
+        let categoryNamesList = "Alimentación, Transporte, Combustible, Hospedaje, Suministros Oficina, Mantenimiento, Otros"; // fallback
+        if (!dbError && dbCategories && dbCategories.length > 0) {
+            categoryNamesList = dbCategories.map(c => c.name).join(', ');
+        }
+
         const prompt = `Eres un asistente experto en contabilidad.
 Extrae los datos de esta imagen de recibo o boleta de compra y devuélvelos estrictamente en el siguiente formato JSON puro (sin formato markdown ni explicaciones adicionales):
 
@@ -49,16 +70,16 @@ Extrae los datos de esta imagen de recibo o boleta de compra y devuélvelos estr
   "merchant": "Nombre del comercio o tienda",
   "date": "Fecha en formato YYYY-MM-DD",
   "amount": "Monto total como texto numérico limpio (solo números y coma/punto, ej: 15500 o 150.50)",
-  "category": "Una de estas: Alimentación, Transporte, Combustible, Hospedaje, Suministros Oficina, Mantenimiento, Otros"
+  "category": "Estrictamente UNA de estas opciones exactas, la que mejor describa la compra: ${categoryNamesList}"
 }
 
-Si un dato no es visible, infiérelo (ej. la fecha suele estar cerca del monto final o al principio). Si es ilegible, devuelve un string vacío para ese campo. Elige la categoría que mejor encaje según el comercio y los items.`;
+Si un dato no es visible, infiérelo (ej. la fecha suele estar cerca del monto final o al principio). Si es completamente ilegible, devuelve un string vacío para ese campo. Elige la categoría que mejor encaje según el comercio y los items.`;
 
         const imageParts = [
             {
                 inlineData: {
                     data: base64Data,
-                    mimeType: "image/jpeg" // Asumimos JPEG por la compresión previa del lado del cliente
+                    mimeType: mimeType
                 }
             }
         ];

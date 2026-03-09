@@ -1,29 +1,48 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2 } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download } from 'lucide-react';
 
 export default function AdminReceipts() {
     const [receipts, setReceipts] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [rejectingId, setRejectingId] = useState<string | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
 
     useEffect(() => {
-        const fetchReceipts = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch('/api/admin/receipts');
-                const data = await res.json();
-                if (res.ok && data.receipts) {
-                    setReceipts(data.receipts);
+                const [resReceipts, resCategories] = await Promise.all([
+                    fetch('/api/admin/receipts'),
+                    fetch('/api/admin/categories')
+                ]);
+
+                const dataReceipts = await resReceipts.json();
+                const dataCategories = await resCategories.json();
+
+                if (resReceipts.ok && dataReceipts.receipts) {
+                    setReceipts(dataReceipts.receipts);
+                }
+                if (resCategories.ok && dataCategories.categories) {
+                    setCategories(dataCategories.categories);
                 }
             } catch (err) {
-                console.error("Error fetching receipts", err);
+                console.error("Error fetching data", err);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchReceipts();
+        fetchData();
     }, []);
+
+    const categoryAlerts = categories.reduce((acc, cat) => {
+        if (cat.max_amount_alert) {
+            acc[cat.name] = cat.max_amount_alert;
+        }
+        return acc;
+    }, {} as Record<string, number>);
 
     const handleStatusUpdate = async (id: string, newStatus: string) => {
         try {
@@ -40,6 +59,61 @@ export default function AdminReceipts() {
         } catch (err) {
             console.error(err);
         }
+    };
+
+    const handleRejectSubmit = async () => {
+        if (!rejectingId || !rejectionReason.trim()) return;
+
+        try {
+            const res = await fetch('/api/admin/receipts/status', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: rejectingId,
+                    status: 'Rechazado',
+                    rejection_reason: rejectionReason
+                })
+            });
+            if (res.ok) {
+                setReceipts(receipts.map(r => r.id === rejectingId ? { ...r, status: 'Rechazado', rejection_reason: rejectionReason } : r));
+                setRejectingId(null);
+                setRejectionReason('');
+            } else {
+                alert("Error al actualizar estado.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleExportCSV = () => {
+        if (filteredReceipts.length === 0) return;
+
+        // Create CSV Header
+        const headers = ['Fecha', 'Comercio', 'Proyecto', 'Categoria', 'Monto ($)', 'Estado', 'Trabajador (Email)', 'Motivo Rechazo'];
+
+        // Build CSV rows
+        const rows = filteredReceipts.map(r => [
+            r.date,
+            `"${r.merchant.replace(/"/g, '""')}"`, // escape quotes
+            `"${r.projects?.name || 'Gasto Genérico'}"`,
+            r.category,
+            r.amount,
+            r.status || 'Pendiente',
+            r.worker_email || 'Desconocido',
+            `"${(r.rejection_reason || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `gastos_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const filteredReceipts = receipts.filter(r =>
@@ -61,6 +135,15 @@ export default function AdminReceipts() {
                         className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
                     />
                 </div>
+
+                <button
+                    onClick={handleExportCSV}
+                    disabled={filteredReceipts.length === 0}
+                    className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <Download className="w-4 h-4" />
+                    Exportar CSV
+                </button>
             </div>
 
             <div className="bg-[#1C2D54] border border-white/10 rounded-2xl overflow-hidden">
@@ -113,7 +196,14 @@ export default function AdminReceipts() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <div className="text-white font-semibold mb-1">${receipt.amount}</div>
+                                            {categoryAlerts[receipt.category] && receipt.amount > categoryAlerts[receipt.category] ? (
+                                                <div className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2 py-1 rounded inline-block font-bold mb-1" title="Supera el límite de categoría">
+                                                    ${receipt.amount} ⚠️
+                                                </div>
+                                            ) : (
+                                                <div className="text-white font-semibold mb-1">${receipt.amount}</div>
+                                            )}
+
                                             {receipt.image_url ? (
                                                 receipt.image_url.startsWith('http') ? (
                                                     <a href={receipt.image_url} target="_blank" rel="noopener noreferrer" className="text-[#8CC63F] hover:text-[#3EAE49] inline-flex items-center gap-1 text-xs">
@@ -130,22 +220,37 @@ export default function AdminReceipts() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={`px-2 py-1 rounded text-[11px] font-medium whitespace-nowrap ${receipt.status === 'Pendiente' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                                                    receipt.status === 'Aprobado por Supervisor' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                                receipt.status === 'Aprobado por Supervisor' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                                    receipt.status === 'Rechazado' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
                                                         'bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/30'
                                                 }`}>
                                                 {receipt.status || 'Pendiente'}
                                             </span>
+                                            {receipt.status === 'Rechazado' && receipt.rejection_reason && (
+                                                <div className="text-[10px] text-red-400/80 mt-1 max-w-[150px] truncate" title={receipt.rejection_reason}>
+                                                    Motivo: {receipt.rejection_reason}
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 {(receipt.status === 'Pendiente' || !receipt.status) && (
-                                                    <button
-                                                        onClick={() => handleStatusUpdate(receipt.id, 'Aprobado por Supervisor')}
-                                                        className="p-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-md transition"
-                                                        title="Aprobar (Supervisor)"
-                                                    >
-                                                        <CheckCircle className="w-4 h-4" />
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleStatusUpdate(receipt.id, 'Aprobado por Supervisor')}
+                                                            className="p-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-md transition"
+                                                            title="Aprobar (Supervisor)"
+                                                        >
+                                                            <CheckCircle className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setRejectingId(receipt.id)}
+                                                            className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-md transition"
+                                                            title="Rechazar Gasto"
+                                                        >
+                                                            <XCircle className="w-4 h-4" />
+                                                        </button>
+                                                    </>
                                                 )}
                                                 {receipt.status === 'Aprobado por Supervisor' && (
                                                     <button
@@ -165,6 +270,38 @@ export default function AdminReceipts() {
                     </table>
                 </div>
             </div>
+
+            {rejectingId && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-[#1C2D54] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                        <h3 className="text-xl font-semibold text-white mb-4">Rechazar Gasto</h3>
+                        <p className="text-sm text-zinc-300 mb-4">
+                            Por favor, indica el motivo del rechazo para que el trabajador pueda corregirlo.
+                        </p>
+                        <textarea
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 min-h-[100px] mb-6"
+                            placeholder="Ej: La foto está muy borrosa, el monto no coincide, etc."
+                        />
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => { setRejectingId(null); setRejectionReason(''); }}
+                                className="px-4 py-2 text-zinc-400 hover:text-white transition"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => handleRejectSubmit()}
+                                disabled={!rejectionReason.trim()}
+                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition disabled:opacity-50"
+                            >
+                                Confirmar Rechazo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,6 +1,28 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
+export async function GET() {
+    const supabaseSession = await createClient();
+    const { data: { user } } = await supabaseSession.auth.getUser();
+
+    if (!user) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    try {
+        const { data: receipts, error } = await supabaseSession
+            .from('receipts')
+            .select('*')
+            .eq('worker_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return NextResponse.json({ receipts });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+}
+
 export async function POST(request: Request) {
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
@@ -15,6 +37,23 @@ export async function POST(request: Request) {
 
         let formattedDate = date;
         const cleanAmount = amount.replace(/[^\d.,]/g, '').replace(',', '.'); // Permite solo dígitos y punto
+        const parsedAmount = parseFloat(cleanAmount) || 0;
+
+        // 0. Evitar Duplicados: Check si este mismo trabajador ya subió este exacto gasto
+        const { data: existingReceipts, error: checkError } = await supabaseSession
+            .from('receipts')
+            .select('id')
+            .eq('worker_id', user.id)
+            .eq('merchant', merchant)
+            .eq('date', formattedDate)
+            .eq('amount', parsedAmount)
+            .limit(1);
+
+        if (!checkError && existingReceipts && existingReceipts.length > 0) {
+            return NextResponse.json({
+                error: 'Posible duplicado: Ya has registrado un recibo idéntico con esta fecha, comercio y monto.'
+            }, { status: 409 });
+        }
 
         let supabaseImageUrl = null;
 
@@ -62,7 +101,7 @@ export async function POST(request: Request) {
                     worker_id: user.id,
                     worker_email: user.email,
                     merchant: merchant,
-                    amount: parseFloat(cleanAmount) || 0,
+                    amount: parsedAmount,
                     date: formattedDate,
                     category: category,
                     image_url: supabaseImageUrl,

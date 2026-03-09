@@ -20,25 +20,88 @@ export default function WorkerCapture() {
         project_id: string; // Nuevo campo
     } | null>(null);
 
-    const CATEGORIES = [
-        "Alimentación", "Transporte", "Combustible",
-        "Hospedaje", "Suministros Oficina", "Mantenimiento", "Otros"
-    ];
+    const [categories, setCategories] = useState<{ id: string; name: string; color: string }[]>([]);
 
+    // Initial load for categories
     useEffect(() => {
-        // Cargar los proyectos operativos disponibles al iniciar
-        fetch('/api/worker/projects')
-            .then(res => res.json())
-            .then(data => {
-                if (data.projects) setProjects(data.projects);
-            })
-            .catch(err => console.error("Error cargando proyectos:", err));
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch('/api/worker/categories');
+                const data = await res.json();
+                if (res.ok && data.categories) {
+                    setCategories(data.categories);
+                }
+            } catch (err) {
+                console.error("Error fetching categories:", err);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
+    // Active projects fetch
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                const res = await fetch('/api/worker/projects');
+                const data = await res.json();
+                if (res.ok && data.projects) {
+                    setProjects(data.projects);
+                }
+            } catch (err) {
+                console.error("Error fetching projects:", err);
+            }
+        };
+
+        fetchProjects();
     }, []);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
+
+    // Offline Background Sync
+    useEffect(() => {
+        const syncOfflineData = async () => {
+            if (!navigator.onLine) return;
+            const offlineQueue = JSON.parse(localStorage.getItem('offline_receipts') || '[]');
+            if (offlineQueue.length === 0) return;
+
+            console.log("Sincronizando gastos offline...");
+            const newQueue = [];
+            let syncedCount = 0;
+
+            for (const payload of offlineQueue) {
+                try {
+                    const res = await fetch('/api/worker/receipts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        syncedCount++;
+                    } else {
+                        newQueue.push(payload); // keep in queue if backend failed logic (e.g. duplicate or down)
+                    }
+                } catch (e) {
+                    newQueue.push(payload); // keep if network dropped again mid-sync
+                }
+            }
+
+            localStorage.setItem('offline_receipts', JSON.stringify(newQueue));
+            if (syncedCount > 0) {
+                alert(`¡Conexión recuperada! Se han sincronizado ${syncedCount} gastos que tenías pendientes.`);
+            }
+        };
+
+        // Escuchar cuando vuelva la conexión
+        window.addEventListener('online', syncOfflineData);
+        // Intentar al cargar
+        syncOfflineData();
+
+        return () => window.removeEventListener('online', syncOfflineData);
+    }, []);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -48,6 +111,18 @@ export default function WorkerCapture() {
         setProgressStatus('Procesando la imagen original...');
 
         try {
+            if (file.type === 'application/pdf') {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64 = event.target?.result as string;
+                    setImageBase64(base64);
+                    setImage('PDF_DOCUMENT_PLACEHOLDER');
+                    processImage(base64);
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+
             const url = URL.createObjectURL(file);
             setImage(url);
 
@@ -116,18 +191,28 @@ export default function WorkerCapture() {
                 formattedDateForInput = date;
             }
 
+            // Intentar matchear la categoría extraída con las existentes (o usar la primera como fallback)
+            const validCategoryNames = categories.map(c => c.name);
+            let finalCategory = '';
+
+            if (categories.length > 0) {
+                finalCategory = validCategoryNames.includes(category) ? category : categories[0].name;
+            } else {
+                finalCategory = category || 'Otros';
+            }
+
             setResults({
                 amount: amount || '',
                 date: formattedDateForInput,
                 merchant: merchant || 'Desconocido',
-                category: CATEGORIES.includes(category) ? category : CATEGORIES[0],
+                category: finalCategory,
                 project_id: '' // Por defecto Ninguno
             });
 
         } catch (error: any) {
             console.error(error);
-            alert("Error en OCR: " + error.message);
-            setResults({ amount: '', date: new Date().toISOString().split('T')[0], merchant: '', category: CATEGORIES[0], project_id: '' });
+            alert("Atención: No hay conexión o falló el reconocimiento OCR. Por favor, rellena los datos a mano.");
+            setResults({ amount: '', date: new Date().toISOString().split('T')[0], merchant: '', category: categories.length > 0 ? categories[0].name : '', project_id: '' });
         } finally {
             setIsProcessing(false);
         }
@@ -143,6 +228,22 @@ export default function WorkerCapture() {
                 imageBase64: imageBase64
             };
 
+            // Modo Offline: Guardar localmente
+            if (!navigator.onLine) {
+                const existing = JSON.parse(localStorage.getItem('offline_receipts') || '[]');
+                localStorage.setItem('offline_receipts', JSON.stringify([...existing, payload]));
+
+                setIsSuccess(true);
+                alert("Estás sin conexión a Internet. El gasto se ha guardado en tu teléfono y se enviará automáticamente cuando recuperes la señal.");
+
+                setTimeout(() => {
+                    setImage(null);
+                    setResults(null);
+                    setIsSuccess(false);
+                }, 4000);
+                return;
+            }
+
             const res = await fetch('/api/worker/receipts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -153,18 +254,6 @@ export default function WorkerCapture() {
 
             if (res.ok) {
                 setIsSuccess(true);
-
-                // Save to local history
-                if (results) {
-                    const newRecord = {
-                        id: Math.random().toString(36).substring(7),
-                        ...results,
-                        submittedAt: new Date().toISOString()
-                    };
-                    const existing = localStorage.getItem('worker_history');
-                    const history = existing ? JSON.parse(existing) : [];
-                    localStorage.setItem('worker_history', JSON.stringify([newRecord, ...history]));
-                }
 
                 // Reset after success
                 setTimeout(() => {
@@ -177,7 +266,17 @@ export default function WorkerCapture() {
             }
         } catch (error: any) {
             console.error("Error submitting receipt:", error);
-            alert("No se pudo subir el recibo: " + error.message);
+            // Catch error en caso de que la red se caiga justo al hacer el fetch
+            if (error.message.includes("Failed to fetch") || !navigator.onLine) {
+                const payload = { ...results, imageBase64 };
+                const existing = JSON.parse(localStorage.getItem('offline_receipts') || '[]');
+                localStorage.setItem('offline_receipts', JSON.stringify([...existing, payload]));
+                setIsSuccess(true);
+                alert("Conexión perdida. El gasto se guardó localmente y se enviará luego.");
+                setTimeout(() => { setImage(null); setResults(null); setIsSuccess(false); }, 4000);
+            } else {
+                alert("No se pudo subir el recibo: " + error.message);
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -218,29 +317,33 @@ export default function WorkerCapture() {
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleImageUpload}
-                                accept="image/*"
-                                capture="environment"
+                                accept="image/*,application/pdf"
                                 className="hidden"
                             />
                             <div className="p-4 bg-white/5 rounded-full text-zinc-400 group-hover:text-[#8CC63F] group-hover:bg-[#8CC63F]/20 transition-all">
                                 <Camera className="w-10 h-10" />
                             </div>
                             <div className="text-center">
-                                <p className="font-medium">Tomar foto o subir imagen</p>
-                                <p className="text-xs text-zinc-500 mt-1">Soporta JPG, PNG, WEBP</p>
+                                <p className="font-medium">Tomar foto o subir imagen/PDF</p>
+                                <p className="text-xs text-zinc-500 mt-1">Soporta JPG, PNG, WEBP, PDF</p>
                             </div>
                         </div>
                     </div>
                 ) : (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black aspect-video flex items-center justify-center">
-                            <img src={image} alt="Recibo" className="max-h-full max-w-full object-contain opacity-70" />
+                        <div className="relative aspect-video sm:aspect-square md:aspect-video bg-black/50 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                            {image === 'PDF_DOCUMENT_PLACEHOLDER' ? (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400">
+                                    <Receipt className="w-16 h-16 mb-4 opacity-50" />
+                                    <p className="font-medium text-zinc-300">Documento PDF Cargado</p>
+                                </div>
+                            ) : (
+                                <img src={image} alt="Recibo" className="w-full h-full object-contain opacity-80" />
+                            )}
 
                             {isProcessing && (
                                 <div className="absolute inset-0 bg-[#121D38]/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
                                     <Loader2 className="w-10 h-10 text-[#8CC63F] animate-spin mb-4" />
-                                    <p className="font-medium text-[#8CC63F]">{progressStatus}</p>
-                                    <p className="text-xs text-[#8CC63F]/70 mt-2 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Potenciado por Gemini AI</p>
                                 </div>
                             )}
 
@@ -301,8 +404,8 @@ export default function WorkerCapture() {
                                                 onChange={e => setResults({ ...results, category: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
                                             >
-                                                {CATEGORIES.map(cat => (
-                                                    <option key={cat} value={cat}>{cat}</option>
+                                                {categories.map(cat => (
+                                                    <option key={cat.id} value={cat.name}>{cat.name}</option>
                                                 ))}
                                             </select>
                                         </div>

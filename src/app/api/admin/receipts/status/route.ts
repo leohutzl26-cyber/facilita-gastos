@@ -10,15 +10,20 @@ export async function PATCH(request: Request) {
     }
 
     try {
-        const { id, status } = await request.json();
+        const { id, status, rejection_reason } = await request.json();
 
         if (!id || !status) {
             return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
         }
 
+        const updateData: any = { status };
+        if (rejection_reason !== undefined) {
+            updateData.rejection_reason = rejection_reason;
+        }
+
         const { data, error } = await supabaseSession
             .from('receipts')
-            .update({ status })
+            .update(updateData)
             .eq('id', id)
             .select();
 

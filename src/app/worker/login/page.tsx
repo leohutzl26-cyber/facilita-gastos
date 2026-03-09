@@ -19,7 +19,7 @@ export default function WorkerLogin() {
         setLoading(true);
         setError('');
 
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -28,6 +28,12 @@ export default function WorkerLogin() {
             setError('Credenciales inválidas. Verifica tu correo y contraseña.');
             setLoading(false);
         } else {
+            if (data.user?.user_metadata?.is_suspended === true) {
+                await supabase.auth.signOut();
+                setError('⚠️ Tu cuenta ha sido suspendida. Contacta a un Administrador.');
+                setLoading(false);
+                return;
+            }
             router.push('/worker/capture');
         }
     };

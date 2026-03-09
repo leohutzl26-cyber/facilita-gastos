@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2 } from 'lucide-react';
 
 export default function AdminReceipts() {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -25,9 +25,27 @@ export default function AdminReceipts() {
         fetchReceipts();
     }, []);
 
+    const handleStatusUpdate = async (id: string, newStatus: string) => {
+        try {
+            const res = await fetch('/api/admin/receipts/status', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status: newStatus })
+            });
+            if (res.ok) {
+                setReceipts(receipts.map(r => r.id === id ? { ...r, status: newStatus } : r));
+            } else {
+                alert("Error al actualizar estado.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const filteredReceipts = receipts.filter(r =>
         r.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.category.toLowerCase().includes(searchTerm.toLowerCase())
+        r.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (r.projects && r.projects.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -51,11 +69,11 @@ export default function AdminReceipts() {
                         <thead className="bg-[#1C2D54] border-b border-white/10 text-zinc-400">
                             <tr>
                                 <th className="px-6 py-4 font-medium">Fecha</th>
-                                <th className="px-6 py-4 font-medium">Comercio</th>
+                                <th className="px-6 py-4 font-medium">Proyecto y Comercio</th>
                                 <th className="px-6 py-4 font-medium text-left">Categoría</th>
-                                <th className="px-6 py-4 font-medium text-center">Boleta</th>
-                                <th className="px-6 py-4 font-medium text-right">Monto</th>
-                                <th className="px-6 py-4 font-medium text-center">ID Creador</th>
+                                <th className="px-6 py-4 font-medium text-center">Info. Pago</th>
+                                <th className="px-6 py-4 font-medium text-center">Estado</th>
+                                <th className="px-6 py-4 font-medium text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -78,34 +96,67 @@ export default function AdminReceipts() {
                                 filteredReceipts.map((receipt) => (
                                     <tr key={receipt.id} className="hover:bg-white/5 transition-colors">
                                         <td className="px-6 py-4 text-zinc-300 whitespace-nowrap">{receipt.date}</td>
-                                        <td className="px-6 py-4 text-white font-medium">{receipt.merchant}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-white font-medium">{receipt.merchant}</span>
+                                                <span className="text-xs text-zinc-400">
+                                                    {receipt.projects ? `Carpeta: ${receipt.projects.name}` : 'Gasto Genérico'}
+                                                </span>
+                                            </div>
+                                        </td>
                                         <td className="px-6 py-4">
                                             <span className="bg-[#8CC63F]/10 text-[#8CC63F] px-2 py-1 rounded text-xs whitespace-nowrap">
                                                 {receipt.category}
                                             </span>
+                                            <div className="text-[10px] text-zinc-500 mt-1" title={receipt.worker_email}>
+                                                Generado por: {receipt.worker_email?.split('@')[0] || 'Unknown'}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
+                                            <div className="text-white font-semibold mb-1">${receipt.amount}</div>
                                             {receipt.image_url ? (
                                                 receipt.image_url.startsWith('http') ? (
-                                                    <a href={receipt.image_url} target="_blank" rel="noopener noreferrer" className="text-[#8CC63F] hover:text-[#3EAE49] inline-flex items-center gap-1">
-                                                        <ExternalLink className="w-4 h-4" />
+                                                    <a href={receipt.image_url} target="_blank" rel="noopener noreferrer" className="text-[#8CC63F] hover:text-[#3EAE49] inline-flex items-center gap-1 text-xs">
+                                                        <ExternalLink className="w-3 h-3" /> Ver Boleta
                                                     </a>
                                                 ) : (
-                                                    <span className="text-red-400 text-[10px] leading-tight block max-w-[120px] font-medium" title={receipt.image_url}>
-                                                        {receipt.image_url.length > 30 ? receipt.image_url.substring(0, 30) + '...' : receipt.image_url}
+                                                    <span className="text-red-400 text-[10px] block font-medium" title={receipt.image_url}>
+                                                        Error URL
                                                     </span>
                                                 )
                                             ) : (
                                                 <span className="text-zinc-600 text-xs">-</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-right text-white font-semibold">
-                                            ${receipt.amount}
-                                        </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className="text-xs text-zinc-300 font-mono bg-black/30 px-2 py-1 rounded">
-                                                {receipt.worker_email || receipt.worker_id.substring(0, 8) + '...'}
+                                            <span className={`px-2 py-1 rounded text-[11px] font-medium whitespace-nowrap ${receipt.status === 'Pendiente' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                                                    receipt.status === 'Aprobado por Supervisor' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                                        'bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/30'
+                                                }`}>
+                                                {receipt.status || 'Pendiente'}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {(receipt.status === 'Pendiente' || !receipt.status) && (
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(receipt.id, 'Aprobado por Supervisor')}
+                                                        className="p-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-md transition"
+                                                        title="Aprobar (Supervisor)"
+                                                    >
+                                                        <CheckCircle className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                                {receipt.status === 'Aprobado por Supervisor' && (
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(receipt.id, 'Reembolsado')}
+                                                        className="p-1.5 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-md transition"
+                                                        title="Marcar como Reembolsado/Pagado"
+                                                    >
+                                                        <CreditCard className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

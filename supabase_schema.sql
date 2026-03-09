@@ -33,6 +33,7 @@ ALTER TABLE public.receipts ENABLE ROW LEVEL SECURITY;
 -- Evitar errores de "Policy ya existe" eliminándolas previamente
 DROP POLICY IF EXISTS "Workers can insert their receipts" ON public.receipts;
 DROP POLICY IF EXISTS "Admins can view all receipts" ON public.receipts;
+DROP POLICY IF EXISTS "Admins can update receipts" ON public.receipts;
 
 -- Los trabajadores pueden insertar sus propios recibos
 CREATE POLICY "Workers can insert their receipts" ON public.receipts FOR INSERT WITH CHECK (auth.uid() = worker_id);
@@ -40,8 +41,45 @@ CREATE POLICY "Workers can insert their receipts" ON public.receipts FOR INSERT 
 -- Los administradores/supervisores pueden ver todos los recibos
 CREATE POLICY "Admins can view all receipts" ON public.receipts FOR SELECT USING (auth.uid() IS NOT NULL);
 
+-- Los administradores pueden actualizar el estado de recibos
+CREATE POLICY "Admins can update receipts" ON public.receipts FOR UPDATE USING (auth.uid() IS NOT NULL);
+
 -- ==========================================
--- 3. Configuración del Supabase Storage
+-- 3. Configuración de Proyectos Empresariales (Fase 2)
+-- ==========================================
+
+-- Crear tabla global para el control de Proyectos/Clientes
+CREATE TABLE IF NOT EXISTS public.projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    active BOOLEAN DEFAULT true
+);
+
+-- Si la tabla receipts existía ANTES y no tenía la columna del proyecto vinculado, la añadimos.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='receipts' AND column_name='project_id') THEN
+    ALTER TABLE public.receipts ADD COLUMN project_id UUID REFERENCES public.projects(id);
+  END IF;
+END
+$$;
+
+-- Habilitar RLS para proyectos
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view active projects" ON public.projects;
+DROP POLICY IF EXISTS "Admins can manage projects" ON public.projects;
+
+-- Los trabajadores pueden leer los proyectos vigentes
+CREATE POLICY "Anyone can view active projects" ON public.projects FOR SELECT USING (auth.uid() IS NOT NULL AND active = true);
+
+-- Las funciones de inserción y borrado son para admins
+CREATE POLICY "Admins can manage projects" ON public.projects FOR ALL USING (auth.uid() IS NOT NULL);
+
+-- ==========================================
+-- 4. Configuración del Supabase Storage
 -- ==========================================
 
 -- Insertar el nuevo bucket llamado "receipts" si no existe

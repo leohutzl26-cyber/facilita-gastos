@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop } from 'lucide-react';
 import { createWorker } from 'tesseract.js';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,8 @@ export default function WorkerCapture() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [progressStatus, setProgressStatus] = useState('');
+
+    const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
 
     const [isCropping, setIsCropping] = useState(false);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -26,12 +28,23 @@ export default function WorkerCapture() {
         amount: string;
         merchant: string;
         category: string;
+        project_id: string; // Nuevo campo
     } | null>(null);
 
     const CATEGORIES = [
         "Alimentación", "Transporte", "Combustible",
         "Hospedaje", "Suministros Oficina", "Mantenimiento", "Otros"
     ];
+
+    useEffect(() => {
+        // Cargar los proyectos operativos disponibles al iniciar
+        fetch('/api/worker/projects')
+            .then(res => res.json())
+            .then(data => {
+                if (data.projects) setProjects(data.projects);
+            })
+            .catch(err => console.error("Error cargando proyectos:", err));
+    }, []);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -160,12 +173,13 @@ export default function WorkerCapture() {
                 amount: amountMatch ? amountMatch[1] : '',
                 date: formattedDateForInput,
                 merchant: merchant.length > 30 ? merchant.substring(0, 30) : merchant,
-                category: CATEGORIES[0] // Default
+                category: CATEGORIES[0], // Default
+                project_id: '' // Por defecto Ninguno
             });
 
         } catch (error) {
             console.error(error);
-            setResults({ amount: '', date: '', merchant: '', category: CATEGORIES[0] });
+            setResults({ amount: '', date: '', merchant: '', category: CATEGORIES[0], project_id: '' });
         } finally {
             setIsProcessing(false);
         }
@@ -379,6 +393,19 @@ export default function WorkerCapture() {
                                             >
                                                 {CATEGORIES.map(cat => (
                                                     <option key={cat} value={cat}>{cat}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="text-xs text-zinc-400 block mb-1">Proyecto Asignado (Opcional)</label>
+                                            <select
+                                                value={results.project_id}
+                                                onChange={e => setResults({ ...results, project_id: e.target.value })}
+                                                className="w-full bg-black/40 border border-white/10 text-zinc-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
+                                            >
+                                                <option value="">-- Ninguno (Gasto Genérico) --</option>
+                                                {projects.map(proj => (
+                                                    <option key={proj.id} value={proj.id}>{proj.name}</option>
                                                 ))}
                                             </select>
                                         </div>

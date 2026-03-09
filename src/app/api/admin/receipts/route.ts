@@ -14,7 +14,7 @@ export async function GET() {
         // Aquí extraemos todos los recibos ordenados por fecha descendente
         const { data: receipts, error } = await supabaseSession
             .from('receipts')
-            .select('*')
+            .select('*, projects(name)')
             .order('created_at', { ascending: false });
 
         if (error) {

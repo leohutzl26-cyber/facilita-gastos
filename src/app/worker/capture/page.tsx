@@ -63,8 +63,8 @@ export default function WorkerCapture() {
 
             const targetWidth = croppedAreaPixels.width;
             const targetHeight = croppedAreaPixels.height;
-            const MAX_WIDTH = 1000;
-            const MAX_HEIGHT = 1000;
+            const MAX_WIDTH = 2400;
+            const MAX_HEIGHT = 2400;
 
             let finalWidth = targetWidth;
             let finalHeight = targetHeight;
@@ -99,7 +99,8 @@ export default function WorkerCapture() {
                 finalHeight
             );
 
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            // Mejorar la calidad de compresión de 0.6 a 0.9 para no dañar el texto de recibos
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.9);
             setImageBase64(compressedBase64);
             setImage(compressedBase64); // Actualizar prev. con la imagen final
             setIsCropping(false);

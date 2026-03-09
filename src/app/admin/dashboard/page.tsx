@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import UserCrud from '@/components/admin/UserCrud';
 import AdminReceipts from '@/components/admin/AdminReceipts';
 import ProjectCrud from '@/components/admin/ProjectCrud';
+import DangerZone from '@/components/admin/DangerZone';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -61,15 +62,19 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Segunda Fila: Tabla de Reportes Completos */}
-                <div className="space-y-6">
+                <div className="space-y-6 mt-12 border-t border-white/10 pt-8">
                     <div className="flex items-center gap-2 mb-4">
                         <FileText className="w-5 h-5 text-[#8CC63F]" />
-                        <h2 className="text-xl font-semibold">Histórico Global de Gastos</h2>
+                        <h2 className="text-xl font-semibold">Reporte General de Gastos</h2>
                     </div>
-                    <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl">
+                    <div>
                         <AdminReceipts />
                     </div>
                 </div>
+
+                {/* Tercera Fila: Zona de Limpieza Masiva (Danger Zone) */}
+                <DangerZone />
+
             </main>
         </div>
     );

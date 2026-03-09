@@ -9,7 +9,8 @@ const getAdminSupabase = () => {
     );
 };
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+    const params = await context.params;
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 

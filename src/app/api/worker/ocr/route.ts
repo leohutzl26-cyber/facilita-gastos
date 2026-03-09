@@ -25,8 +25,15 @@ export async function POST(request: Request) {
         // Obtener la parte limpia de Base64
         const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-        // 2. Preparar el modelo de IA (Gemini 1.5 Flash es rápido y excelente en OCR)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const fallbackModels = [
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-2.0-flash",
+            "gemini-1.5-pro"
+        ];
+
+        let responseText = "";
+        let lastError = null;
 
         const prompt = `Eres un asistente experto en contabilidad.
 Extrae los datos de esta imagen de recibo o boleta de compra y devuélvelos estrictamente en el siguiente formato JSON puro (sin formato markdown ni explicaciones adicionales):
@@ -49,9 +56,23 @@ Si un dato no es visible, infiérelo (ej. la fecha suele estar cerca del monto f
             }
         ];
 
-        // 3. Ejecutar la llamada a la IA
-        const result = await model.generateContent([prompt, ...imageParts]);
-        const responseText = result.response.text();
+        // 3. Ejecutar la llamada iterando sobre los modelos de respaldo
+        for (const modelName of fallbackModels) {
+            try {
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent([prompt, ...imageParts]);
+                responseText = result.response.text();
+                lastError = null;
+                break; // Si es exitoso, salimos del bucle
+            } catch (err: any) {
+                console.warn(`[OCR] Fallo con modelo ${modelName}:`, err.message);
+                lastError = err;
+            }
+        }
+
+        if (lastError) {
+            throw lastError; // Si todos fallan, lanza el último error
+        }
 
         // Limpieza de posibles etiquetas codeblock (```json ... ```) si el modelo decidiera incluirlas a pesar del prompt
         const cleanJsonString = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();

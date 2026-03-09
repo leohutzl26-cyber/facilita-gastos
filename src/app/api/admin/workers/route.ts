@@ -31,7 +31,8 @@ export async function GET() {
             .map(u => ({
                 id: u.id,
                 name: u.user_metadata?.name || 'Trabajador',
-                email: u.email
+                email: u.email,
+                is_suspended: !!u.user_metadata?.is_suspended
             }));
 
         return NextResponse.json({ workers });

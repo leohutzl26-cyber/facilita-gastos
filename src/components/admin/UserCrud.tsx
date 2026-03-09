@@ -1,11 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle } from 'lucide-react';
 
 type Worker = {
     id: string;
     name: string;
     email: string;
+    is_suspended?: boolean;
 };
 
 export default function UserCrud() {
@@ -17,6 +18,7 @@ export default function UserCrud() {
     const [newName, setNewName] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [isResetting, setIsResetting] = useState<string | null>(null);
+    const [isToggling, setIsToggling] = useState<string | null>(null);
 
     useEffect(() => {
         fetchWorkers();
@@ -94,6 +96,29 @@ export default function UserCrud() {
         }
     };
 
+    const handleToggleStatus = async (id: string, name: string) => {
+        setIsToggling(id);
+        try {
+            const res = await fetch(`/api/admin/workers/${id}/toggle-status`, {
+                method: 'POST',
+            });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Error al cambiar estado del colaborador');
+
+            // Update local state without refetching fully
+            setWorkers(workers.map(w =>
+                w.id === id ? { ...w, is_suspended: data.is_suspended } : w
+            ));
+
+        } catch (err: any) {
+            console.error(err);
+            alert("Falló el cambio de estado: " + err.message);
+        } finally {
+            setIsToggling(null);
+        }
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
@@ -139,12 +164,29 @@ export default function UserCrud() {
                                 </div>
                                 <div>
                                     <p className="font-medium text-sm text-zinc-200">{worker.name}</p>
-                                    <div className="flex items-center gap-1 text-xs text-zinc-500">
-                                        <Mail className="w-3 h-3" /> {worker.email}
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <div className="flex items-center gap-1 text-xs text-zinc-500">
+                                            <Mail className="w-3 h-3" /> {worker.email}
+                                        </div>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${worker.is_suspended ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}>
+                                            {worker.is_suspended ? 'Suspendido' : 'Activo'}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => handleToggleStatus(worker.id, worker.name)}
+                                    disabled={isToggling === worker.id}
+                                    title={worker.is_suspended ? "Reactivar acceso" : "Suspender acceso"}
+                                    className={`p-2 rounded-lg transition disabled:opacity-50 ${worker.is_suspended
+                                            ? 'text-green-500 hover:text-green-400 hover:bg-green-500/10'
+                                            : 'text-orange-500 hover:text-orange-400 hover:bg-orange-500/10'
+                                        }`}
+                                >
+                                    {isToggling === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                                        worker.is_suspended ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
+                                </button>
                                 <button
                                     onClick={() => handleResetPassword(worker.id, worker.name)}
                                     disabled={isResetting === worker.id}

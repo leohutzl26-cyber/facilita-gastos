@@ -52,6 +52,17 @@ export async function updateSession(request: NextRequest) {
         }
     } else {
         // 2. Authenticated Role-Based Routing
+
+        // Block suspended users
+        if (user.user_metadata?.is_suspended === true) {
+            // Allow them to be on the login page to see the error, but nowhere else
+            if (path !== '/worker/login' && path !== '/admin/login') {
+                const url = request.nextUrl.clone();
+                url.pathname = '/worker/login';
+                return NextResponse.redirect(url);
+            }
+        }
+
         if (path.startsWith('/admin') && path !== '/admin/login') {
             if (role !== 'admin') {
                 // Workers trying to access admin

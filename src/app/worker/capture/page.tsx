@@ -2,7 +2,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import Cropper from 'react-easy-crop';
+import ReactCrop, { type Crop as ReactCropType, type PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 export default function WorkerCapture() {
     const [image, setImage] = useState<string | null>(null);
@@ -14,13 +15,9 @@ export default function WorkerCapture() {
     const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
 
     const [isCropping, setIsCropping] = useState(false);
-    const [crop, setCrop] = useState({ x: 0, y: 0 });
-    const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
-
-    const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
-        setCroppedAreaPixels(croppedAreaPixels);
-    }, []);
+    const [crop, setCrop] = useState<ReactCropType>();
+    const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+    const imgRef = useRef<HTMLImageElement>(null);
 
     const [results, setResults] = useState<{
         date: string;
@@ -60,68 +57,115 @@ export default function WorkerCapture() {
     };
 
     const confirmCrop = async () => {
-        if (!image || !croppedAreaPixels) return;
+        if (!image) return;
+        if (!completedCrop || !imgRef.current || completedCrop.width <= 0 || completedCrop.height <= 0) {
+            handleNoCrop();
+            return;
+        }
+
         setIsProcessing(true);
         setProgressStatus('Optimizando recorte...');
 
         try {
-            const img = new Image();
-            img.src = image;
-            await new Promise((resolve) => { img.onload = resolve; });
-
             const canvas = document.createElement('canvas');
+            const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
+            const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
+
+            const pixelRatio = window.devicePixelRatio || 1;
+            canvas.width = Math.floor(completedCrop.width * scaleX * pixelRatio);
+            canvas.height = Math.floor(completedCrop.height * scaleY * pixelRatio);
+
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            const targetWidth = croppedAreaPixels.width;
-            const targetHeight = croppedAreaPixels.height;
-            const MAX_WIDTH = 2400;
-            const MAX_HEIGHT = 2400;
+            ctx.scale(pixelRatio, pixelRatio);
+            ctx.imageSmoothingQuality = 'high';
 
-            let finalWidth = targetWidth;
-            let finalHeight = targetHeight;
+            const cropX = completedCrop.x * scaleX;
+            const cropY = completedCrop.y * scaleY;
+            const cropWidth = completedCrop.width * scaleX;
+            const cropHeight = completedCrop.height * scaleY;
 
-            if (finalWidth > finalHeight) {
-                if (finalWidth > MAX_WIDTH) {
-                    finalHeight *= MAX_WIDTH / finalWidth;
-                    finalWidth = MAX_WIDTH;
-                }
-            } else {
-                if (finalHeight > MAX_HEIGHT) {
-                    finalWidth *= MAX_HEIGHT / finalHeight;
-                    finalHeight = MAX_HEIGHT;
-                }
-            }
-
-            canvas.width = finalWidth;
-            canvas.height = finalHeight;
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fillRect(0, 0, finalWidth, finalHeight);
-
-            // Dibujar solo la porción recortada
             ctx.drawImage(
-                img,
-                croppedAreaPixels.x,
-                croppedAreaPixels.y,
-                croppedAreaPixels.width,
-                croppedAreaPixels.height,
+                imgRef.current,
+                cropX,
+                cropY,
+                cropWidth,
+                cropHeight,
                 0,
                 0,
-                finalWidth,
-                finalHeight
+                cropWidth,
+                cropHeight
             );
 
-            // Mejorar la calidad de compresión de 0.6 a 0.9 para no dañar el texto de recibos
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.9);
+            const MAX_DIMENSION = 2000;
+            let finalWidth = cropWidth;
+            let finalHeight = cropHeight;
+
+            if (finalWidth > MAX_DIMENSION || finalHeight > MAX_DIMENSION) {
+                const ratio = Math.min(MAX_DIMENSION / finalWidth, MAX_DIMENSION / finalHeight);
+                finalWidth *= ratio;
+                finalHeight *= ratio;
+            }
+
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = finalWidth;
+            finalCanvas.height = finalHeight;
+            const finalCtx = finalCanvas.getContext('2d');
+            if (finalCtx) {
+                finalCtx.fillStyle = "#FFFFFF";
+                finalCtx.fillRect(0, 0, finalWidth, finalHeight);
+                finalCtx.drawImage(canvas, 0, 0, finalWidth, finalHeight);
+            }
+
+            const compressedBase64 = finalCanvas.toDataURL('image/jpeg', 0.9);
             setImageBase64(compressedBase64);
-            setImage(compressedBase64); // Actualizar prev. con la imagen final
+            setImage(compressedBase64);
             setIsCropping(false);
 
-            // Correr el OCR sobre el recorte límpio
             processImage(compressedBase64);
         } catch (e) {
             console.error(e);
             alert("Error al recortar la imagen");
+            setIsProcessing(false);
+        }
+    };
+
+    const handleNoCrop = async () => {
+        setIsProcessing(true);
+        setProgressStatus('Procesando imagen original...');
+        try {
+            const img = new Image();
+            img.src = image!;
+            await new Promise((resolve) => { img.onload = resolve; });
+
+            const MAX_DIMENSION = 2000;
+            let finalWidth = img.width;
+            let finalHeight = img.height;
+
+            if (finalWidth > MAX_DIMENSION || finalHeight > MAX_DIMENSION) {
+                const ratio = Math.min(MAX_DIMENSION / finalWidth, MAX_DIMENSION / finalHeight);
+                finalWidth *= ratio;
+                finalHeight *= ratio;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = finalWidth;
+            canvas.height = finalHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fillRect(0, 0, finalWidth, finalHeight);
+                ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
+            }
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.9);
+            setImageBase64(compressedBase64);
+            setImage(compressedBase64);
+            setIsCropping(false);
+            processImage(compressedBase64);
+        } catch (e) {
+            console.error(e);
             setIsProcessing(false);
         }
     };
@@ -271,16 +315,29 @@ export default function WorkerCapture() {
                     </div>
                 ) : isCropping ? (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black h-[60vh] flex items-center justify-center">
-                            <Cropper
-                                image={image}
+                        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black min-h-[50vh] flex items-center justify-center p-4">
+                            <ReactCrop
                                 crop={crop}
-                                zoom={zoom}
-                                aspect={undefined} // Proporción libre para recibos largos
-                                onCropChange={setCrop}
-                                onCropComplete={onCropComplete}
-                                onZoomChange={setZoom}
-                            />
+                                onChange={(_, percentCrop) => setCrop(percentCrop)}
+                                onComplete={(c) => setCompletedCrop(c)}
+                                className="max-h-[60vh] mx-auto overflow-hidden object-contain"
+                            >
+                                <img
+                                    ref={imgRef}
+                                    src={image}
+                                    alt="Recorte"
+                                    className="max-h-[60vh] max-w-full object-contain pointer-events-none"
+                                    onLoad={(e) => {
+                                        setCrop({
+                                            unit: '%',
+                                            x: 5,
+                                            y: 5,
+                                            width: 90,
+                                            height: 90
+                                        });
+                                    }}
+                                />
+                            </ReactCrop>
                             {isProcessing && (
                                 <div className="absolute inset-0 z-50 bg-[#121D38]/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
                                     <Loader2 className="w-10 h-10 text-[#8CC63F] animate-spin mb-4" />

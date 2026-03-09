@@ -2,8 +2,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function WorkerCapture() {
+    const router = useRouter();
     const [image, setImage] = useState<string | null>(null);
     const [imageBase64, setImageBase64] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -56,10 +58,23 @@ export default function WorkerCapture() {
         fetchProjects();
     }, []);
 
+    // Password Security Check
+    useEffect(() => {
+        const checkSecurityStatus = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (user?.user_metadata?.requires_password_change) {
+                router.push('/worker/change-password');
+            }
+        };
+
+        checkSecurityStatus();
+    }, [router]);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const router = useRouter();
 
     // Offline Background Sync
     useEffect(() => {

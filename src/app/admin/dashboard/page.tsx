@@ -38,7 +38,7 @@ export default function AdminDashboard() {
                     <div className="space-y-6">
                         <div className="flex items-center gap-2 mb-4">
                             <Users className="w-5 h-5 text-[#8CC63F]" />
-                            <h2 className="text-xl font-semibold">Gestión de Trabajadores</h2>
+                            <h2 className="text-xl font-semibold">Gestión de Colaboradores</h2>
                         </div>
                         <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl h-full">
                             <UserCrud />

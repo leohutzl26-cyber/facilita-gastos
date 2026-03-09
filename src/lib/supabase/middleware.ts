@@ -35,15 +35,43 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/admin/login') &&
-        !request.nextUrl.pathname.startsWith('/worker/login') &&
-        !request.nextUrl.pathname.startsWith('/auth') &&
-        request.nextUrl.pathname !== '/'
-    ) {
-        // no user, potentially respond by redirecting the user to the login page
-        // For now we just allow everything or mock it.
+    const role = user?.user_metadata?.role;
+    const path = request.nextUrl.pathname;
+
+    // 1. Unauthenticated Routing
+    if (!user) {
+        if (path.startsWith('/admin') && path !== '/admin/login') {
+            const url = request.nextUrl.clone();
+            url.pathname = '/admin/login';
+            return NextResponse.redirect(url);
+        }
+        if (path.startsWith('/worker') && path !== '/worker/login') {
+            const url = request.nextUrl.clone();
+            url.pathname = '/worker/login';
+            return NextResponse.redirect(url);
+        }
+        if (path === '/') {
+            const url = request.nextUrl.clone();
+            url.pathname = '/worker/login'; // Default landing
+            return NextResponse.redirect(url);
+        }
+    } else {
+        // 2. Authenticated Role-Based Routing
+        if (path.startsWith('/admin') && path !== '/admin/login') {
+            if (role !== 'admin') {
+                // Workers trying to access admin
+                const url = request.nextUrl.clone();
+                url.pathname = '/worker/capture';
+                return NextResponse.redirect(url);
+            }
+        }
+
+        // Prevent logged in users from seeing login pages
+        if (path === '/admin/login' || path === '/worker/login' || path === '/') {
+            const url = request.nextUrl.clone();
+            url.pathname = role === 'admin' ? '/admin/dashboard' : '/worker/capture';
+            return NextResponse.redirect(url);
+        }
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

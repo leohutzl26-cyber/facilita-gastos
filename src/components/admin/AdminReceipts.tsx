@@ -90,7 +90,7 @@ export default function AdminReceipts() {
         if (filteredReceipts.length === 0) return;
 
         // Create CSV Header
-        const headers = ['Fecha', 'Comercio', 'Proyecto', 'Categoria', 'Monto ($)', 'Estado', 'Trabajador (Email)', 'Motivo Rechazo'];
+        const headers = ['Fecha', 'Comercio', 'Proyecto', 'Categoria', 'Monto ($)', 'Estado', 'Colaborador (Email)', 'Motivo Rechazo'];
 
         // Build CSV rows
         const rows = filteredReceipts.map(r => [

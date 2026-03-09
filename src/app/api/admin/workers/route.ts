@@ -25,9 +25,9 @@ export async function GET() {
 
         if (error) throw error;
 
-        // Filtramos para devolver solo los que tengan rol 'worker' en su user_metadata (para no mostrar otros admins)
+        // Filtramos para devolver solo los que tengan rol 'colaborador' (antes 'worker')
         const workers = authUsers.users
-            .filter(u => u.user_metadata?.role === 'worker')
+            .filter(u => u.user_metadata?.role === 'colaborador' || u.user_metadata?.role === 'worker')
             .map(u => ({
                 id: u.id,
                 name: u.user_metadata?.name || 'Trabajador',
@@ -50,16 +50,20 @@ export async function POST(request: Request) {
     }
 
     try {
-        const { name, email, password } = await request.json();
+        const { name, email } = await request.json();
 
         const adminAuthClient = getAdminSupabase();
 
-        // 1. Crear el usuario en Auth
+        // 1. Crear el usuario en Auth con clave inicial genérica y flag de cambio
         const { data: newAuthUser, error: authError } = await adminAuthClient.auth.admin.createUser({
             email: email,
-            password: password,
+            password: '123456', // Contraseña temporal por defecto
             email_confirm: true,
-            user_metadata: { name: name, role: 'worker' }
+            user_metadata: {
+                name: name,
+                role: 'colaborador',
+                requires_password_change: true
+            }
         });
 
         if (authError) throw authError;

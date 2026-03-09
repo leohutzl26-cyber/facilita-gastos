@@ -48,7 +48,7 @@ export default function WorkerLogin() {
                             <Receipt className="w-8 h-8" />
                         </div>
                         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-300">
-                            Portal de Trabajador
+                            Portal de Colaborador
                         </h1>
                         <p className="text-[#8CC63F]/80 text-sm mt-2 text-center font-medium">
                             Ingresa para registrar tus gastos

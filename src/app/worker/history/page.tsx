@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Camera, Search, Filter, History, MapPin, Receipt, ArrowLeft, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function WorkerHistory() {
     const router = useRouter();
@@ -25,6 +26,20 @@ export default function WorkerHistory() {
 
         fetchHistory();
     }, []);
+
+    // Password Security Check
+    useEffect(() => {
+        const checkSecurityStatus = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (user?.user_metadata?.requires_password_change) {
+                router.push('/worker/change-password');
+            }
+        };
+
+        checkSecurityStatus();
+    }, [router]);
 
     const stats = history.reduce((acc, curr) => {
         acc.totalRegistrado += Number(curr.amount) || 0;

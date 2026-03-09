@@ -1,7 +1,6 @@
 'use client';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop } from 'lucide-react';
-import { createWorker } from 'tesseract.js';
+import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Cropper from 'react-easy-crop';
 
@@ -132,54 +131,41 @@ export default function WorkerCapture() {
         setProgress(0);
         setResults(null);
         setIsSuccess(false);
+        setProgressStatus('IA analizando recibo...');
 
         try {
-            const worker = await createWorker('spa+eng', 1, {
-                logger: (m: any) => {
-                    if (m.status === 'recognizing text') {
-                        setProgress(Math.round(m.progress * 100));
-                        setProgressStatus('Analizando recibo...');
-                    } else {
-                        setProgressStatus('Inicializando motor OCR...');
-                    }
-                }
-            } as any);
+            const res = await fetch('/api/worker/ocr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageBase64: imageUrl })
+            });
 
-            const { data: { text } } = await worker.recognize(imageUrl);
-            await worker.terminate();
+            const data = await res.json();
 
-            // Simple regex based extractions
-            const amountMatch = text.match(/(?:total|importe|monto)[\s:\$]*([0-9]{1,3}(?:\.[0-9]{3})*(?:,[0-9]{2})?|[0-9]+(?:,[0-9]{2})?)/i) ||
-                text.match(/\$?\s*([0-9]{1,3}(?:\.[0-9]{3})*(?:,[0-9]{2})?|[0-9]+(?:,[0-9]{2})?)/);
-            const dateMatch = text.match(/\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\b/);
+            if (!res.ok) {
+                throw new Error(data.error || "Error al procesar la imagen con IA");
+            }
 
-            // Attempt to get the first non-empty line as merchant name
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
-            const merchant = lines.length > 0 ? lines[0] : 'Desconocido';
+            const { merchant, date, amount, category } = data.data;
 
-            // Format date for native HTML date input (YYYY-MM-DD)
+            // Aseguramos formato YYYY-MM-DD para el input type="date"
             let formattedDateForInput = new Date().toISOString().split('T')[0];
-            if (dateMatch) {
-                const parts = dateMatch[1].split(/[\/\-]/);
-                if (parts.length === 3) {
-                    const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
-                    const month = parts[1].padStart(2, '0');
-                    const day = parts[0].padStart(2, '0');
-                    formattedDateForInput = `${year}-${month}-${day}`;
-                }
+            if (date && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                formattedDateForInput = date;
             }
 
             setResults({
-                amount: amountMatch ? amountMatch[1] : '',
+                amount: amount || '',
                 date: formattedDateForInput,
-                merchant: merchant.length > 30 ? merchant.substring(0, 30) : merchant,
-                category: CATEGORIES[0], // Default
+                merchant: merchant || 'Desconocido',
+                category: CATEGORIES.includes(category) ? category : CATEGORIES[0],
                 project_id: '' // Por defecto Ninguno
             });
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            setResults({ amount: '', date: '', merchant: '', category: CATEGORIES[0], project_id: '' });
+            alert("Error en OCR: " + error.message);
+            setResults({ amount: '', date: new Date().toISOString().split('T')[0], merchant: '', category: CATEGORIES[0], project_id: '' });
         } finally {
             setIsProcessing(false);
         }
@@ -258,8 +244,8 @@ export default function WorkerCapture() {
                 {!image ? (
                     <div className="space-y-6">
                         <div className="text-center space-y-2">
-                            <h1 className="text-2xl font-bold">Registrar Nuevo Gasto</h1>
-                            <p className="text-zinc-400 text-sm">Sube una foto de tu boleta o recibo. El sistema extraerá los datos automáticamente (Free Tier OCR).</p>
+                            <h1 className="text-2xl font-bold flex items-center justify-center gap-2">Registrar Nuevo Gasto <Sparkles className="w-5 h-5 text-yellow-400" /></h1>
+                            <p className="text-zinc-400 text-sm">Sube una foto de tu recibo. Nuestra Inteligencia Artificial (Gemini) extraerá los datos con alta precisión automáticamente.</p>
                         </div>
 
                         <div
@@ -328,9 +314,7 @@ export default function WorkerCapture() {
                                 <div className="absolute inset-0 bg-[#121D38]/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
                                     <Loader2 className="w-10 h-10 text-[#8CC63F] animate-spin mb-4" />
                                     <p className="font-medium text-[#8CC63F]">{progressStatus}</p>
-                                    <div className="w-full max-w-xs bg-white/10 rounded-full h-2 mt-4 overflow-hidden">
-                                        <div className="bg-[#8CC63F] h-full transition-all duration-300" style={{ width: `${progress}%` }} />
-                                    </div>
+                                    <p className="text-xs text-[#8CC63F]/70 mt-2 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Potenciado por Gemini AI</p>
                                 </div>
                             )}
 

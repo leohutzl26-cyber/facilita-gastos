@@ -16,7 +16,7 @@ export default function Home() {
             <img
               src="/logo.png"
               alt="Facilita Capacitación y Consultoría"
-              className="h-28 md:h-36 object-contain drop-shadow-2xl"
+              className="w-auto h-32 sm:h-40 md:h-52 object-contain drop-shadow-2xl"
             />
           </div>
 

@@ -11,7 +11,7 @@ const getAdminSupabase = () => {
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
@@ -24,8 +24,9 @@ export async function DELETE(
     try {
         const adminAuthClient = getAdminSupabase();
 
-        // El id viene en params.id
-        const workerId = params.id;
+        // 1. Extraer ID asíncronamente (Next.js 15+)
+        const resolvedParams = await context.params;
+        const workerId = resolvedParams.id;
 
         // 1. Eliminar al usuario de Auth (esto también debería eliminar sus dependencias si hay reglas de cascade, 
         // pero dado que es Supabase Auth, se elimina la identidad)

@@ -5,13 +5,13 @@ import "./globals.css";
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Expense Tracker Pro",
+  title: "Facilita Gastos",
   description: "Registro de Gastos y Captura de Recibos para Empresas",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Expense Tracker Pro",
+    title: "Facilita Gastos",
   },
 };
 

@@ -1,8 +1,8 @@
 {
-  "name": "Expense Tracker Worker",
-  "short_name": "Gastos",
+  "name": "Facilita Gastos",
+  "short_name": "Facilita Gastos",
   "description": "App de captura de recibos via OCR",
-  "start_url": "/worker/login",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#121D38",
   "theme_color": "#121D38",

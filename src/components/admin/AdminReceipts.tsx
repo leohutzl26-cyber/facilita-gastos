@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2 } from 'lucide-react';
 
 export default function AdminReceipts() {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -9,6 +9,13 @@ export default function AdminReceipts() {
     const [searchTerm, setSearchTerm] = useState('');
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
+
+    // Advance Filters States
+    const [filterCategory, setFilterCategory] = useState('');
+    const [filterProject, setFilterProject] = useState('');
+    const [filterWorker, setFilterWorker] = useState('');
+    const [filterStartDate, setFilterStartDate] = useState('');
+    const [filterEndDate, setFilterEndDate] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -116,34 +123,147 @@ export default function AdminReceipts() {
         document.body.removeChild(link);
     };
 
-    const filteredReceipts = receipts.filter(r =>
-        r.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (r.projects && r.projects.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const handleDelete = async (id: string) => {
+        if (!confirm('¿Estás seguro de ELIMINAR permanentemente este recibo? Esta acción no se puede deshacer y borrará el registro de la base de datos.')) return;
+
+        try {
+            const res = await fetch(`/api/admin/receipts/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Error al eliminar el recibo');
+            }
+
+            // Eliminar exitosamente del estado local
+            setReceipts(receipts.filter(r => r.id !== id));
+            alert('Recibo eliminado correctamente.');
+        } catch (err: any) {
+            console.error(err);
+            alert('Falló la eliminación: ' + err.message);
+        }
+    };
+
+    const filteredReceipts = receipts.filter(r => {
+        // 1. Text Search
+        const matchSearch = !searchTerm ||
+            r.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            r.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (r.projects && r.projects.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (r.worker_email && r.worker_email.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        // 2. Category Match
+        const matchCategory = !filterCategory || r.category === filterCategory;
+
+        // 3. Project Match
+        const matchProject = !filterProject || r.project_id === filterProject;
+
+        // 4. Worker Match
+        const matchWorker = !filterWorker || r.worker_email === filterWorker;
+
+        // 5. Date Range Match
+        let matchDate = true;
+        if (filterStartDate) {
+            matchDate = matchDate && new Date(r.date) >= new Date(filterStartDate);
+        }
+        if (filterEndDate) {
+            matchDate = matchDate && new Date(r.date) <= new Date(filterEndDate);
+        }
+
+        return matchSearch && matchCategory && matchProject && matchWorker && matchDate;
+    });
+
+    // Extract unique values for dropdowns based on actual data
+    const uniqueWorkerEmails = Array.from(new Set(receipts.map(r => r.worker_email).filter(Boolean))) as string[];
+    const uniqueProjects = Array.from(new Map(receipts.filter(r => r.projects).map(r => [r.project_id, r.projects])).values()) as any[];
+    const uniqueCategories = Array.from(new Set(receipts.map(r => r.category).filter(Boolean))) as string[];
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                    <input
-                        type="text"
-                        placeholder="Buscar comercio o categoría..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
-                    />
+            <div className="flex flex-col gap-4">
+                {/* Top Row: Search & Export */}
+                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div className="relative w-full sm:w-1/3">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <input
+                            type="text"
+                            placeholder="Búsqueda rápida..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
+                        />
+                    </div>
+                    <button
+                        onClick={handleExportCSV}
+                        disabled={filteredReceipts.length === 0}
+                        className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                        <Download className="w-4 h-4" />
+                        Exportar CSV
+                    </button>
                 </div>
 
-                <button
-                    onClick={handleExportCSV}
-                    disabled={filteredReceipts.length === 0}
-                    className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <Download className="w-4 h-4" />
-                    Exportar CSV
-                </button>
+                {/* Filters Row */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 bg-[#1C2D54]/50 p-4 rounded-xl border border-white/5">
+                    <div className="flex flex-col">
+                        <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider">Desde (Fecha)</label>
+                        <input
+                            type="date"
+                            value={filterStartDate}
+                            onChange={(e) => setFilterStartDate(e.target.value)}
+                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                        />
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider">Hasta (Fecha)</label>
+                        <input
+                            type="date"
+                            value={filterEndDate}
+                            onChange={(e) => setFilterEndDate(e.target.value)}
+                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                        />
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider">Colaborador</label>
+                        <select
+                            value={filterWorker}
+                            onChange={(e) => setFilterWorker(e.target.value)}
+                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                        >
+                            <option value="">Todos los colaboradores</option>
+                            {uniqueWorkerEmails.map(email => (
+                                <option key={email} value={email}>{email}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider">Proyecto</label>
+                        <select
+                            value={filterProject}
+                            onChange={(e) => setFilterProject(e.target.value)}
+                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                        >
+                            <option value="">Todos los proyectos</option>
+                            {uniqueProjects.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider">Categoría</label>
+                        <select
+                            value={filterCategory}
+                            onChange={(e) => setFilterCategory(e.target.value)}
+                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                        >
+                            <option value="">Todas las categorías</option>
+                            {uniqueCategories.map(c => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div className="bg-[#1C2D54] border border-white/10 rounded-2xl overflow-hidden">
@@ -261,6 +381,13 @@ export default function AdminReceipts() {
                                                         <CreditCard className="w-4 h-4" />
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={() => handleDelete(receipt.id)}
+                                                    className="p-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-md transition ml-2"
+                                                    title="Eliminar Recibo Permanentemente"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>

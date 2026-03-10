@@ -70,10 +70,26 @@ export default function UserCrud() {
         }
     };
 
-    const handleDelete = (id: string) => {
-        // Todo: Connect to real delete endpoint
-        setWorkers(workers.filter(w => w.id !== id));
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente a ${name}? Esta acción no se puede deshacer.`)) return;
+
+        try {
+            const res = await fetch(`/api/admin/workers/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Error al eliminar usuario');
+            }
+
+            // Actualizar la lista en el frontend solo si el backend confirmó la eliminación
+            setWorkers(workers.filter(w => w.id !== id));
+        } catch (err: any) {
+            alert(`Error: ${err.message}`);
+        }
     };
+
 
     const handleResetPassword = async (id: string, name: string) => {
         if (!confirm(`¿Estás seguro de que deseas forzar el reinicio de clave para ${name}? Esto la devolverá a "123456" y obligará al colaborador a cambiarla en su próximo acceso.`)) return;
@@ -180,8 +196,8 @@ export default function UserCrud() {
                                     disabled={isToggling === worker.id}
                                     title={worker.is_suspended ? "Reactivar acceso" : "Suspender acceso"}
                                     className={`p-2 rounded-lg transition disabled:opacity-50 ${worker.is_suspended
-                                            ? 'text-green-500 hover:text-green-400 hover:bg-green-500/10'
-                                            : 'text-orange-500 hover:text-orange-400 hover:bg-orange-500/10'
+                                        ? 'text-green-500 hover:text-green-400 hover:bg-green-500/10'
+                                        : 'text-orange-500 hover:text-orange-400 hover:bg-orange-500/10'
                                         }`}
                                 >
                                     {isToggling === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> :
@@ -195,7 +211,7 @@ export default function UserCrud() {
                                 >
                                     {isResetting === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
                                 </button>
-                                <button onClick={() => handleDelete(worker.id)} className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition">
+                                <button onClick={() => handleDelete(worker.id, worker.name)} className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition" title="Eliminar Trabajador">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>

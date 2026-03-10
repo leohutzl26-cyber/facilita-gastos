@@ -33,6 +33,21 @@ export default function RootLayout({
     <html lang="es" className="dark">
       <body className={`${outfit.className} bg-[#121D38] text-zinc-50 antialiased min-h-screen selection:bg-[#8CC63F]/30`}>
         {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                  }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                  });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

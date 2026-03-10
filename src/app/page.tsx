@@ -11,13 +11,13 @@ export default function Home() {
 
       <div className="max-w-3xl w-full space-y-8 text-center">
         <div className="space-y-4 flex flex-col items-center">
-          {/* Logo Placeholder */}
+          {/* Logo Oficial Facilita */}
           <div className="flex flex-col items-center mb-6">
-            <div className="flex items-end gap-2 text-white font-bold tracking-tighter text-6xl">
-              <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#8CC63F] to-[#3EAE49] text-8xl leading-none">f</span>
-              <span>ACILITA</span>
-            </div>
-            <p className="text-sm tracking-widest text-zinc-300 uppercase mt-2 font-medium">Capacitación y Consultoría</p>
+            <img
+              src="/logo.png"
+              alt="Facilita Capacitación y Consultoría"
+              className="h-28 md:h-36 object-contain drop-shadow-2xl"
+            />
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white drop-shadow-sm mt-4">

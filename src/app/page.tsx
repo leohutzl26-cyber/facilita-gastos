@@ -36,7 +36,7 @@ export default function Home() {
                 <Receipt className="w-8 h-8" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold mb-2 text-white">Trabajadores</h2>
+                <h2 className="text-xl font-semibold mb-2 text-white">Colaboradores</h2>
                 <p className="text-sm text-zinc-300">Captura recibos y registra tus gastos diarios de forma rápida</p>
               </div>
             </div>

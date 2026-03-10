@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2 } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export default function AdminReceipts() {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -93,34 +94,31 @@ export default function AdminReceipts() {
         }
     };
 
-    const handleExportCSV = () => {
+    const handleExportExcel = () => {
         if (filteredReceipts.length === 0) return;
 
-        // Create CSV Header
-        const headers = ['Fecha', 'Comercio', 'Proyecto', 'Categoria', 'Monto ($)', 'Estado', 'Colaborador (Email)', 'Motivo Rechazo'];
+        // Custom Header mapping for Excel
+        const dataForExcel = filteredReceipts.map(r => ({
+            'Fecha': r.date,
+            'Comercio': r.merchant,
+            'Proyecto': r.projects?.name || 'Gasto Genérico',
+            'Categoría': r.category,
+            'Monto ($)': Number(r.amount),
+            'Estado': r.status || 'Pendiente',
+            'Colaborador (Email)': r.worker_email || 'Desconocido',
+            'Motivo Rechazo': r.rejection_reason || ''
+        }));
 
-        // Build CSV rows
-        const rows = filteredReceipts.map(r => [
-            r.date,
-            `"${r.merchant.replace(/"/g, '""')}"`, // escape quotes
-            `"${r.projects?.name || 'Gasto Genérico'}"`,
-            r.category,
-            r.amount,
-            r.status || 'Pendiente',
-            r.worker_email || 'Desconocido',
-            `"${(r.rejection_reason || '').replace(/"/g, '""')}"`
-        ]);
+        // 1. Convert specific JSON structure to a worksheet
+        const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
 
-        const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
+        // 2. Create a new workbook and append the worksheet
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte_Gastos");
 
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `gastos_export_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // 3. Trigger native browser download of the Excel File
+        const fileName = `Reporte_Gastos_Facilita_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
     };
 
     const handleDelete = async (id: string) => {
@@ -195,12 +193,12 @@ export default function AdminReceipts() {
                         />
                     </div>
                     <button
-                        onClick={handleExportCSV}
+                        onClick={handleExportExcel}
                         disabled={filteredReceipts.length === 0}
                         className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                     >
-                        <Download className="w-4 h-4" />
-                        Exportar CSV
+                        <FileSpreadsheet className="w-4 h-4" />
+                        Exportar a Excel
                     </button>
                 </div>
 

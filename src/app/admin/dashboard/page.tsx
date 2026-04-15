@@ -6,6 +6,8 @@ import UserCrud from '@/components/admin/UserCrud';
 import AdminReceipts from '@/components/admin/AdminReceipts';
 import ProjectCrud from '@/components/admin/ProjectCrud';
 import DangerZone from '@/components/admin/DangerZone';
+import AdminDashboardCharts from '@/components/admin/AdminDashboardCharts';
+import CategoryCrud from '@/components/admin/CategoryCrud';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -37,7 +39,10 @@ export default function AdminDashboard() {
             </nav>
 
             <main className="max-w-7xl mx-auto px-6 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Gráficos de Inteligencia de Negocios */}
+                <AdminDashboardCharts />
+
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8 mt-12 border-t border-white/10 pt-8">
                     {/* Columna 1: Trabajadores */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-2 mb-4">
@@ -57,6 +62,17 @@ export default function AdminDashboard() {
                         </div>
                         <div className="h-[400px]">
                             <ProjectCrud />
+                        </div>
+                    </div>
+
+                    {/* Columna 3: Categorías */}
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <FileText className="w-5 h-5 text-[#8CC63F]" />
+                            <h2 className="text-xl font-semibold">Categorías y Límites</h2>
+                        </div>
+                        <div className="h-[400px]">
+                            <CategoryCrud />
                         </div>
                     </div>
                 </div>

@@ -6,7 +6,7 @@ type Category = {
     id: string;
     name: string;
     color?: string;
-    max_amount_alert?: number;
+    max_amount_alert?: number | null;
 };
 
 export default function CategoryCrud() {
@@ -92,6 +92,8 @@ export default function CategoryCrud() {
         } catch (err: any) {
             alert(`Error: ${err.message}`);
         }
+    };
+
     const handleEditSubmit = async (e: React.FormEvent, cat: Category) => {
         e.preventDefault();
         setIsLoading(true);

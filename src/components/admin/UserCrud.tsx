@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle } from 'lucide-react';
+import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
 
 type Worker = {
     id: string;
     name: string;
     email: string;
     is_suspended?: boolean;
+    role?: string;
 };
 
 export default function UserCrud() {
@@ -19,6 +20,7 @@ export default function UserCrud() {
     const [newEmail, setNewEmail] = useState('');
     const [isResetting, setIsResetting] = useState<string | null>(null);
     const [isToggling, setIsToggling] = useState<string | null>(null);
+    const [isTogglingRole, setIsTogglingRole] = useState<string | null>(null);
 
     useEffect(() => {
         fetchWorkers();
@@ -135,6 +137,31 @@ export default function UserCrud() {
         }
     };
 
+    const handleToggleRole = async (id: string, name: string, currentRole?: string) => {
+        const action = currentRole === 'admin' ? 'quitar los permisos de Administrador a' : 'promover a Administrador a';
+        if (!confirm(`¿Estás seguro de que deseas ${action} ${name}?`)) return;
+
+        setIsTogglingRole(id);
+        try {
+            const res = await fetch(`/api/admin/workers/${id}/toggle-role`, {
+                method: 'POST',
+            });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Error al cambiar rol del usuario');
+
+            setWorkers(workers.map(w =>
+                w.id === id ? { ...w, role: data.role } : w
+            ));
+
+        } catch (err: any) {
+            console.error(err);
+            alert("Falló el cambio de rol: " + err.message);
+        } finally {
+            setIsTogglingRole(null);
+        }
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
@@ -187,6 +214,11 @@ export default function UserCrud() {
                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${worker.is_suspended ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}>
                                             {worker.is_suspended ? 'Suspendido' : 'Activo'}
                                         </span>
+                                        {worker.role === 'admin' && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+                                                <ShieldCheck className="w-3 h-3" /> Admin
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -202,6 +234,18 @@ export default function UserCrud() {
                                 >
                                     {isToggling === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> :
                                         worker.is_suspended ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
+                                </button>
+                                <button
+                                    onClick={() => handleToggleRole(worker.id, worker.name, worker.role)}
+                                    disabled={isTogglingRole === worker.id}
+                                    title={worker.role === 'admin' ? "Quitar privilegios de Administrador" : "Hacer Administrador"}
+                                    className={`p-2 rounded-lg transition disabled:opacity-50 ${worker.role === 'admin'
+                                        ? 'text-blue-500 hover:text-blue-400 hover:bg-blue-500/10'
+                                        : 'text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10'
+                                    }`}
+                                >
+                                    {isTogglingRole === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                                        worker.role === 'admin' ? <ShieldAlert className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                                 </button>
                                 <button
                                     onClick={() => handleResetPassword(worker.id, worker.name)}

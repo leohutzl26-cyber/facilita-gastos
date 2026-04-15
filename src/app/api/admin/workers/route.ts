@@ -25,14 +25,14 @@ export async function GET() {
 
         if (error) throw error;
 
-        // Filtramos para devolver solo los que tengan rol 'colaborador' (antes 'worker')
+        // Mapeamos para devolver todos los usuarios y su rol
         const workers = authUsers.users
-            .filter(u => u.user_metadata?.role === 'colaborador' || u.user_metadata?.role === 'worker')
             .map(u => ({
                 id: u.id,
                 name: u.user_metadata?.name || 'Trabajador',
                 email: u.email,
-                is_suspended: !!u.user_metadata?.is_suspended
+                is_suspended: !!u.user_metadata?.is_suspended,
+                role: u.user_metadata?.role || 'colaborador'
             }));
 
         return NextResponse.json({ workers });

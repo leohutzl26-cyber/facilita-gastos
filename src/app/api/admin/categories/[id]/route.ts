@@ -20,11 +20,18 @@ export async function PUT(
             .from('categories')
             .update({ name, color, max_amount_alert })
             .eq('id', id)
-            .select()
-            .single();
+            .select();
 
         if (error) throw error;
-        return NextResponse.json({ category: data });
+        
+        if (!data || data.length === 0) {
+            return NextResponse.json(
+                { error: 'No se pudo actualizar la categoría. Revisa las políticas RLS de Supabase (te falta permitir UPDATE para la tabla categories).' },
+                { status: 403 }
+            );
+        }
+
+        return NextResponse.json({ category: data[0] });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 400 });
     }

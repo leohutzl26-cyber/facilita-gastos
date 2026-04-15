@@ -103,3 +103,36 @@ WITH CHECK (
 CREATE POLICY "Anyone can view receipts" 
 ON storage.objects FOR SELECT 
 USING (bucket_id = 'receipts');
+
+-- ==========================================
+-- 5. Actualización Fase 2 y 3 (Ubicación y Comentarios)
+-- ==========================================
+
+-- 5.1 Añadir Geolocalización a Recibos
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='receipts' AND column_name='location') THEN
+    ALTER TABLE public.receipts ADD COLUMN location TEXT;
+  END IF;
+END
+$$;
+
+-- 5.2 Crear tabla de comentarios
+CREATE TABLE IF NOT EXISTS public.receipt_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    receipt_id UUID REFERENCES public.receipts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id),
+    user_email TEXT NOT NULL,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.receipt_comments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view comments" ON public.receipt_comments;
+DROP POLICY IF EXISTS "Workers and admins can insert comments" ON public.receipt_comments;
+
+-- Lectura: Todos los autenticados pueden ver los comentarios (idealmente podrías limitarlo a admin + dueño del recibo, pero simplificado por ahora)
+CREATE POLICY "Anyone can view comments" ON public.receipt_comments FOR SELECT USING (auth.uid() IS NOT NULL);
+-- Escritura: Todos los autenticados pueden comentar
+CREATE POLICY "Workers and admins can insert comments" ON public.receipt_comments FOR INSERT WITH CHECK (auth.uid() = user_id);

@@ -19,6 +19,9 @@ export default function CategoryCrud() {
     const [newName, setNewName] = useState('');
     const [newMaxAmount, setNewMaxAmount] = useState<string>('');
 
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editMaxAmount, setEditMaxAmount] = useState<string>('');
+
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -89,6 +92,35 @@ export default function CategoryCrud() {
         } catch (err: any) {
             alert(`Error: ${err.message}`);
         }
+    const handleEditSubmit = async (e: React.FormEvent, cat: Category) => {
+        e.preventDefault();
+        setIsLoading(true);
+        const amountNum = parseFloat(editMaxAmount);
+        const finalAmount = isNaN(amountNum) || amountNum <= 0 ? null : amountNum;
+
+        try {
+            const res = await fetch(`/api/admin/categories/${cat.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: cat.name,
+                    color: cat.color,
+                    max_amount_alert: finalAmount
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Error al actualizar categoría');
+            }
+
+            setCategories(categories.map(c => c.id === cat.id ? { ...c, max_amount_alert: finalAmount } : c));
+            setEditingId(null);
+        } catch (err: any) {
+            alert(`Error: ${err.message}`);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -139,19 +171,56 @@ export default function CategoryCrud() {
                 ) : (
                     categories.map(cat => (
                         <div key={cat.id} className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 transition group">
-                            <div className="flex flex-col">
-                                <span className="font-medium text-sm text-zinc-200">{cat.name}</span>
-                                {cat.max_amount_alert ? (
-                                    <span className="text-[10px] text-orange-400 flex items-center gap-1 mt-0.5">
-                                        <AlertTriangle className="w-3 h-3" /> Tope: ${cat.max_amount_alert.toLocaleString()}
-                                    </span>
-                                ) : (
-                                    <span className="text-[10px] text-zinc-500 mt-0.5">Sin tope de alerta</span>
-                                )}
-                            </div>
-                            <button onClick={() => handleDelete(cat.id, cat.name)} className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-md transition opacity-0 group-hover:opacity-100" title="Eliminar">
-                                <Trash2 className="w-4 h-4" />
-                            </button>
+                            {editingId === cat.id ? (
+                                <form onSubmit={(e) => handleEditSubmit(e, cat)} className="flex-1 flex gap-2 items-center">
+                                    <span className="font-medium text-sm text-zinc-200 w-1/3 truncate">{cat.name}</span>
+                                    <div className="flex-1 flex items-center gap-1">
+                                        <span className="text-zinc-500 text-xs">$</span>
+                                        <input
+                                            autoFocus
+                                            type="number"
+                                            value={editMaxAmount}
+                                            onChange={e => setEditMaxAmount(e.target.value)}
+                                            className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-white"
+                                            placeholder="Límite"
+                                        />
+                                    </div>
+                                    <button disabled={isLoading} type="submit" className="text-xs text-[#121D38] bg-[#8CC63F] hover:bg-[#3EAE49] px-2 py-1 rounded transition disabled:opacity-50">
+                                        Guardar
+                                    </button>
+                                    <button type="button" onClick={() => setEditingId(null)} className="text-xs text-zinc-400 hover:text-white px-2 py-1">
+                                        X
+                                    </button>
+                                </form>
+                            ) : (
+                                <>
+                                    <div className="flex flex-col">
+                                        <span className="font-medium text-sm text-zinc-200">{cat.name}</span>
+                                        {cat.max_amount_alert ? (
+                                            <span className="text-[10px] text-orange-400 flex items-center gap-1 mt-0.5">
+                                                <AlertTriangle className="w-3 h-3" /> Tope: ${cat.max_amount_alert.toLocaleString()}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] text-zinc-500 mt-0.5">Sin tope de alerta</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
+                                        <button 
+                                            onClick={() => {
+                                                setEditingId(cat.id);
+                                                setEditMaxAmount(cat.max_amount_alert ? cat.max_amount_alert.toString() : '');
+                                            }} 
+                                            className="p-1.5 text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition" 
+                                            title="Editar Tope"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDelete(cat.id, cat.name)} className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-md transition" title="Eliminar">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))
                 )}

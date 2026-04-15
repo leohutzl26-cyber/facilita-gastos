@@ -26,6 +26,7 @@ export default function WorkerCapture() {
         merchant: string;
         category: string;
         project_id: string; // Nuevo campo
+        location?: string; // Phase 2: Geolocation
     } | null>(null);
 
     const [categories, setCategories] = useState<{ id: string; name: string; color: string }[]>([]);
@@ -227,13 +228,28 @@ export default function WorkerCapture() {
                 date: formattedDateForInput,
                 merchant: merchant || 'Desconocido',
                 category: finalCategory,
-                project_id: '' // Por defecto Ninguno
+                project_id: '', // Por defecto Ninguno
+                location: ''
             });
+
+            // Capture Geolocation
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const loc = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
+                        setResults(prev => prev ? { ...prev, location: loc } : null);
+                    },
+                    (error) => {
+                        console.warn("Geolocation Error:", error.message);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            }
 
         } catch (error: any) {
             console.error(error);
             alert("Atención: No hay conexión o falló el reconocimiento OCR. Por favor, rellena los datos a mano.");
-            setResults({ amount: '', date: new Date().toISOString().split('T')[0], merchant: '', category: categories.length > 0 ? categories[0].name : '', project_id: '' });
+            setResults({ amount: '', date: new Date().toISOString().split('T')[0], merchant: '', category: categories.length > 0 ? categories[0].name : '', project_id: '', location: '' });
         } finally {
             setIsProcessing(false);
         }

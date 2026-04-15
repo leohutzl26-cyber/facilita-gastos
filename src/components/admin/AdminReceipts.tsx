@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function AdminReceipts() {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -121,6 +123,52 @@ export default function AdminReceipts() {
         XLSX.writeFile(workbook, fileName);
     };
 
+    const handleExportPDF = () => {
+        if (filteredReceipts.length === 0) return;
+
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFontSize(18);
+        doc.setTextColor(28, 45, 84); // #1C2D54
+        doc.text('Facilita Capacitación - Reporte de Gastos', 14, 22);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        const dateStr = new Date().toLocaleDateString('es-CL');
+        doc.text(`Fecha de emisión: ${dateStr}`, 14, 30);
+        doc.text(`Total de registros: ${filteredReceipts.length}`, 14, 36);
+
+        const totalAmount = filteredReceipts.reduce((sum, r) => sum + Number(r.amount), 0);
+        doc.setFontSize(12);
+        // #8CC63F (140, 198, 63)
+        doc.setTextColor(140, 198, 63); 
+        doc.text(`Suma Total: $${totalAmount.toLocaleString()}`, 14, 44);
+
+        // Table
+        const tableColumn = ["Fecha", "Comercio", "Proyecto", "Categoría", "Colaborador", "Monto", "Estado"];
+        const tableRows = filteredReceipts.map(r => [
+            r.date,
+            r.merchant,
+            (r.projects?.name || 'Gasto Genérico').substring(0, 15),
+            r.category,
+            r.worker_email?.split('@')[0] || 'Desconocido',
+            `$${Number(r.amount).toLocaleString()}`,
+            r.status || 'Pendiente'
+        ]);
+
+        autoTable(doc, {
+            startY: 50,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: { fillColor: [28, 45, 84] },
+            styles: { fontSize: 8, cellPadding: 2 }
+        });
+
+        doc.save(`Reporte_Gastos_Facilita_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
     const handleDelete = async (id: string) => {
         if (!confirm('¿Estás seguro de ELIMINAR permanentemente este recibo? Esta acción no se puede deshacer y borrará el registro de la base de datos.')) return;
 
@@ -192,14 +240,24 @@ export default function AdminReceipts() {
                             className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
                         />
                     </div>
-                    <button
-                        onClick={handleExportExcel}
-                        disabled={filteredReceipts.length === 0}
-                        className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                    >
-                        <FileSpreadsheet className="w-4 h-4" />
-                        Exportar a Excel
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleExportPDF}
+                            disabled={filteredReceipts.length === 0}
+                            className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                            <FileText className="w-4 h-4" />
+                            PDF
+                        </button>
+                        <button
+                            onClick={handleExportExcel}
+                            disabled={filteredReceipts.length === 0}
+                            className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            Excel
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters Row */}

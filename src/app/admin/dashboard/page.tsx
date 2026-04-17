@@ -1,7 +1,8 @@
 'use client';
-import { ShieldUser, LogOut, Users, FileText } from 'lucide-react';
+import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, ReceiptText, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { useState } from 'react';
 import UserCrud from '@/components/admin/UserCrud';
 import AdminReceipts from '@/components/admin/AdminReceipts';
 import ProjectCrud from '@/components/admin/ProjectCrud';
@@ -11,12 +12,20 @@ import CategoryCrud from '@/components/admin/CategoryCrud';
 
 export default function AdminDashboard() {
     const router = useRouter();
+    const [activeTab, setActiveTab] = useState('dashboard');
 
     const handleLogout = async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
         router.push('/admin/login');
     };
+
+    const tabs = [
+        { id: 'dashboard', label: 'Resumen', icon: LayoutDashboard },
+        { id: 'management', label: 'Gestión Básica', icon: Settings },
+        { id: 'reports', label: 'Reportes', icon: ReceiptText },
+        { id: 'advanced', label: 'Avanzado', icon: AlertTriangle },
+    ];
 
     return (
         <div className="min-h-screen bg-[#121D38] text-zinc-50 font-sans">
@@ -36,61 +45,91 @@ export default function AdminDashboard() {
                         Cerrar Sesión
                     </button>
                 </div>
+                {/* Tabs Header */}
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="flex gap-1 overflow-x-auto -mb-px">
+                        {tabs.map(tab => {
+                            const Icon = tab.icon;
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${isActive
+                                            ? 'border-[#8CC63F] text-[#8CC63F]'
+                                            : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'
+                                        }`}
+                                >
+                                    <Icon className="w-4 h-4" />
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
             </nav>
 
             <main className="max-w-7xl mx-auto px-6 py-8">
-                {/* Gráficos de Inteligencia de Negocios */}
-                <AdminDashboardCharts />
+                {activeTab === 'dashboard' && (
+                    <div className="animate-in fade-in duration-300">
+                        <AdminDashboardCharts />
+                    </div>
+                )}
 
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8 mt-12 border-t border-white/10 pt-8">
-                    {/* Columna 1: Trabajadores */}
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Users className="w-5 h-5 text-[#8CC63F]" />
-                            <h2 className="text-xl font-semibold">Gestión de Colaboradores</h2>
+                {activeTab === 'management' && (
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-in fade-in duration-300">
+                        {/* Columna 1: Trabajadores */}
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Users className="w-5 h-5 text-[#8CC63F]" />
+                                <h2 className="text-xl font-semibold">Gestión de Colaboradores</h2>
+                            </div>
+                            <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl h-full">
+                                <UserCrud />
+                            </div>
                         </div>
-                        <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl h-full">
-                            <UserCrud />
+
+                        {/* Columna 2: Proyectos */}
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <FileText className="w-5 h-5 text-[#8CC63F]" />
+                                <h2 className="text-xl font-semibold">Proyectos Activos</h2>
+                            </div>
+                            <div className="h-[400px]">
+                                <ProjectCrud />
+                            </div>
+                        </div>
+
+                        {/* Columna 3: Categorías */}
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <FileText className="w-5 h-5 text-[#8CC63F]" />
+                                <h2 className="text-xl font-semibold">Categorías y Límites</h2>
+                            </div>
+                            <div className="h-[400px]">
+                                <CategoryCrud />
+                            </div>
                         </div>
                     </div>
+                )}
 
-                    {/* Columna 2: Proyectos */}
-                    <div className="space-y-6">
+                {activeTab === 'reports' && (
+                    <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="flex items-center gap-2 mb-4">
                             <FileText className="w-5 h-5 text-[#8CC63F]" />
-                            <h2 className="text-xl font-semibold">Proyectos Activos</h2>
+                            <h2 className="text-xl font-semibold">Reporte General de Gastos</h2>
                         </div>
-                        <div className="h-[400px]">
-                            <ProjectCrud />
-                        </div>
-                    </div>
-
-                    {/* Columna 3: Categorías */}
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <FileText className="w-5 h-5 text-[#8CC63F]" />
-                            <h2 className="text-xl font-semibold">Categorías y Límites</h2>
-                        </div>
-                        <div className="h-[400px]">
-                            <CategoryCrud />
+                        <div>
+                            <AdminReceipts />
                         </div>
                     </div>
-                </div>
+                )}
 
-                {/* Segunda Fila: Tabla de Reportes Completos */}
-                <div className="space-y-6 mt-12 border-t border-white/10 pt-8">
-                    <div className="flex items-center gap-2 mb-4">
-                        <FileText className="w-5 h-5 text-[#8CC63F]" />
-                        <h2 className="text-xl font-semibold">Reporte General de Gastos</h2>
+                {activeTab === 'advanced' && (
+                    <div className="animate-in fade-in duration-300">
+                        <DangerZone />
                     </div>
-                    <div>
-                        <AdminReceipts />
-                    </div>
-                </div>
-
-                {/* Tercera Fila: Zona de Limpieza Masiva (Danger Zone) */}
-                <DangerZone />
-
+                )}
             </main>
         </div>
     );

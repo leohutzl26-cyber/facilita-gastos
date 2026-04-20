@@ -7,6 +7,7 @@ import UserCrud from '@/components/admin/UserCrud';
 import AdminReceipts from '@/components/admin/AdminReceipts';
 import ProjectCrud from '@/components/admin/ProjectCrud';
 import DangerZone from '@/components/admin/DangerZone';
+import SystemAuditLog from '@/components/admin/SystemAuditLog';
 import AdminDashboardCharts from '@/components/admin/AdminDashboardCharts';
 import CategoryCrud from '@/components/admin/CategoryCrud';
 
@@ -126,8 +127,9 @@ export default function AdminDashboard() {
                 )}
 
                 {activeTab === 'advanced' && (
-                    <div className="animate-in fade-in duration-300">
+                    <div className="space-y-8 animate-in fade-in duration-300">
                         <DangerZone />
+                        <SystemAuditLog />
                     </div>
                 )}
             </main>

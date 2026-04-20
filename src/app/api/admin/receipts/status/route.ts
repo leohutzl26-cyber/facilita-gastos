@@ -29,6 +29,13 @@ export async function PATCH(request: Request) {
 
         if (error) throw error;
 
+        // Auditoría
+        await supabaseSession.from('audit_logs').insert([{
+            user_email: user.email,
+            action: 'Cambio Estado',
+            details: `Recibo ID ${id} -> Estado: ${status}`
+        }]);
+
         return NextResponse.json({ success: true, receipt: data[0] });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 400 });

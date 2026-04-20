@@ -28,6 +28,13 @@ export default function AdminLogin() {
             setError('Credenciales inválidas o error de conexión.');
             setLoading(false);
         } else {
+            try {
+                await fetch('/api/audit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'Login Administrador', details: 'Inicio de sesión exitoso al panel.' })
+                });
+            } catch (e) { }
             router.push('/admin/dashboard');
         }
     };

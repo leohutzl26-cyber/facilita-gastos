@@ -114,6 +114,13 @@ export async function POST(request: Request) {
 
         if (insertError) throw insertError;
 
+        // Auditoría
+        await supabaseSession.from('audit_logs').insert([{
+            user_email: user.email,
+            action: 'Envío de Gasto',
+            details: `Subió ${document_type} de ${merchant} por monto ${parsedAmount}`
+        }]);
+
         return NextResponse.json({ success: true, message: "Gasto registrado exitosamente." });
     } catch (error: any) {
         console.error("Error al registrar el recibo:", error);

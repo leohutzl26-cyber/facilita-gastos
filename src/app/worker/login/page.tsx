@@ -34,6 +34,13 @@ export default function WorkerLogin() {
                 setLoading(false);
                 return;
             }
+            try {
+                await fetch('/api/audit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'Login Trabajador', details: 'Acceso a portal de captura.' })
+                });
+            } catch (e) { }
             router.push('/worker/capture');
         }
     };

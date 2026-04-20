@@ -30,12 +30,26 @@ export async function POST(request: Request) {
         if (target === 'receipts') {
             const { error } = await adminDbClient.from('receipts').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows trick
             if (error) throw error;
+            
+            await supabaseSession.from('audit_logs').insert([{
+                user_email: user.email,
+                action: 'Limpieza de BD',
+                details: 'Eliminó el historial de recibos entero.'
+            }]);
+
             return NextResponse.json({ success: true, message: 'Se eliminó todo el historial de recibos exitosamente.' });
         }
 
         if (target === 'projects') {
             const { error } = await adminDbClient.from('projects').delete().neq('id', '00000000-0000-0000-0000-000000000000');
             if (error) throw error;
+            
+            await supabaseSession.from('audit_logs').insert([{
+                user_email: user.email,
+                action: 'Limpieza de BD',
+                details: 'Eliminó todos los proyectos activos.'
+            }]);
+
             return NextResponse.json({ success: true, message: 'Se eliminaron todos los proyectos activos.' });
         }
 
@@ -59,6 +73,12 @@ export async function POST(request: Request) {
                     console.error(`Failed to delete worker ${worker.email}:`, delError);
                 }
             }
+
+            await supabaseSession.from('audit_logs').insert([{
+                user_email: user.email,
+                action: 'Limpieza de BD',
+                details: `Eliminó a ${deletedCount} colaboradores corporativos en masa.`
+            }]);
 
             return NextResponse.json({ success: true, message: `Se eliminaron ${deletedCount} colaboradores corporativos exitosamente.` });
         }

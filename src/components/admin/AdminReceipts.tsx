@@ -8,6 +8,7 @@ import autoTable from 'jspdf-autotable';
 export default function AdminReceipts() {
     const [receipts, setReceipts] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
+    const [workers, setWorkers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -17,25 +18,31 @@ export default function AdminReceipts() {
     const [filterCategory, setFilterCategory] = useState('');
     const [filterProject, setFilterProject] = useState('');
     const [filterWorker, setFilterWorker] = useState('');
+    const [filterDocumentType, setFilterDocumentType] = useState('');
     const [filterStartDate, setFilterStartDate] = useState('');
     const [filterEndDate, setFilterEndDate] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [resReceipts, resCategories] = await Promise.all([
+                const [resReceipts, resCategories, resWorkers] = await Promise.all([
                     fetch('/api/admin/receipts'),
-                    fetch('/api/admin/categories')
+                    fetch('/api/admin/categories'),
+                    fetch('/api/admin/workers')
                 ]);
 
                 const dataReceipts = await resReceipts.json();
                 const dataCategories = await resCategories.json();
+                const dataWorkers = await resWorkers.json();
 
                 if (resReceipts.ok && dataReceipts.receipts) {
                     setReceipts(dataReceipts.receipts);
                 }
                 if (resCategories.ok && dataCategories.categories) {
                     setCategories(dataCategories.categories);
+                }
+                if (resWorkers.ok && dataWorkers.workers) {
+                    setWorkers(dataWorkers.workers);
                 }
             } catch (err) {
                 console.error("Error fetching data", err);
@@ -53,6 +60,13 @@ export default function AdminReceipts() {
         }
         return acc;
     }, {} as Record<string, number>);
+
+    // Helper: Map email to worker name
+    const getWorkerName = (email: string) => {
+        if (!email) return 'Desconocido';
+        const worker = workers.find(w => w.email === email);
+        return worker && worker.name ? worker.name : email.split('@')[0];
+    };
 
     const handleStatusUpdate = async (id: string, newStatus: string) => {
         try {
@@ -109,7 +123,7 @@ export default function AdminReceipts() {
             'Categoría': r.category,
             'Monto ($)': Number(r.amount),
             'Estado': r.status || 'Pendiente',
-            'Colaborador (Email)': r.worker_email || 'Desconocido',
+            'Colaborador (Nombre)': getWorkerName(r.worker_email),
             'Motivo Rechazo': r.rejection_reason || ''
         }));
 
@@ -156,7 +170,7 @@ export default function AdminReceipts() {
             r.document_type || 'Boleta',
             (r.projects?.name || 'Gasto Genérico').substring(0, 15),
             r.category,
-            r.worker_email?.split('@')[0] || 'Desconocido',
+            getWorkerName(r.worker_email),
             `$${Number(r.amount).toLocaleString()}`,
             r.status || 'Pendiente'
         ]);
@@ -210,7 +224,10 @@ export default function AdminReceipts() {
         const matchProject = !filterProject || r.project_id === filterProject;
 
         // 4. Worker Match
-        const matchWorker = !filterWorker || r.worker_email === filterWorker;
+        const matchWorker = !filterWorker || getWorkerName(r.worker_email) === filterWorker;
+
+        // 4.5 Document Type Match
+        const matchDocType = !filterDocumentType || (r.document_type || 'boleta').toLowerCase() === filterDocumentType.toLowerCase();
 
         // 5. Date Range Match
         let matchDate = true;
@@ -221,13 +238,14 @@ export default function AdminReceipts() {
             matchDate = matchDate && new Date(r.date) <= new Date(filterEndDate);
         }
 
-        return matchSearch && matchCategory && matchProject && matchWorker && matchDate;
+        return matchSearch && matchCategory && matchProject && matchWorker && matchDocType && matchDate;
     });
 
     // Extract unique values for dropdowns based on actual data
-    const uniqueWorkerEmails = Array.from(new Set(receipts.map(r => r.worker_email).filter(Boolean))) as string[];
+    const uniqueWorkerNames = Array.from(new Set(receipts.map(r => getWorkerName(r.worker_email)).filter(Boolean))) as string[];
     const uniqueProjects = Array.from(new Map(receipts.filter(r => r.projects).map(r => [r.project_id, r.projects])).values()) as any[];
     const uniqueCategories = Array.from(new Set(receipts.map(r => r.category).filter(Boolean))) as string[];
+    const uniqueDocTypes = Array.from(new Set(receipts.map(r => (r.document_type || 'boleta').toLowerCase()).filter(Boolean))) as string[];
 
     return (
         <div className="space-y-6">
@@ -292,8 +310,8 @@ export default function AdminReceipts() {
                             className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         >
                             <option value="">Todos los colaboradores</option>
-                            {uniqueWorkerEmails.map(email => (
-                                <option key={email} value={email}>{email}</option>
+                            {uniqueWorkerNames.map(name => (
+                                <option key={name} value={name}>{name}</option>
                             ))}
                         </select>
                     </div>
@@ -320,6 +338,19 @@ export default function AdminReceipts() {
                             <option value="">Todas las categorías</option>
                             {uniqueCategories.map(c => (
                                 <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider">Tipo Documento</label>
+                        <select
+                            value={filterDocumentType}
+                            onChange={(e) => setFilterDocumentType(e.target.value)}
+                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200 capitalize"
+                        >
+                            <option value="">Todos los tipos</option>
+                            {uniqueDocTypes.map(c => (
+                                <option key={c} value={c} className="capitalize">{c}</option>
                             ))}
                         </select>
                     </div>
@@ -379,7 +410,7 @@ export default function AdminReceipts() {
                                                 {receipt.category}
                                             </span>
                                             <div className="text-[10px] text-zinc-500 mt-1" title={receipt.worker_email}>
-                                                Generado por: {receipt.worker_email?.split('@')[0] || 'Unknown'}
+                                                Generado por: {getWorkerName(receipt.worker_email)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">

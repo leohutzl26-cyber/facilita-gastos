@@ -5,17 +5,22 @@ import { ShieldAlert, Clock, User, Activity, Loader2 } from 'lucide-react';
 export default function SystemAuditLog() {
     const [logs, setLogs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [debugError, setDebugError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const res = await fetch('/api/audit');
+                const res = await fetch('/api/audit', { cache: 'no-store' });
                 const data = await res.json();
                 if (res.ok && data.logs) {
                     setLogs(data.logs);
+                    setDebugError(null);
+                } else {
+                    setDebugError(data.error || 'Server returned not OK');
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Error fetching audit logs", err);
+                setDebugError(err.message || 'Network exception');
             } finally {
                 setIsLoading(false);
             }
@@ -62,6 +67,12 @@ export default function SystemAuditLog() {
                                     <td colSpan={4} className="px-6 py-12 text-center text-zinc-500">
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#8CC63F]" />
                                         Cargando logs...
+                                    </td>
+                                </tr>
+                            ) : debugError ? (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-12 text-center text-red-500 font-medium">
+                                        Error obteniendo logs: {debugError}
                                     </td>
                                 </tr>
                             ) : logs.length === 0 ? (

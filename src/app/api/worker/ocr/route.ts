@@ -64,10 +64,12 @@ export async function POST(request: Request) {
         }
 
         const prompt = `Eres un asistente experto en contabilidad.
-Extrae los datos de esta imagen de recibo o boleta de compra y devuélvelos estrictamente en el siguiente formato JSON puro (sin formato markdown ni explicaciones adicionales):
+Extrae los datos de esta imagen de documento (recibo, factura o boleta) y devuélvelos estrictamente en el siguiente formato JSON puro (sin formato markdown ni explicaciones adicionales):
 
 {
-  "merchant": "Nombre del comercio o tienda",
+  "merchant": "Nombre del comercio o de la empresa proveedora",
+  "merchant_rut": "RUT de la empresa proveedora o comercio emisor (ej: '76.123.456-K' o '19456789-2'). Si no lo encuentras, devuelve cadena vacía.",
+  "document_type": "Clasifica el tipo de documento. Debe ser estrictamente 'factura', 'boleta', o 'boleta de honorarios'. Si no estás seguro, usa 'boleta'.",
   "date": "Fecha en formato YYYY-MM-DD",
   "amount": "Monto total como texto numérico limpio (solo números y coma/punto, ej: 15500 o 150.50)",
   "category": "Estrictamente UNA de estas opciones exactas, la que mejor describa la compra: ${categoryNamesList}"

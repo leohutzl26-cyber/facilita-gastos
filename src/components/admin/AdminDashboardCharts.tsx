@@ -4,7 +4,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { TrendingUp, PieChart as PieChartIcon } from 'lucide-react';
+import { TrendingUp, PieChart as PieChartIcon, FileText } from 'lucide-react';
 
 export default function AdminDashboardCharts() {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -68,11 +68,23 @@ export default function AdminDashboardCharts() {
     const categoryData = Array.from(categoryDataMap, ([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
+    // --- Data Processing for MODO DOCUMENTO ---
+    const documentTypeDataMap = new Map();
+    receipts.forEach(r => {
+        if (!r.amount || !r.document_type || r.status === 'Rechazado') return;
+        const type = r.document_type.charAt(0).toUpperCase() + r.document_type.slice(1);
+        const currentAmount = documentTypeDataMap.get(type) || 0;
+        documentTypeDataMap.set(type, currentAmount + Number(r.amount));
+    });
+
+    const documentTypeData = Array.from(documentTypeDataMap, ([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
     // Colores corporativos y variaciones para el PieChart
     const COLORS = ['#8CC63F', '#3EAE49', '#1C2D54', '#4DAFD6', '#F5A623', '#D0021B', '#9B9B9B'];
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 mt-6">
             {/* Gráfico de Barras: Gastos Mensuales */}
             <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl">
                 <div className="flex items-center gap-2 mb-6">
@@ -122,6 +134,43 @@ export default function AdminDashboardCharts() {
                                 >
                                     {categoryData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <RechartsTooltip 
+                                    contentStyle={{ backgroundColor: '#121D38', borderColor: '#8CC63F', color: '#fff', borderRadius: '8px' }}
+                                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Total']}
+                                />
+                                <Legend wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-zinc-500">Sin datos suficientes</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Gráfico Circular: Por Tipo de Documento */}
+            <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center gap-2 mb-6">
+                    <FileText className="w-5 h-5 text-[#4DAFD6]" />
+                    <h2 className="text-xl font-semibold text-zinc-100">Por Documento</h2>
+                </div>
+                <div className="h-[300px] w-full">
+                    {documentTypeData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={documentTypeData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={70}
+                                    outerRadius={100}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    stroke="rgba(0,0,0,0)"
+                                >
+                                    {documentTypeData.map((entry, index) => (
+                                        <Cell key={`cell-doc-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <RechartsTooltip 

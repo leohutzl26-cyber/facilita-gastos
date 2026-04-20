@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { merchant, amount, date, category, imageBase64, project_id, location } = body;
+        const { merchant, merchant_rut, document_type, amount, date, category, imageBase64, project_id, location } = body;
 
         let formattedDate = date;
         const cleanAmount = amount.replace(/[^\d.,]/g, '').replace(',', '.'); // Permite solo dígitos y punto
@@ -101,6 +101,8 @@ export async function POST(request: Request) {
                     worker_id: user.id,
                     worker_email: user.email,
                     merchant: merchant,
+                    merchant_rut: merchant_rut || null,
+                    document_type: document_type || 'boleta',
                     amount: parsedAmount,
                     date: formattedDate,
                     category: category,

@@ -103,6 +103,8 @@ export default function AdminReceipts() {
         const dataForExcel = filteredReceipts.map(r => ({
             'Fecha': r.date,
             'Comercio': r.merchant,
+            'RUT Proveedor': r.merchant_rut || '-',
+            'Tipo Documento': r.document_type || 'Boleta',
             'Proyecto': r.projects?.name || 'Gasto Genérico',
             'Categoría': r.category,
             'Monto ($)': Number(r.amount),
@@ -146,10 +148,12 @@ export default function AdminReceipts() {
         doc.text(`Suma Total: $${totalAmount.toLocaleString()}`, 14, 44);
 
         // Table
-        const tableColumn = ["Fecha", "Comercio", "Proyecto", "Categoría", "Colaborador", "Monto", "Estado"];
+        const tableColumn = ["Fecha", "Comercio", "RUT Proveedor", "Documento", "Proyecto", "Categoría", "Colaborador", "Monto", "Estado"];
         const tableRows = filteredReceipts.map(r => [
             r.date,
             r.merchant,
+            r.merchant_rut || '-',
+            r.document_type || 'Boleta',
             (r.projects?.name || 'Gasto Genérico').substring(0, 15),
             r.category,
             r.worker_email?.split('@')[0] || 'Desconocido',
@@ -329,6 +333,7 @@ export default function AdminReceipts() {
                             <tr>
                                 <th className="px-6 py-4 font-medium">Fecha</th>
                                 <th className="px-6 py-4 font-medium">Proyecto y Comercio</th>
+                                <th className="px-6 py-4 font-medium text-left">Documento</th>
                                 <th className="px-6 py-4 font-medium text-left">Categoría</th>
                                 <th className="px-6 py-4 font-medium text-center">Info. Pago</th>
                                 <th className="px-6 py-4 font-medium text-center">Estado</th>
@@ -361,6 +366,12 @@ export default function AdminReceipts() {
                                                 <span className="text-xs text-zinc-400">
                                                     {receipt.projects ? `Carpeta: ${receipt.projects.name}` : 'Gasto Genérico'}
                                                 </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-white font-medium capitalize">{receipt.document_type || 'Boleta'}</span>
+                                                <span className="text-xs text-zinc-400 mt-1">RUT: {receipt.merchant_rut || '-'}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

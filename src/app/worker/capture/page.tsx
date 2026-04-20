@@ -24,6 +24,8 @@ export default function WorkerCapture() {
         date: string;
         amount: string;
         merchant: string;
+        merchant_rut?: string;
+        document_type?: string;
         category: string;
         project_id: string; // Nuevo campo
         location?: string; // Phase 2: Geolocation
@@ -205,7 +207,7 @@ export default function WorkerCapture() {
                 throw new Error(data.error || "Error al procesar la imagen con IA");
             }
 
-            const { merchant, date, amount, category } = data.data;
+            const { merchant, merchant_rut, document_type, date, amount, category } = data.data;
 
             // Aseguramos formato YYYY-MM-DD para el input type="date"
             let formattedDateForInput = new Date().toISOString().split('T')[0];
@@ -227,6 +229,8 @@ export default function WorkerCapture() {
                 amount: amount || '',
                 date: formattedDateForInput,
                 merchant: merchant || 'Desconocido',
+                merchant_rut: merchant_rut || '',
+                document_type: document_type || 'boleta',
                 category: finalCategory,
                 project_id: '', // Por defecto Ninguno
                 location: ''
@@ -249,7 +253,7 @@ export default function WorkerCapture() {
         } catch (error: any) {
             console.error(error);
             alert("Atención: No hay conexión o falló el reconocimiento OCR. Por favor, rellena los datos a mano.");
-            setResults({ amount: '', date: new Date().toISOString().split('T')[0], merchant: '', category: categories.length > 0 ? categories[0].name : '', project_id: '', location: '' });
+            setResults({ amount: '', date: new Date().toISOString().split('T')[0], merchant: '', merchant_rut: '', document_type: 'boleta', category: categories.length > 0 ? categories[0].name : '', project_id: '', location: '' });
         } finally {
             setIsProcessing(false);
         }
@@ -401,14 +405,25 @@ export default function WorkerCapture() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div>
-                                        <label className="text-xs text-zinc-400 block mb-1">Comercio / Tienda</label>
-                                        <input
-                                            required
-                                            value={results.merchant}
-                                            onChange={e => setResults({ ...results, merchant: e.target.value })}
-                                            className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs text-zinc-400 block mb-1">Comercio / Tienda</label>
+                                            <input
+                                                required
+                                                value={results.merchant}
+                                                onChange={e => setResults({ ...results, merchant: e.target.value })}
+                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-zinc-400 block mb-1">RUT Proveedor</label>
+                                            <input
+                                                value={results.merchant_rut}
+                                                onChange={e => setResults({ ...results, merchant_rut: e.target.value })}
+                                                placeholder="Ej: 76.123.456-K"
+                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
+                                            />
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
@@ -433,7 +448,7 @@ export default function WorkerCapture() {
                                                 />
                                             </div>
                                         </div>
-                                        <div className="col-span-2">
+                                        <div className="col-span-2 md:col-span-1">
                                             <label className="text-xs text-zinc-400 block mb-1">Categoría</label>
                                             <select
                                                 required
@@ -444,6 +459,19 @@ export default function WorkerCapture() {
                                                 {categories.map(cat => (
                                                     <option key={cat.id} value={cat.name}>{cat.name}</option>
                                                 ))}
+                                            </select>
+                                        </div>
+                                        <div className="col-span-2 md:col-span-1">
+                                            <label className="text-xs text-zinc-400 block mb-1">Tipo de Documento</label>
+                                            <select
+                                                required
+                                                value={results.document_type || 'boleta'}
+                                                onChange={e => setResults({ ...results, document_type: e.target.value })}
+                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
+                                            >
+                                                <option value="boleta">Boleta</option>
+                                                <option value="factura">Factura</option>
+                                                <option value="boleta de honorarios">Boleta de Honorarios</option>
                                             </select>
                                         </div>
                                         <div className="col-span-2">

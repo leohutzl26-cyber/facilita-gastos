@@ -1,5 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
+const getAdminSupabase = () => {
+    return createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+};
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
     const supabaseSession = await createClient();
@@ -12,8 +22,10 @@ export async function POST(request: Request) {
     try {
         const { action, details } = await request.json();
         
-        // Log in DB
-        const { error } = await supabaseSession
+        const adminDbClient = getAdminSupabase();
+        
+        // Log in DB using Admin privileges to bypass RLS mapping issues
+        const { error } = await adminDbClient
             .from('audit_logs')
             .insert([{
                 user_email: user.email,
@@ -42,8 +54,9 @@ export async function GET() {
     }
 
     try {
+        const adminDbClient = getAdminSupabase();
         // Obtenemos los logs, los admins pueden verlos
-        const { data: logs, error } = await supabaseSession
+        const { data: logs, error } = await adminDbClient
             .from('audit_logs')
             .select('*')
             .order('created_at', { ascending: false })

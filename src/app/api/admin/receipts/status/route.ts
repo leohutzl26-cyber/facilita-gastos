@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
+const getAdminSupabase = () => {
+    return createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+};
 
 export async function PATCH(request: Request) {
     const supabaseSession = await createClient();
@@ -30,7 +38,8 @@ export async function PATCH(request: Request) {
         if (error) throw error;
 
         // Auditoría
-        await supabaseSession.from('audit_logs').insert([{
+        const adminDbClient = getAdminSupabase();
+        await adminDbClient.from('audit_logs').insert([{
             user_email: user.email,
             action: 'Cambio Estado',
             details: `Recibo ID ${id} -> Estado: ${status}`

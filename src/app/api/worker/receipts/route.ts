@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
+const getAdminSupabase = () => {
+    return createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+};
 
 export async function GET() {
     const supabaseSession = await createClient();
@@ -115,10 +123,11 @@ export async function POST(request: Request) {
         if (insertError) throw insertError;
 
         // Auditoría
-        await supabaseSession.from('audit_logs').insert([{
+        const adminDbClient = getAdminSupabase();
+        await adminDbClient.from('audit_logs').insert([{
             user_email: user.email,
             action: 'Envío de Gasto',
-            details: `Subió ${document_type} de ${merchant} por monto ${parsedAmount}`
+            details: `Subió ${document_type || 'boleta'} de ${merchant} por monto ${parsedAmount}`
         }]);
 
         return NextResponse.json({ success: true, message: "Gasto registrado exitosamente." });

@@ -37,7 +37,7 @@ export async function DELETE(
         if (deleteError) throw deleteError;
 
         // Auditoría
-        await supabaseSession.from('audit_logs').insert([{
+        await adminSupabase.from('audit_logs').insert([{
             user_email: user.email,
             action: 'Eliminar Recibo',
             details: `Se eliminó permanentemente el recibo ID: ${receiptId}`

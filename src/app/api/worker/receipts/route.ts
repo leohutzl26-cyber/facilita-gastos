@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { merchant, merchant_rut, document_type, amount, date, category, imageBase64, project_id, location } = body;
+        const { merchant, merchant_rut, document_type, document_number, amount, date, category, imageBase64, project_id, location } = body;
 
         let formattedDate = date;
         const cleanAmount = amount.replace(/[^\d.,]/g, '').replace(',', '.'); // Permite solo dígitos y punto
@@ -111,6 +111,7 @@ export async function POST(request: Request) {
                     merchant: merchant,
                     merchant_rut: merchant_rut || null,
                     document_type: document_type || 'boleta',
+                    document_number: document_number || null,
                     amount: parsedAmount,
                     date: formattedDate,
                     category: category,
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
         await adminDbClient.from('audit_logs').insert([{
             user_email: user.email,
             action: 'Envío de Gasto',
-            details: `Subió ${document_type || 'boleta'} de ${merchant} por monto ${parsedAmount}`
+            details: `Subió ${document_type || 'boleta'} Nº ${document_number || '-'} de ${merchant} por monto ${parsedAmount}`
         }]);
 
         return NextResponse.json({ success: true, message: "Gasto registrado exitosamente." });

@@ -119,6 +119,7 @@ export default function AdminReceipts() {
             'Comercio': r.merchant,
             'RUT Proveedor': r.merchant_rut || '-',
             'Tipo Documento': r.document_type || 'Boleta',
+            'N° Documento': r.document_number || '-',
             'Proyecto': r.projects?.name || 'Gasto Genérico',
             'Categoría': r.category,
             'Monto ($)': Number(r.amount),
@@ -167,7 +168,7 @@ export default function AdminReceipts() {
             r.date,
             r.merchant,
             r.merchant_rut || '-',
-            r.document_type || 'Boleta',
+            r.document_number ? `${r.document_type} N°${r.document_number}` : (r.document_type || 'Boleta'),
             (r.projects?.name || 'Gasto Genérico').substring(0, 15),
             r.category,
             getWorkerName(r.worker_email),
@@ -401,7 +402,9 @@ export default function AdminReceipts() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
-                                                <span className="text-white font-medium capitalize">{receipt.document_type || 'Boleta'}</span>
+                                                <span className="text-white font-medium capitalize">
+                                                    {receipt.document_type || 'Boleta'} {receipt.document_number ? `Nº ${receipt.document_number}` : ''}
+                                                </span>
                                                 <span className="text-xs text-zinc-400 mt-1">RUT: {receipt.merchant_rut || '-'}</span>
                                             </div>
                                         </td>

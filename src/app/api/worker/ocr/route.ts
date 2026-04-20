@@ -70,6 +70,7 @@ Extrae los datos de esta imagen de documento (recibo, factura o boleta) y devué
   "merchant": "Nombre del comercio o de la empresa proveedora",
   "merchant_rut": "RUT de la empresa proveedora o comercio emisor (ej: '76.123.456-K' o '19456789-2'). Si no lo encuentras, devuelve cadena vacía.",
   "document_type": "Clasifica el tipo de documento. Debe ser estrictamente 'factura', 'boleta', o 'boleta de honorarios'. Si no estás seguro, usa 'boleta'.",
+  "document_number": "Número del documento, folio de la factura o número impreso de la boleta (ej: '1459', '000122'). Si no hay número, devuelve cadena vacía.",
   "date": "Fecha en formato YYYY-MM-DD",
   "amount": "Monto total como texto numérico limpio (solo números y coma/punto, ej: 15500 o 150.50)",
   "category": "Estrictamente UNA de estas opciones exactas, la que mejor describa la compra: ${categoryNamesList}"

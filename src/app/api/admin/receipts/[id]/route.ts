@@ -36,6 +36,13 @@ export async function DELETE(
 
         if (deleteError) throw deleteError;
 
+        // Auditoría
+        await supabaseSession.from('audit_logs').insert([{
+            user_email: user.email,
+            action: 'Eliminar Recibo',
+            details: `Se eliminó permanentemente el recibo ID: ${receiptId}`
+        }]);
+
         return NextResponse.json({ success: true, message: 'Recibo eliminado correctamente' });
     } catch (error: any) {
         console.error("Error deleting individual receipt:", error);

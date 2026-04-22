@@ -261,11 +261,25 @@ export default function AdminReceipts() {
                 
                 let currentY = 30;
                 const PAGE_HEIGHT = 297;
-                const MARGIN_BOTTOM = 20;
+                const MARGIN_BOTTOM = 15;
+                const MARGIN_X = 14;
+                const COL_GAP = 10;
+                const COL_WIDTH = (210 - (MARGIN_X * 2) - COL_GAP) / 2; // Anchura aprox 86mm por columna
+                const MAX_IMG_HEIGHT = 115; // Límite de alto para alojar 2 filas per página cómodamente
+                
+                let colIndex = 0;
+                let rowMaxHeight = 0;
 
                 for (let i = 0; i < receiptsWithImages.length; i++) {
                     const r = receiptsWithImages[i];
                     
+                    // Si estamos empezando una fila (colIndex === 0), comprobamos si hay espacio vertical
+                    // Asumimos un máximo espacio que podría ocupar la fila (MAX_IMG_HEIGHT + textos = ~135)
+                    if (colIndex === 0 && (currentY + MAX_IMG_HEIGHT + 20 > PAGE_HEIGHT - MARGIN_BOTTOM)) {
+                        doc.addPage();
+                        currentY = 20; // reset
+                    }
+
                     let base64Img: string | null = null;
                     let imgProps: any = null;
                     
@@ -277,49 +291,63 @@ export default function AdminReceipts() {
                     } catch (e) {
                          console.error("Error al cargar la imagen", e);
                     }
-
-                    // Determinar el tamaño de la imagen que usaremos (MÁXIMO 120 mm de alto para acomodar unas 2 por página seguro)
-                    const margin = 14;
-                    const maxImgWidth = 210 - margin * 2;
-                    const maxImgHeight = 120;
                     
                     let drawWidth = 0;
                     let drawHeight = 0;
 
                     if (imgProps) {
                         const imgRatio = imgProps.width / imgProps.height;
-                        drawWidth = maxImgWidth;
+                        drawWidth = COL_WIDTH;
                         drawHeight = drawWidth / imgRatio;
 
-                        if (drawHeight > maxImgHeight) {
-                            drawHeight = maxImgHeight;
+                        if (drawHeight > MAX_IMG_HEIGHT) {
+                            drawHeight = MAX_IMG_HEIGHT;
                             drawWidth = drawHeight * imgRatio;
                         }
                     }
 
-                    // Calcular la altura que ocupará este bloque (Textos + Imagen + Espaciado extra)
-                    const blockHeight = 15 + (drawHeight > 0 ? drawHeight : 10) + 15; 
+                    // Posición X para la columna actual
+                    const xStart = MARGIN_X + (colIndex * (COL_WIDTH + COL_GAP));
 
-                    // Si excede la página actual, saltar a una nueva
-                    if (currentY + blockHeight > PAGE_HEIGHT - MARGIN_BOTTOM) {
-                        doc.addPage();
-                        currentY = 20; // reset al inicio de nueva página
-                    }
-
-                    // Dibujar textos
-                    doc.setFontSize(12);
+                    // Dibujar textos, reduciendo la fuente a 9 para el formato de grilla
+                    doc.setFontSize(9);
                     doc.setTextColor(0);
-                    doc.text(`Comercio: ${r.merchant} | Fecha: ${r.date}`, 14, currentY);
-                    doc.text(`Monto: $${Number(r.amount).toLocaleString()} | Colaborador: ${getWorkerName(r.worker_email)}`, 14, currentY + 6);
                     
+                    // Truncar textos largos si hace falta
+                    const shortMerchant = r.merchant.length > 20 ? r.merchant.substring(0, 18) + '...' : r.merchant;
+                    const workerName = getWorkerName(r.worker_email);
+                    const shortWorker = workerName.length > 20 ? workerName.substring(0, 18) + '...' : workerName;
+
+                    doc.text(`Comercio: ${shortMerchant}`, xStart, currentY);
+                    doc.text(`Fecha: ${r.date} | Monto: $${Number(r.amount).toLocaleString()}`, xStart, currentY + 4);
+                    doc.text(`Resp: ${shortWorker}`, xStart, currentY + 8);
+                    
+                    let currentItemHeight = 12; // Altura base de los textos
+
                     // Dibujar imagen
                     if (base64Img && imgProps) {
-                        const xOffset = margin + (maxImgWidth - drawWidth) / 2;
-                        doc.addImage(base64Img, imgProps.fileType, xOffset, currentY + 12, drawWidth, drawHeight);
-                        currentY += 12 + drawHeight + 15;
+                        const xOffset = xStart + (COL_WIDTH - drawWidth) / 2; // centrar en la columna
+                        doc.addImage(base64Img, imgProps.fileType, xOffset, currentY + 11, drawWidth, drawHeight);
+                        currentItemHeight += drawHeight + 5;
                     } else {
-                        doc.text('(No se pudo incluir la imagen al PDF)', 14, currentY + 15);
-                        currentY += 15 + 15;
+                        doc.setTextColor(255, 0, 0);
+                        doc.text('(Error al cargar foto)', xStart, currentY + 14);
+                        currentItemHeight += 10;
+                    }
+
+                    // Registrar cuál fue el elemento más alto de esta fila
+                    if (currentItemHeight > rowMaxHeight) {
+                        rowMaxHeight = currentItemHeight;
+                    }
+
+                    // Pasar a la siguiente columna
+                    colIndex++;
+                    
+                    // Si ya llenamos las 2 columnas, bajamos de fila
+                    if (colIndex > 1) {
+                        colIndex = 0;
+                        currentY += rowMaxHeight + 10; // Espaciado entre filas de 10mm
+                        rowMaxHeight = 0; // reset
                     }
                 }
             }

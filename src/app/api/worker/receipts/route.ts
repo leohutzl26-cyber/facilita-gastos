@@ -47,7 +47,32 @@ export async function POST(request: Request) {
         const cleanAmount = amount.replace(/[^\d.,]/g, '').replace(',', '.'); // Permite solo dígitos y punto
         const parsedAmount = parseFloat(cleanAmount) || 0;
 
-        // 0. Evitar Duplicados: Check si este mismo trabajador ya subió este exacto gasto
+        // 0.1 Check de Fraude Global: Comprobar si este mismo Folio ya fue usado por CUALQUIER usuario
+        // Solo chequeamos si tenemos un número de documento válido subido.
+        if (document_number && String(document_number).trim() !== '') {
+            let query = supabaseSession
+                .from('receipts')
+                .select('id, worker_email')
+                .eq('document_number', document_number);
+            
+            // Preferimos el RUT para exactitud, sino caemos en el nombre del comercio
+            if (merchant_rut && String(merchant_rut).trim() !== '') {
+                query = query.eq('merchant_rut', merchant_rut);
+            } else if (merchant && String(merchant).trim() !== '') {
+                query = query.eq('merchant', merchant);
+            }
+
+            const { data: globalDuplicates, error: globalError } = await query.limit(1);
+
+            if (!globalError && globalDuplicates && globalDuplicates.length > 0) {
+                return NextResponse.json({
+                    error: `ALERTA FRAUDE/DUPLICADO: El documento N° ${document_number} ya fue ingresado anteriormente por el usuario ${globalDuplicates[0].worker_email}. El sistema prohíbe el doble reembolso de un mismo folio.`
+                }, { status: 409 });
+            }
+        }
+
+        // 0.2 Evitar dobles envíos por error del mismo usuario (ej: apretar enviar dos veces)
+        // Mismo monto, comercio, fecha en el mismo usuario.
         const { data: existingReceipts, error: checkError } = await supabaseSession
             .from('receipts')
             .select('id')
@@ -58,8 +83,9 @@ export async function POST(request: Request) {
             .limit(1);
 
         if (!checkError && existingReceipts && existingReceipts.length > 0) {
+            // Si además tiene el mismo folio, el check 0.1 ya lo debió atrapar, pero por si acaso.
             return NextResponse.json({
-                error: 'Posible duplicado: Ya has registrado un recibo idéntico con esta fecha, comercio y monto.'
+                error: 'Posible duplicado: Ya has registrado un recibo idéntico con esta misma fecha, comercio y monto exacto.'
             }, { status: 409 });
         }
 

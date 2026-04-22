@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -13,6 +13,7 @@ export default function AdminReceipts() {
     const [searchTerm, setSearchTerm] = useState('');
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
     // Advance Filters States
     const [filterCategory, setFilterCategory] = useState('');
@@ -140,6 +141,22 @@ export default function AdminReceipts() {
         XLSX.writeFile(workbook, fileName);
     };
 
+    const fetchImageAsBase64 = async (url: string): Promise<string | null> => {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) return null;
+            const blob = await response.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            });
+        } catch (e) {
+            console.error("Error fetching image:", e);
+            return null;
+        }
+    };
+
     const handleExportPDF = () => {
         if (filteredReceipts.length === 0) return;
 
@@ -186,6 +203,116 @@ export default function AdminReceipts() {
         });
 
         doc.save(`Reporte_Gastos_Facilita_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
+    const handleExportPDFWithPhotos = async () => {
+        if (filteredReceipts.length === 0) return;
+        setIsGeneratingPDF(true);
+
+        try {
+            const doc = new jsPDF();
+            
+            // --- INICIO DE LA TABLA ESTÁNDAR ---
+            doc.setFontSize(18);
+            doc.setTextColor(28, 45, 84); // #1C2D54
+            doc.text('Facilita Capacitación - Reporte de Gastos con Anexos', 14, 22);
+            
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            const dateStr = new Date().toLocaleDateString('es-CL');
+            doc.text(`Fecha de emisión: ${dateStr}`, 14, 30);
+            doc.text(`Total de registros: ${filteredReceipts.length}`, 14, 36);
+
+            const totalAmount = filteredReceipts.reduce((sum, r) => sum + Number(r.amount), 0);
+            doc.setFontSize(12);
+            // #8CC63F (140, 198, 63)
+            doc.setTextColor(140, 198, 63); 
+            doc.text(`Suma Total: $${totalAmount.toLocaleString()}`, 14, 44);
+
+            const tableColumn = ["Fecha", "Comercio", "RUT", "Documento", "Categoría", "Colaborador", "Monto", "Estado"];
+            const tableRows = filteredReceipts.map(r => [
+                r.date,
+                r.merchant,
+                r.merchant_rut || '-',
+                r.document_number ? `${r.document_type} N°${r.document_number}` : (r.document_type || 'Boleta'),
+                r.category,
+                getWorkerName(r.worker_email),
+                `$${Number(r.amount).toLocaleString()}`,
+                r.status || 'Pendiente'
+            ]);
+
+            autoTable(doc, {
+                startY: 50,
+                head: [tableColumn],
+                body: tableRows,
+                theme: 'striped',
+                headStyles: { fillColor: [28, 45, 84] },
+                styles: { fontSize: 8, cellPadding: 2 }
+            });
+
+            // --- INICIO DE ANEXOS DE FOTOS ---
+            const receiptsWithImages = filteredReceipts.filter(r => r.image_url && r.image_url.startsWith('http'));
+
+            if (receiptsWithImages.length > 0) {
+                doc.addPage();
+                doc.setFontSize(16);
+                doc.setTextColor(28, 45, 84);
+                doc.text('ANEXO: Comprobantes Fotográficos', 14, 20);
+                
+                let isFirstImage = true;
+
+                for (let i = 0; i < receiptsWithImages.length; i++) {
+                    const r = receiptsWithImages[i];
+                    
+                    if (!isFirstImage) {
+                        doc.addPage();
+                    } else {
+                        isFirstImage = false;
+                    }
+
+                    const yTextStart = (i === 0) ? 30 : 20;
+
+                    doc.setFontSize(12);
+                    doc.setTextColor(0);
+                    doc.text(`Comercio: ${r.merchant} | Fecha: ${r.date}`, 14, yTextStart);
+                    doc.text(`Monto: $${Number(r.amount).toLocaleString()} | Colaborador: ${getWorkerName(r.worker_email)}`, 14, yTextStart + 6);
+                    
+                    try {
+                        const base64Img = await fetchImageAsBase64(r.image_url);
+                        if (base64Img) {
+                            const imgProps = doc.getImageProperties(base64Img);
+                            const imgRatio = imgProps.width / imgProps.height;
+                            
+                            const margin = 14;
+                            const maxWidth = 210 - margin * 2;
+                            const maxHeight = 297 - (yTextStart + 15) - margin;
+
+                            let drawWidth = maxWidth;
+                            let drawHeight = drawWidth / imgRatio;
+
+                            if (drawHeight > maxHeight) {
+                                drawHeight = maxHeight;
+                                drawWidth = drawHeight * imgRatio;
+                            }
+
+                            const xOffset = margin + (maxWidth - drawWidth) / 2;
+                            doc.addImage(base64Img, imgProps.fileType, xOffset, yTextStart + 15, drawWidth, drawHeight);
+                        } else {
+                            doc.text('(Error al cargar la imagen de este comprobante)', 14, yTextStart + 15);
+                        }
+                    } catch (e) {
+                         doc.text('(No se pudo incluir la imagen al PDF)', 14, yTextStart + 15);
+                    }
+                }
+            }
+
+            doc.save(`Reporte_Anexos_Facilita_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error("Error generando PDF con fotos:", error);
+            alert("Hubo un error al generar el PDF con fotos.");
+        } finally {
+            setIsGeneratingPDF(false);
+        }
     };
 
     const handleDelete = async (id: string) => {
@@ -266,16 +393,24 @@ export default function AdminReceipts() {
                     <div className="flex gap-2">
                         <button
                             onClick={handleExportPDF}
-                            disabled={filteredReceipts.length === 0}
-                            className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                            disabled={filteredReceipts.length === 0 || isGeneratingPDF}
+                            className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                         >
                             <FileText className="w-4 h-4" />
                             PDF
                         </button>
                         <button
+                            onClick={handleExportPDFWithPhotos}
+                            disabled={filteredReceipts.length === 0 || isGeneratingPDF}
+                            className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                            {isGeneratingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                            {isGeneratingPDF ? "Generando..." : "PDF + Fotos"}
+                        </button>
+                        <button
                             onClick={handleExportExcel}
-                            disabled={filteredReceipts.length === 0}
-                            className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                            disabled={filteredReceipts.length === 0 || isGeneratingPDF}
+                            className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-3 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                         >
                             <FileSpreadsheet className="w-4 h-4" />
                             Excel

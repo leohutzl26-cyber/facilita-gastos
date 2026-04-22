@@ -259,49 +259,67 @@ export default function AdminReceipts() {
                 doc.setTextColor(28, 45, 84);
                 doc.text('ANEXO: Comprobantes Fotográficos', 14, 20);
                 
-                let isFirstImage = true;
+                let currentY = 30;
+                const PAGE_HEIGHT = 297;
+                const MARGIN_BOTTOM = 20;
 
                 for (let i = 0; i < receiptsWithImages.length; i++) {
                     const r = receiptsWithImages[i];
                     
-                    if (!isFirstImage) {
-                        doc.addPage();
-                    } else {
-                        isFirstImage = false;
-                    }
-
-                    const yTextStart = (i === 0) ? 30 : 20;
-
-                    doc.setFontSize(12);
-                    doc.setTextColor(0);
-                    doc.text(`Comercio: ${r.merchant} | Fecha: ${r.date}`, 14, yTextStart);
-                    doc.text(`Monto: $${Number(r.amount).toLocaleString()} | Colaborador: ${getWorkerName(r.worker_email)}`, 14, yTextStart + 6);
+                    let base64Img: string | null = null;
+                    let imgProps: any = null;
                     
                     try {
-                        const base64Img = await fetchImageAsBase64(r.image_url);
+                        base64Img = await fetchImageAsBase64(r.image_url);
                         if (base64Img) {
-                            const imgProps = doc.getImageProperties(base64Img);
-                            const imgRatio = imgProps.width / imgProps.height;
-                            
-                            const margin = 14;
-                            const maxWidth = 210 - margin * 2;
-                            const maxHeight = 297 - (yTextStart + 15) - margin;
-
-                            let drawWidth = maxWidth;
-                            let drawHeight = drawWidth / imgRatio;
-
-                            if (drawHeight > maxHeight) {
-                                drawHeight = maxHeight;
-                                drawWidth = drawHeight * imgRatio;
-                            }
-
-                            const xOffset = margin + (maxWidth - drawWidth) / 2;
-                            doc.addImage(base64Img, imgProps.fileType, xOffset, yTextStart + 15, drawWidth, drawHeight);
-                        } else {
-                            doc.text('(Error al cargar la imagen de este comprobante)', 14, yTextStart + 15);
+                            imgProps = doc.getImageProperties(base64Img);
                         }
                     } catch (e) {
-                         doc.text('(No se pudo incluir la imagen al PDF)', 14, yTextStart + 15);
+                         console.error("Error al cargar la imagen", e);
+                    }
+
+                    // Determinar el tamaño de la imagen que usaremos (MÁXIMO 120 mm de alto para acomodar unas 2 por página seguro)
+                    const margin = 14;
+                    const maxImgWidth = 210 - margin * 2;
+                    const maxImgHeight = 120;
+                    
+                    let drawWidth = 0;
+                    let drawHeight = 0;
+
+                    if (imgProps) {
+                        const imgRatio = imgProps.width / imgProps.height;
+                        drawWidth = maxImgWidth;
+                        drawHeight = drawWidth / imgRatio;
+
+                        if (drawHeight > maxImgHeight) {
+                            drawHeight = maxImgHeight;
+                            drawWidth = drawHeight * imgRatio;
+                        }
+                    }
+
+                    // Calcular la altura que ocupará este bloque (Textos + Imagen + Espaciado extra)
+                    const blockHeight = 15 + (drawHeight > 0 ? drawHeight : 10) + 15; 
+
+                    // Si excede la página actual, saltar a una nueva
+                    if (currentY + blockHeight > PAGE_HEIGHT - MARGIN_BOTTOM) {
+                        doc.addPage();
+                        currentY = 20; // reset al inicio de nueva página
+                    }
+
+                    // Dibujar textos
+                    doc.setFontSize(12);
+                    doc.setTextColor(0);
+                    doc.text(`Comercio: ${r.merchant} | Fecha: ${r.date}`, 14, currentY);
+                    doc.text(`Monto: $${Number(r.amount).toLocaleString()} | Colaborador: ${getWorkerName(r.worker_email)}`, 14, currentY + 6);
+                    
+                    // Dibujar imagen
+                    if (base64Img && imgProps) {
+                        const xOffset = margin + (maxImgWidth - drawWidth) / 2;
+                        doc.addImage(base64Img, imgProps.fileType, xOffset, currentY + 12, drawWidth, drawHeight);
+                        currentY += 12 + drawHeight + 15;
+                    } else {
+                        doc.text('(No se pudo incluir la imagen al PDF)', 14, currentY + 15);
+                        currentY += 15 + 15;
                     }
                 }
             }

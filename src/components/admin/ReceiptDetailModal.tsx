@@ -64,6 +64,8 @@ export default function ReceiptDetailModal({
 
     const commentsEndRef = useRef<HTMLDivElement>(null);
 
+    const isPdf = receipt.image_url?.toLowerCase().split('?')[0].endsWith('.pdf');
+
     // Load comments and audit logs
     useEffect(() => {
         fetchComments();
@@ -249,59 +251,71 @@ export default function ReceiptDetailModal({
                 {/* Left Side: Receipt Image & Viewer */}
                 <div className="w-full md:w-1/2 bg-black/40 border-r border-white/5 flex flex-col relative h-[40vh] md:h-full">
                     {/* Toolbar */}
-                    <div className="absolute top-4 left-4 z-10 flex gap-1.5 bg-black/50 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
-                        <button 
-                            onClick={handleZoomIn}
-                            title="Acercar"
-                            className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
-                        >
-                            <ZoomIn className="w-4 h-4" />
-                        </button>
-                        <button 
-                            onClick={handleZoomOut}
-                            title="Alejar"
-                            className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
-                        >
-                            <ZoomOut className="w-4 h-4" />
-                        </button>
-                        <button 
-                            onClick={handleRotate}
-                            title="Rotar 90°"
-                            className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
-                        >
-                            <RotateCw className="w-4 h-4" />
-                        </button>
-                        {(zoom !== 1 || rotate !== 0) && (
+                    {!isPdf && (
+                        <div className="absolute top-4 left-4 z-10 flex gap-1.5 bg-black/50 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
                             <button 
-                                onClick={handleResetImage}
-                                title="Restablecer"
-                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition text-[#8CC63F]"
+                                onClick={handleZoomIn}
+                                title="Acercar"
+                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
                             >
-                                <RotateCcw className="w-4 h-4" />
+                                <ZoomIn className="w-4 h-4" />
                             </button>
-                        )}
-                    </div>
+                            <button 
+                                onClick={handleZoomOut}
+                                title="Alejar"
+                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                            >
+                                <ZoomOut className="w-4 h-4" />
+                            </button>
+                            <button 
+                                onClick={handleRotate}
+                                title="Rotar 90°"
+                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                            >
+                                <RotateCw className="w-4 h-4" />
+                            </button>
+                            {(zoom !== 1 || rotate !== 0) && (
+                                <button 
+                                    onClick={handleResetImage}
+                                    title="Restablecer"
+                                    className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition text-[#8CC63F]"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+                    )}
 
-                    {/* Image Area */}
-                    <div className="flex-1 flex items-center justify-center overflow-hidden p-6 relative">
+                    {/* Image or PDF Area */}
+                    <div className="flex-1 flex items-center justify-center overflow-hidden p-6 relative w-full h-full">
                         {receipt.image_url ? (
                             receipt.image_url.startsWith('http') ? (
-                                <div className="w-full h-full flex items-center justify-center" style={{ perspective: 1000 }}>
-                                    <img 
-                                        src={receipt.image_url} 
-                                        alt={`Boleta ${receipt.merchant}`}
-                                        className="max-h-full max-w-full object-contain rounded-xl select-none shadow-md"
-                                        style={{ 
-                                            transform: `scale(${zoom}) rotate(${rotate}deg)`,
-                                            transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                                        }}
-                                        draggable="false"
-                                    />
-                                </div>
+                                isPdf ? (
+                                    <div className="w-full h-full p-2 bg-zinc-950/40 rounded-xl border border-white/5 overflow-hidden">
+                                        <iframe 
+                                            src={`${receipt.image_url}#toolbar=1&navpanes=0`}
+                                            className="w-full h-full rounded-lg border-none"
+                                            title={`PDF ${receipt.merchant}`}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center" style={{ perspective: 1000 }}>
+                                        <img 
+                                            src={receipt.image_url} 
+                                            alt={`Boleta ${receipt.merchant}`}
+                                            className="max-h-full max-w-full object-contain rounded-xl select-none shadow-md"
+                                            style={{ 
+                                                transform: `scale(${zoom}) rotate(${rotate}deg)`,
+                                                transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            }}
+                                            draggable="false"
+                                        />
+                                    </div>
+                                )
                             ) : (
                                 <div className="text-center text-red-400 p-4 border border-red-500/20 bg-red-500/5 rounded-2xl max-w-xs">
                                     <AlertCircle className="w-10 h-10 mx-auto mb-2 text-red-400" />
-                                    <p className="font-semibold text-sm">Error en URL de imagen</p>
+                                    <p className="font-semibold text-sm">Error en URL de imagen/PDF</p>
                                     <span className="text-[10px] text-zinc-500 break-all">{receipt.image_url}</span>
                                 </div>
                             )
@@ -315,7 +329,7 @@ export default function ReceiptDetailModal({
 
                     {/* Footer Image Indicator */}
                     <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm border border-white/5 px-3 py-1 rounded-full text-xs text-zinc-400">
-                        {receipt.image_url ? 'Comprobante Digitalizado' : 'Sin Imagen'}
+                        {receipt.image_url ? (isPdf ? 'Documento PDF' : 'Comprobante de Imagen') : 'Sin Imagen'}
                     </div>
                 </div>
 

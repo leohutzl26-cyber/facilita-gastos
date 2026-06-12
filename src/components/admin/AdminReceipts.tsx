@@ -159,6 +159,51 @@ export default function AdminReceipts() {
         }
     };
 
+    const loadPdfJs = (): Promise<any> => {
+        return new Promise((resolve, reject) => {
+            if ((window as any).pdfjsLib) {
+                resolve((window as any).pdfjsLib);
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
+            script.onload = () => {
+                const pdfjsLib = (window as any).pdfjsLib;
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+                resolve(pdfjsLib);
+            };
+            script.onerror = (e) => reject(new Error("Error al cargar PDF.js de CDN"));
+            document.head.appendChild(script);
+        });
+    };
+
+    const convertPdfToImageBase64 = async (pdfUrl: string): Promise<string | null> => {
+        try {
+            const pdfjsLib = await loadPdfJs();
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            const pdf = await loadingTask.promise;
+            const page = await pdf.getPage(1);
+            
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            if (!context) return null;
+            
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            await page.render(renderContext).promise;
+            return canvas.toDataURL('image/jpeg', 0.85);
+        } catch (err) {
+            console.error("Error converting PDF to image:", err);
+            return null;
+        }
+    };
+
     const handleExportPDF = () => {
         if (filteredReceipts.length === 0) return;
 
@@ -286,12 +331,18 @@ export default function AdminReceipts() {
                     let imgProps: any = null;
                     
                     try {
-                        base64Img = await fetchImageAsBase64(r.image_url);
+                        const isPdf = r.image_url.toLowerCase().split('?')[0].endsWith('.pdf');
+                        if (isPdf) {
+                            base64Img = await convertPdfToImageBase64(r.image_url);
+                        } else {
+                            base64Img = await fetchImageAsBase64(r.image_url);
+                        }
+                        
                         if (base64Img) {
                             imgProps = doc.getImageProperties(base64Img);
                         }
                     } catch (e) {
-                         console.error("Error al cargar la imagen", e);
+                         console.error("Error al cargar la imagen/PDF", e);
                     }
                     
                     let drawWidth = 0;

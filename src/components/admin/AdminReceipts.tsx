@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import ReceiptDetailModal from './ReceiptDetailModal';
 
 export default function AdminReceipts() {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -14,6 +15,7 @@ export default function AdminReceipts() {
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
 
     // Advance Filters States
     const [filterCategory, setFilterCategory] = useState('');
@@ -608,9 +610,9 @@ export default function AdminReceipts() {
 
                                             {receipt.image_url ? (
                                                 receipt.image_url.startsWith('http') ? (
-                                                    <a href={receipt.image_url} target="_blank" rel="noopener noreferrer" className="text-[#8CC63F] hover:text-[#3EAE49] inline-flex items-center gap-1 text-xs">
-                                                        <ExternalLink className="w-3 h-3" /> Ver Boleta
-                                                    </a>
+                                                    <button onClick={() => setSelectedReceipt(receipt)} className="text-[#8CC63F] hover:text-[#3EAE49] inline-flex items-center gap-1 text-xs font-semibold bg-[#8CC63F]/10 px-2 py-0.5 rounded-lg transition">
+                                                        <Eye className="w-3.5 h-3.5" /> Detalle
+                                                    </button>
                                                 ) : (
                                                     <span className="text-red-400 text-[10px] block font-medium" title={receipt.image_url}>
                                                         Error URL
@@ -636,6 +638,13 @@ export default function AdminReceipts() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => setSelectedReceipt(receipt)}
+                                                    className="p-1.5 bg-zinc-700/30 text-zinc-300 hover:bg-zinc-700 hover:text-white rounded-md transition"
+                                                    title="Ver Detalle Completo"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
                                                 {(receipt.status === 'Pendiente' || !receipt.status) && (
                                                     <>
                                                         <button
@@ -710,6 +719,23 @@ export default function AdminReceipts() {
                         </div>
                     </div>
                 </div>
+            )}
+            {selectedReceipt && (
+                <ReceiptDetailModal
+                    receipt={selectedReceipt}
+                    onClose={() => setSelectedReceipt(null)}
+                    onUpdate={(updated) => {
+                        setReceipts(prev => prev.map(r => r.id === updated.id ? updated : r));
+                        setSelectedReceipt(updated);
+                    }}
+                    onDelete={(id) => {
+                        setReceipts(prev => prev.filter(r => r.id !== id));
+                        setSelectedReceipt(null);
+                    }}
+                    categories={categories}
+                    projects={uniqueProjects}
+                    workers={workers}
+                />
             )}
         </div>
     );

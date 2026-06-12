@@ -553,7 +553,7 @@ export default function ReceiptDetailModal({
                                     ) : (
                                         receipt.location ? (
                                             <a 
-                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(receipt.location)}`}
+                                                href={receipt.location.trim().startsWith('http') ? receipt.location.trim() : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(receipt.location.trim())}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-[#8CC63F] hover:text-[#3EAE49] text-sm font-medium flex items-center gap-1 mt-0.5 truncate"

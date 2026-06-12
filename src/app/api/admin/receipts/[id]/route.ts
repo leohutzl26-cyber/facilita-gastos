@@ -90,7 +90,7 @@ export async function PATCH(
         if (amount !== undefined) updateData.amount = parseFloat(amount) || 0;
         if (date !== undefined) updateData.date = date;
         if (category !== undefined) updateData.category = category;
-        if (project_id !== undefined) updateData.project_id = project_id;
+        if (project_id !== undefined) updateData.project_id = project_id === '' ? null : project_id;
         if (location !== undefined) updateData.location = location;
         if (status !== undefined) updateData.status = status;
 

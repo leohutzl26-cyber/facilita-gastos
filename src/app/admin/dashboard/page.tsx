@@ -1,5 +1,5 @@
 'use client';
-import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, ReceiptText, AlertTriangle } from 'lucide-react';
+import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, ReceiptText, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useState } from 'react';
@@ -14,6 +14,7 @@ import CategoryCrud from '@/components/admin/CategoryCrud';
 export default function AdminDashboard() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [showDangerZone, setShowDangerZone] = useState(false);
 
     const handleLogout = async () => {
         const supabase = createClient();
@@ -128,7 +129,47 @@ export default function AdminDashboard() {
 
                 {activeTab === 'advanced' && (
                     <div className="space-y-8 animate-in fade-in duration-300">
-                        <DangerZone />
+                        {/* Panel Colapsable de Zona de Peligro */}
+                        <div className="bg-[#1C2D54]/20 border border-red-500/10 rounded-2xl p-6 shadow-xl space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-red-400 flex items-center gap-2">
+                                        <AlertTriangle className="w-5 h-5 text-red-400" />
+                                        Zona de Peligro del Sistema
+                                    </h3>
+                                    <p className="text-xs text-zinc-400">
+                                        Contiene operaciones destructivas como vaciar bases de datos y restaurar valores iniciales.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setShowDangerZone(!showDangerZone)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                                        showDangerZone
+                                            ? 'bg-red-500/10 border-red-500 text-red-400'
+                                            : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white'
+                                    }`}
+                                >
+                                    {showDangerZone ? (
+                                        <>
+                                            <EyeOff className="w-4 h-4" />
+                                            Ocultar Opciones Peligrosas
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Eye className="w-4 h-4" />
+                                            Mostrar Opciones Peligrosas
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {showDangerZone && (
+                                <div className="border-t border-red-500/10 pt-4 animate-in slide-in-from-top-2 duration-200">
+                                    <DangerZone />
+                                </div>
+                            )}
+                        </div>
+
                         <SystemAuditLog />
                     </div>
                 )}

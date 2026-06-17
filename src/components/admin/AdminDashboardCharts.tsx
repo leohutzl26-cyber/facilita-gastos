@@ -119,7 +119,7 @@ export default function AdminDashboardCharts() {
         const headers = ["Fecha", "Proveedor", "Categoria", "Proyecto", "Colaborador", "Monto", "Estado", "Tipo Documento"];
         
         const rows = filteredReceipts.map(r => {
-            const dateStr = r.date ? new Date(r.date).toLocaleDateString('es-CL') : 'N/A';
+            const dateStr = r.date ? new Date(r.date).toLocaleDateString('es-CL', { timeZone: 'UTC' }) : 'N/A';
             const merchant = r.merchant || 'N/A';
             const category = r.category || 'N/A';
             const project = r.projects?.name || 'N/A';
@@ -169,7 +169,7 @@ export default function AdminDashboardCharts() {
         if (shouldExcludeRechazados && r.status === 'Rechazado') return;
 
         const dateObj = new Date(r.date);
-        const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+        const monthKey = `${dateObj.getUTCFullYear()}-${String(dateObj.getUTCMonth() + 1).padStart(2, '0')}`;
 
         const current = monthlyDataMap.get(monthKey) || { total: 0, count: 0 };
         monthlyDataMap.set(monthKey, {

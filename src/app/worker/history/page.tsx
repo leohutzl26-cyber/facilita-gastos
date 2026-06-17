@@ -44,10 +44,11 @@ export default function WorkerHistory() {
     const stats = history.reduce((acc, curr) => {
         acc.totalRegistrado += Number(curr.amount) || 0;
         if (curr.status === 'Aprobado por Supervisor') acc.totalAprobado += Number(curr.amount) || 0;
+        if (curr.status === 'Reembolsado') acc.totalReembolsado += Number(curr.amount) || 0;
         if (curr.status === 'Pendiente' || !curr.status) acc.countPendientes++;
         if (curr.status === 'Rechazado') acc.countRechazados++;
         return acc;
-    }, { totalRegistrado: 0, totalAprobado: 0, countPendientes: 0, countRechazados: 0 });
+    }, { totalRegistrado: 0, totalAprobado: 0, totalReembolsado: 0, countPendientes: 0, countRechazados: 0 });
 
     return (
         <div className="min-h-screen bg-[#121D38] text-zinc-50 font-sans pb-20">
@@ -73,10 +74,14 @@ export default function WorkerHistory() {
                         <h2 className="text-sm font-medium text-zinc-400 mb-4">Resumen de Gastos</h2>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-xs text-zinc-500 mb-1">Total Aprobado</p>
-                                <p className="text-2xl font-bold text-[#8CC63F]">${stats.totalAprobado.toLocaleString('es-CL')}</p>
+                                <p className="text-xs text-zinc-500 mb-1">Total Reembolsado</p>
+                                <p className="text-2xl font-bold text-[#8CC63F]">${stats.totalReembolsado.toLocaleString('es-CL')}</p>
                             </div>
                             <div>
+                                <p className="text-xs text-zinc-500 mb-1">Total Aprobado</p>
+                                <p className="text-2xl font-bold text-blue-400">${stats.totalAprobado.toLocaleString('es-CL')}</p>
+                            </div>
+                            <div className="col-span-2 pt-2 border-t border-white/5">
                                 <p className="text-xs text-zinc-500 mb-1">En Revisión</p>
                                 <p className="text-lg font-semibold text-yellow-400">{stats.countPendientes} tickets</p>
                             </div>

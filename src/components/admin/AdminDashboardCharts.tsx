@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import {
     TrendingUp, PieChart as PieChartIcon, FileText, CheckCircle,
-    Clock, XCircle, Filter, Download
+    Clock, XCircle, Filter, Download, CreditCard
 } from 'lucide-react';
 
 export default function AdminDashboardCharts() {
@@ -84,7 +84,9 @@ export default function AdminDashboardCharts() {
     // Filter logic 2: Charts Filter (KPI Filtered + Selected Status Tab)
     const filteredReceipts = kpiFilteredReceipts.filter(r => {
         if (selectedStatusTab === 'aprobados') {
-            return r.status === 'Reembolsado' || r.status === 'Aprobado por Supervisor';
+            return r.status === 'Aprobado por Supervisor';
+        } else if (selectedStatusTab === 'reembolsados') {
+            return r.status === 'Reembolsado';
         } else if (selectedStatusTab === 'pendientes') {
             return r.status === 'Pendiente' || r.status === 'Por Visar' || !r.status;
         } else if (selectedStatusTab === 'rechazados') {
@@ -101,7 +103,11 @@ export default function AdminDashboardCharts() {
 
     // KPI Calculations
     const totalApproved = kpiFilteredReceipts
-        .filter(r => r.status === 'Reembolsado' || r.status === 'Aprobado por Supervisor')
+        .filter(r => r.status === 'Aprobado por Supervisor')
+        .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+    const totalReimbursed = kpiFilteredReceipts
+        .filter(r => r.status === 'Reembolsado')
         .reduce((sum, r) => sum + Number(r.amount || 0), 0);
 
     const totalPending = kpiFilteredReceipts
@@ -352,11 +358,21 @@ export default function AdminDashboardCharts() {
                     onClick={() => setSelectedStatusTab('aprobados')}
                     className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
                         selectedStatusTab === 'aprobados'
+                            ? 'bg-blue-500/10 border-blue-500 text-blue-400'
+                            : 'border-white/10 text-zinc-400 hover:text-white'
+                    }`}
+                >
+                    Solo Aprobados
+                </button>
+                <button
+                    onClick={() => setSelectedStatusTab('reembolsados')}
+                    className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                        selectedStatusTab === 'reembolsados'
                             ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
                             : 'border-white/10 text-zinc-400 hover:text-white'
                     }`}
                 >
-                    Solo Aprobados/Reembolsados
+                    Solo Pagados/Reembolsados
                 </button>
                 <button
                     onClick={() => setSelectedStatusTab('pendientes')}
@@ -381,16 +397,28 @@ export default function AdminDashboardCharts() {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {/* Aprobados Card */}
+                <div className="bg-[#1C2D54]/40 border border-blue-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Monto Aprobado</p>
+                        <p className="text-2xl font-black text-blue-400">${totalApproved.toLocaleString('es-CL')}</p>
+                        <p className="text-[10px] text-zinc-500">Aprobado por supervisor</p>
+                    </div>
+                    <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400 shrink-0">
+                        <CheckCircle className="w-6 h-6" />
+                    </div>
+                </div>
+
+                {/* Reembolsados Card */}
                 <div className="bg-[#1C2D54]/40 border border-emerald-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Aprobado / Reembolsado</p>
-                        <p className="text-2xl font-black text-emerald-400">${totalApproved.toLocaleString('es-CL')}</p>
-                        <p className="text-[10px] text-zinc-500">Monto pagado/aprobado</p>
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Monto Reembolsado</p>
+                        <p className="text-2xl font-black text-emerald-400">${totalReimbursed.toLocaleString('es-CL')}</p>
+                        <p className="text-[10px] text-zinc-500">Monto pagado/reembolsado</p>
                     </div>
                     <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400 shrink-0">
-                        <CheckCircle className="w-6 h-6" />
+                        <CreditCard className="w-6 h-6" />
                     </div>
                 </div>
 
@@ -419,13 +447,13 @@ export default function AdminDashboardCharts() {
                 </div>
 
                 {/* Total Docs Card */}
-                <div className="bg-[#1C2D54]/40 border border-blue-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4 col-span-2 md:col-span-1">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Total Documentos</p>
-                        <p className="text-2xl font-black text-blue-400">{totalDocsCount}</p>
+                        <p className="text-2xl font-black text-[#8CC63F]">{totalDocsCount}</p>
                         <p className="text-[10px] text-zinc-500">Documentos registrados</p>
                     </div>
-                    <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400 shrink-0">
+                    <div className="p-3 bg-[#8CC63F]/10 rounded-xl text-[#8CC63F] shrink-0">
                         <FileText className="w-6 h-6" />
                     </div>
                 </div>

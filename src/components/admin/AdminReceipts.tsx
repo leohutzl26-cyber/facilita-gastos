@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import ReceiptDetailModal from './ReceiptDetailModal';
+import AdminReceiptCreateModal from './AdminReceiptCreateModal';
 
 export default function AdminReceipts() {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -16,6 +17,7 @@ export default function AdminReceipts() {
     const [rejectionReason, setRejectionReason] = useState('');
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Advance Filters States
     const [filterCategory, setFilterCategory] = useState('');
@@ -489,7 +491,14 @@ export default function AdminReceipts() {
                             className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
                         />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="flex items-center gap-2 bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] px-3 py-2 rounded-xl text-sm font-bold transition whitespace-nowrap"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Registrar Gasto
+                        </button>
                         <button
                             onClick={handleExportPDF}
                             disabled={filteredReceipts.length === 0 || isGeneratingPDF}
@@ -782,6 +791,18 @@ export default function AdminReceipts() {
                     onDelete={(id) => {
                         setReceipts(prev => prev.filter(r => r.id !== id));
                         setSelectedReceipt(null);
+                    }}
+                    categories={categories}
+                    projects={uniqueProjects}
+                    workers={workers}
+                />
+            )}
+            {isCreateModalOpen && (
+                <AdminReceiptCreateModal
+                    onClose={() => setIsCreateModalOpen(false)}
+                    onSuccess={(newReceipt) => {
+                        // Añadir el nuevo recibo al principio de la lista
+                        setReceipts(prev => [newReceipt, ...prev]);
                     }}
                     categories={categories}
                     projects={uniqueProjects}

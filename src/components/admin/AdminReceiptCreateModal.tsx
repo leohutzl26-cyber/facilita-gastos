@@ -341,10 +341,10 @@ export default function AdminReceiptCreateModal({
                                                 required
                                                 value={results.category}
                                                 onChange={e => setResults({ ...results, category: e.target.value })}
-                                                className="w-full bg-black/30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             >
                                                 {categories.map(cat => (
-                                                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                                    <option key={cat.id} value={cat.name} className="bg-[#121D38] text-white">{cat.name}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -354,11 +354,11 @@ export default function AdminReceiptCreateModal({
                                                 required
                                                 value={results.document_type}
                                                 onChange={e => setResults({ ...results, document_type: e.target.value })}
-                                                className="w-full bg-black/30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             >
-                                                <option value="boleta">Boleta</option>
-                                                <option value="factura">Factura</option>
-                                                <option value="boleta de honorarios">Boleta de Honorarios</option>
+                                                <option value="boleta" className="bg-[#121D38] text-white">Boleta</option>
+                                                <option value="factura" className="bg-[#121D38] text-white">Factura</option>
+                                                <option value="boleta de honorarios" className="bg-[#121D38] text-white">Boleta de Honorarios</option>
                                             </select>
                                         </div>
                                     </div>
@@ -389,11 +389,11 @@ export default function AdminReceiptCreateModal({
                                         <select
                                             value={results.project_id}
                                             onChange={e => setResults({ ...results, project_id: e.target.value })}
-                                            className="w-full bg-black/30 border border-white/10 text-zinc-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-[#121D38] border border-white/10 text-zinc-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         >
-                                            <option value="">Gasto Genérico</option>
+                                            <option value="" className="bg-[#121D38] text-white">Gasto Genérico</option>
                                             {projects.map(proj => (
-                                                <option key={proj.id} value={proj.id}>{proj.name}</option>
+                                                <option key={proj.id} value={proj.id} className="bg-[#121D38] text-white">{proj.name}</option>
                                             ))}
                                         </select>
                                     </div>

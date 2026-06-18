@@ -114,6 +114,8 @@ export default function AdminDashboardCharts() {
         .filter(r => r.status === 'Pendiente' || r.status === 'Por Visar' || !r.status)
         .reduce((sum, r) => sum + Number(r.amount || 0), 0);
 
+    const totalExpense = totalApproved + totalReimbursed + totalPending;
+
     const totalRejected = kpiFilteredReceipts
         .filter(r => r.status === 'Rechazado')
         .reduce((sum, r) => sum + Number(r.amount || 0), 0);
@@ -434,15 +436,15 @@ export default function AdminDashboardCharts() {
                     </div>
                 </div>
 
-                {/* Rechazados Card */}
-                <div className="bg-[#1C2D54]/40 border border-red-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                {/* Total Gasto Card */}
+                <div className="bg-[#1C2D54]/40 border border-zinc-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Monto Rechazado</p>
-                        <p className="text-2xl font-black text-red-400">${totalRejected.toLocaleString('es-CL')}</p>
-                        <p className="text-[10px] text-zinc-500">Rechazados por auditoría</p>
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Total Gasto</p>
+                        <p className="text-2xl font-black text-white">${totalExpense.toLocaleString('es-CL')}</p>
+                        <p className="text-[10px] text-zinc-500">Aprobado + Reembolsado + Pendiente</p>
                     </div>
-                    <div className="p-3 bg-red-500/10 rounded-xl text-red-400 shrink-0">
-                        <XCircle className="w-6 h-6" />
+                    <div className="p-3 bg-zinc-500/10 rounded-xl text-zinc-400 shrink-0">
+                        <TrendingUp className="w-6 h-6" />
                     </div>
                 </div>
 

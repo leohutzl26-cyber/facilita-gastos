@@ -806,7 +806,6 @@ export default function AdminReceipts() {
                     }}
                     categories={categories}
                     projects={uniqueProjects}
-                    workers={workers}
                 />
             )}
         </div>

@@ -47,8 +47,6 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const {
-            worker_id,
-            worker_email,
             merchant,
             merchant_rut,
             document_type,
@@ -61,9 +59,12 @@ export async function POST(request: Request) {
             location
         } = body;
 
-        if (!worker_id || !worker_email || !merchant || !amount || !date || !category) {
+        if (!merchant || !amount || !date || !category) {
             return NextResponse.json({ error: 'Datos obligatorios incompletos' }, { status: 400 });
         }
+
+        const worker_id = user.id;
+        const worker_email = user.email || '';
 
         let formattedDate = date;
         const cleanAmount = String(amount).replace(/[^\d.,]/g, '').replace(',', '.');

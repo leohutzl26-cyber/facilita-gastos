@@ -7,15 +7,13 @@ type AdminReceiptCreateModalProps = {
     onSuccess: (newReceipt: any) => void;
     categories: any[];
     projects: any[];
-    workers: any[];
 };
 
 export default function AdminReceiptCreateModal({
     onClose,
     onSuccess,
     categories,
-    projects,
-    workers
+    projects
 }: AdminReceiptCreateModalProps) {
     const [image, setImage] = useState<string | null>(null);
     const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -27,7 +25,6 @@ export default function AdminReceiptCreateModal({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Form states
-    const [selectedWorkerId, setSelectedWorkerId] = useState('');
     const [results, setResults] = useState<{
         merchant: string;
         merchant_rut: string;
@@ -39,13 +36,6 @@ export default function AdminReceiptCreateModal({
         project_id: string;
         location: string;
     } | null>(null);
-
-    // Al abrir el modal, pre-seleccionar el primer colaborador por defecto si existe
-    useEffect(() => {
-        if (workers.length > 0) {
-            setSelectedWorkerId(workers[0].id);
-        }
-    }, [workers]);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -174,20 +164,12 @@ export default function AdminReceiptCreateModal({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedWorkerId) {
-            setErrorMsg("Debe seleccionar un colaborador.");
-            return;
-        }
-
         setIsSubmitting(true);
         setErrorMsg('');
 
         try {
-            const worker = workers.find(w => w.id === selectedWorkerId);
             const payload = {
                 ...results,
-                worker_id: selectedWorkerId,
-                worker_email: worker?.email || '',
                 imageBase64: imageBase64
             };
 
@@ -303,23 +285,7 @@ export default function AdminReceiptCreateModal({
                             </div>
                         )}
 
-                        {/* Paso Inicial: Elegir Colaborador obligatorio */}
                         <div className="space-y-4">
-                            <div>
-                                <label className="text-xs text-zinc-400 block mb-1 uppercase tracking-wider font-semibold">Colaborador Responsable *</label>
-                                <select
-                                    required
-                                    value={selectedWorkerId}
-                                    onChange={(e) => setSelectedWorkerId(e.target.value)}
-                                    className="w-full bg-[#1C2D54] border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#8CC63F] outline-none text-sm"
-                                >
-                                    <option value="" disabled>Selecciona un colaborador...</option>
-                                    {workers.map(w => (
-                                        <option key={w.id} value={w.id}>{w.name || w.email.split('@')[0]} ({w.email})</option>
-                                    ))}
-                                </select>
-                            </div>
-
                             {results ? (
                                 <form onSubmit={handleSubmit} className="space-y-4 pt-2 border-t border-white/5 animate-in slide-in-from-bottom-2 duration-300">
                                     <div className="grid grid-cols-2 gap-4">

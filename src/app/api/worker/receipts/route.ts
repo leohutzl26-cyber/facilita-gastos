@@ -20,7 +20,7 @@ export async function GET() {
     try {
         const { data: receipts, error } = await supabaseSession
             .from('receipts')
-            .select('*')
+            .select('*, projects(id, name)')
             .eq('worker_id', user.id)
             .order('created_at', { ascending: false });
 

@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
@@ -54,17 +54,38 @@ export async function GET() {
     }
 
     try {
+        const { searchParams } = new URL(request.url);
+        const page = parseInt(searchParams.get('page') || '1', 10);
+        const limit = parseInt(searchParams.get('limit') || '50', 10);
+
+        const validPage = isNaN(page) || page < 1 ? 1 : page;
+        const validLimit = isNaN(limit) || limit < 1 ? 50 : limit;
+        const offset = (validPage - 1) * validLimit;
+
         const adminDbClient = getAdminSupabase();
-        // Obtenemos los logs, los admins pueden verlos
+
+        // Obtener el conteo total de registros en la base de datos de manera eficiente
+        const { count, error: countError } = await adminDbClient
+            .from('audit_logs')
+            .select('*', { count: 'exact', head: true });
+
+        if (countError) throw countError;
+
+        // Obtenemos los logs en el rango especificado por la paginación
         const { data: logs, error } = await adminDbClient
             .from('audit_logs')
             .select('*')
             .order('created_at', { ascending: false })
-            .limit(100);
+            .range(offset, offset + validLimit - 1);
 
         if (error) throw error;
 
-        return NextResponse.json({ logs });
+        return NextResponse.json({
+            logs: logs || [],
+            total: count || 0,
+            page: validPage,
+            limit: validLimit
+        });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

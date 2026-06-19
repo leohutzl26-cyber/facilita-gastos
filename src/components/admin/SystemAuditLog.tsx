@@ -6,14 +6,19 @@ export default function SystemAuditLog() {
     const [logs, setLogs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [debugError, setDebugError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [totalLogs, setTotalLogs] = useState(0);
+    const limit = 50;
 
     useEffect(() => {
         const fetchLogs = async () => {
+            setIsLoading(true);
             try {
-                const res = await fetch('/api/audit', { cache: 'no-store' });
+                const res = await fetch(`/api/audit?page=${page}&limit=${limit}`, { cache: 'no-store' });
                 const data = await res.json();
                 if (res.ok && data.logs) {
                     setLogs(data.logs);
+                    setTotalLogs(data.total || 0);
                     setDebugError(null);
                 } else {
                     setDebugError(data.error || 'Server returned not OK');
@@ -27,7 +32,7 @@ export default function SystemAuditLog() {
         };
 
         fetchLogs();
-    }, []);
+    }, [page]);
 
     const isDangerAction = (action: string) => {
         const lowerAction = action.toLowerCase();
@@ -47,7 +52,7 @@ export default function SystemAuditLog() {
             </div>
             
             <p className="text-sm text-zinc-400 mb-6 max-w-3xl">
-                Registro inmutable de todas las acciones y accesos al sistema. Las acciones de alto riesgo se resaltan en <span className="text-red-400 font-medium">rojo</span>. Mostrando las últimas 100 actividades.
+                Registro inmutable de todas las acciones y accesos al sistema. Las acciones de alto riesgo se resaltan en <span className="text-red-400 font-medium">rojo</span>.
             </p>
 
             <div className="bg-[#121D38] border border-white/5 rounded-xl overflow-hidden">
@@ -114,6 +119,38 @@ export default function SystemAuditLog() {
                         </tbody>
                     </table>
                 </div>
+                {/* Pagination Controls */}
+                {!isLoading && !debugError && logs.length > 0 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-white/5 text-sm text-zinc-400 bg-[#1C2D54]/20">
+                        <div>
+                            Mostrando <span className="font-semibold text-zinc-200">{((page - 1) * limit) + 1}</span> a{' '}
+                            <span className="font-semibold text-zinc-200">
+                                {Math.min(page * limit, totalLogs)}
+                            </span>{' '}
+                            de <span className="font-semibold text-zinc-200">{totalLogs}</span> registros
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 disabled:opacity-30 disabled:hover:border-white/10 transition-colors disabled:cursor-not-allowed text-zinc-200 bg-white/5 hover:bg-white/10 disabled:bg-transparent font-medium"
+                            >
+                                Anterior
+                            </button>
+                            <span className="text-zinc-300">
+                                Página <span className="font-semibold text-zinc-100">{page}</span> de{' '}
+                                <span className="font-semibold text-zinc-100">{Math.ceil(totalLogs / limit) || 1}</span>
+                            </span>
+                            <button
+                                onClick={() => setPage(p => Math.min(Math.ceil(totalLogs / limit), p + 1))}
+                                disabled={page >= Math.ceil(totalLogs / limit)}
+                                className="px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 disabled:opacity-30 disabled:hover:border-white/10 transition-colors disabled:cursor-not-allowed text-zinc-200 bg-white/5 hover:bg-white/10 disabled:bg-transparent font-medium"
+                            >
+                                Siguiente
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

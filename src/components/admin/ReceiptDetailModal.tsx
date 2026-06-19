@@ -220,10 +220,26 @@ export default function ReceiptDetailModal({
         }
     };
 
-    const handleDeleteClick = () => {
-        if (!confirm('¿Estás seguro de ELIMINAR permanentemente este recibo? Esta acción no se puede deshacer.')) return;
-        onDelete(receipt.id);
-        onClose();
+    const handleDeleteClick = async () => {
+        if (!confirm('¿Estás seguro de ELIMINAR este recibo? Se enviará a la papelera de reciclaje.')) return;
+
+        try {
+            const res = await fetch(`/api/admin/receipts/${receipt.id}`, {
+                method: 'DELETE'
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Error al eliminar el recibo');
+            }
+
+            onDelete(receipt.id);
+            onClose();
+            alert('Recibo enviado a la papelera correctamente.');
+        } catch (err: any) {
+            console.error(err);
+            alert('Falló la eliminación: ' + err.message);
+        }
     };
 
     const isLimitExceeded = () => {

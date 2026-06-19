@@ -517,6 +517,8 @@ export default function AdminReceipts() {
     const uniqueDocTypes = Array.from(new Set(receipts.map(r => (r.document_type || 'boleta').toLowerCase()).filter(Boolean))) as string[];
     const uniqueStatuses = Array.from(new Set(receipts.map(r => r.status || 'Pendiente').filter(Boolean))) as string[];
 
+    const totalFilteredAmount = filteredReceipts.reduce((sum, r) => sum + Number(r.amount), 0);
+
     const sortedReceipts = [...filteredReceipts].sort((a, b) => {
         let valA: any = '';
         let valB: any = '';
@@ -680,6 +682,17 @@ export default function AdminReceipts() {
                                 <option key={s} value={s} className="capitalize">{s}</option>
                             ))}
                         </select>
+                    </div>
+                </div>
+
+                {/* Total Summary Row */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#1C2D54]/30 border border-white/5 p-4 rounded-xl">
+                    <div className="text-sm text-zinc-400">
+                        Mostrando <span className="font-semibold text-zinc-200">{filteredReceipts.length}</span> {filteredReceipts.length === 1 ? 'comprobante' : 'comprobantes'}
+                    </div>
+                    <div className="bg-[#8CC63F]/10 border border-[#8CC63F]/20 rounded-xl px-4 py-2 flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                        <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Total Filtrado:</span>
+                        <span className="text-lg font-bold text-[#8CC63F]">${totalFilteredAmount.toLocaleString('es-CL')}</span>
                     </div>
                 </div>
             </div>

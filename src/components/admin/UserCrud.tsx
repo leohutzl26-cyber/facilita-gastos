@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle, ShieldAlert, ShieldCheck, Search } from 'lucide-react';
 
 type Worker = {
     id: string;
@@ -12,6 +12,7 @@ type Worker = {
 
 export default function UserCrud() {
     const [workers, setWorkers] = useState<Worker[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isFetchingWorkers, setIsFetchingWorkers] = useState(true);
@@ -162,16 +163,35 @@ export default function UserCrud() {
         }
     };
 
+    const filteredWorkers = workers.filter(w =>
+        w.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        w.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <p className="text-zinc-400 text-sm">Administra las cuentas de tus colaboradores.</p>
-                <button
-                    onClick={() => setIsAdding(!isAdding)}
-                    className="bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition"
-                >
-                    {isAdding ? 'Cancelar' : <><Plus className="w-4 h-4" /> Nuevo Colaborador</>}
-                </button>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                    <p className="text-zinc-400 text-sm">Administra las cuentas de tus colaboradores.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-stretch sm:items-center">
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <input
+                            type="text"
+                            placeholder="Buscar colaborador..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
+                        />
+                    </div>
+                    <button
+                        onClick={() => setIsAdding(!isAdding)}
+                        className="bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition whitespace-nowrap"
+                    >
+                        {isAdding ? 'Cancelar' : <><Plus className="w-4 h-4" /> Nuevo Colaborador</>}
+                    </button>
+                </div>
             </div>
 
             {isAdding && (
@@ -199,7 +219,7 @@ export default function UserCrud() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {workers.map(worker => (
+                    {filteredWorkers.map(worker => (
                         <div key={worker.id} className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900 transition group">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-[#8CC63F]/20 text-[#8CC63F] flex items-center justify-center font-bold">
@@ -261,9 +281,9 @@ export default function UserCrud() {
                             </div>
                         </div>
                     ))}
-                    {workers.length === 0 && (
+                    {filteredWorkers.length === 0 && (
                         <div className="text-center py-8 text-zinc-500 text-sm">
-                            No hay colaboradores registrados.
+                            {searchTerm ? 'No se encontraron colaboradores que coincidan con la búsqueda.' : 'No hay colaboradores registrados.'}
                         </div>
                     )}
                 </div>

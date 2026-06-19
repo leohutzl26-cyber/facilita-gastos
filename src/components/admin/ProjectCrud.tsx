@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Loader2, RefreshCw, Folder, Edit2, X } from 'lucide-react';
+import { Plus, Trash2, Loader2, RefreshCw, Folder, Edit2, X, Search } from 'lucide-react';
 
 interface Project {
     id: string;
@@ -12,6 +12,7 @@ interface Project {
 
 export default function ProjectCrud() {
     const [projects, setProjects] = useState<Project[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -115,6 +116,11 @@ export default function ProjectCrud() {
         setDescription('');
     };
 
+    const filteredProjects = projects.filter(p =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
     return (
         <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl flex flex-col h-full">
             <div className="flex items-center justify-between mb-6">
@@ -176,18 +182,30 @@ export default function ProjectCrud() {
                 </div>
             </form>
 
+            {/* Buscador */}
+            <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <input
+                    type="text"
+                    placeholder="Buscar proyecto..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
+                />
+            </div>
+
             {/* Listado */}
             <div className="flex-1 overflow-y-auto pr-2 space-y-2 min-h-[200px] max-h-[300px] custom-scrollbar">
                 {isLoading && projects.length === 0 ? (
                     <div className="flex items-center justify-center h-full text-zinc-400">
                         <Loader2 className="w-6 h-6 animate-spin" />
                     </div>
-                ) : projects.length === 0 ? (
+                ) : filteredProjects.length === 0 ? (
                     <div className="flex items-center justify-center h-full text-zinc-500 text-sm italic">
-                        No hay proyectos registrados aún.
+                        {searchTerm ? 'No se encontraron proyectos para la búsqueda.' : 'No hay proyectos registrados aún.'}
                     </div>
                 ) : (
-                    projects.map(project => (
+                    filteredProjects.map(project => (
                         <div key={project.id} className="bg-black/30 border border-white/5 rounded-lg p-3 flex items-center justify-between group hover:border-white/10 transition">
                             <div className="flex-1 min-w-0 pr-2">
                                 <p className="font-medium text-sm text-zinc-200 truncate">{project.name}</p>

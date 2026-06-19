@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye, Plus, RotateCcw } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye, Plus, RotateCcw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -18,6 +18,19 @@ export default function AdminReceipts() {
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    // Sorting States
+    const [sortField, setSortField] = useState<string>('date');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+    const handleSort = (field: string) => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
 
     // Advance Filters States
     const [filterCategory, setFilterCategory] = useState('');
@@ -499,6 +512,35 @@ export default function AdminReceipts() {
     const uniqueCategories = Array.from(new Set(receipts.map(r => r.category).filter(Boolean))) as string[];
     const uniqueDocTypes = Array.from(new Set(receipts.map(r => (r.document_type || 'boleta').toLowerCase()).filter(Boolean))) as string[];
 
+    const sortedReceipts = [...filteredReceipts].sort((a, b) => {
+        let valA: any = '';
+        let valB: any = '';
+
+        if (sortField === 'date') {
+            valA = a.date || '';
+            valB = b.date || '';
+        } else if (sortField === 'merchant') {
+            valA = a.merchant?.toLowerCase() || '';
+            valB = b.merchant?.toLowerCase() || '';
+        } else if (sortField === 'document') {
+            valA = ((a.document_type || 'boleta') + (a.document_number || '')).toLowerCase();
+            valB = ((b.document_type || 'boleta') + (b.document_number || '')).toLowerCase();
+        } else if (sortField === 'category') {
+            valA = a.category?.toLowerCase() || '';
+            valB = b.category?.toLowerCase() || '';
+        } else if (sortField === 'amount') {
+            valA = Number(a.amount) || 0;
+            valB = Number(b.amount) || 0;
+        } else if (sortField === 'status') {
+            valA = a.status?.toLowerCase() || 'pendiente';
+            valB = b.status?.toLowerCase() || 'pendiente';
+        }
+
+        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-4">
@@ -627,27 +669,81 @@ export default function AdminReceipts() {
             <div className="bg-[#1C2D54] border border-white/10 rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-[#1C2D54] border-b border-white/10 text-zinc-400">
+                        <thead className="bg-[#1C2D54] border-b border-white/10 text-zinc-400 animate-in fade-in">
                             <tr>
-                                <th className="px-6 py-4 font-medium">Fecha</th>
-                                <th className="px-6 py-4 font-medium">Proyecto y Comercio</th>
-                                <th className="px-6 py-4 font-medium text-left">Documento</th>
-                                <th className="px-6 py-4 font-medium text-left">Categoría</th>
-                                <th className="px-6 py-4 font-medium text-center">Info. Pago</th>
-                                <th className="px-6 py-4 font-medium text-center">Estado</th>
-                                <th className="px-6 py-4 font-medium text-right">Acciones</th>
+                                <th onClick={() => handleSort('date')} className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors">
+                                    <div className="flex items-center gap-1">
+                                        Fecha
+                                        {sortField === 'date' ? (
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                        ) : (
+                                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                                        )}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('merchant')} className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors">
+                                    <div className="flex items-center gap-1">
+                                        Proyecto y Comercio
+                                        {sortField === 'merchant' ? (
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                        ) : (
+                                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                                        )}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('document')} className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors text-left">
+                                    <div className="flex items-center gap-1">
+                                        Documento
+                                        {sortField === 'document' ? (
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                        ) : (
+                                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                                        )}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('category')} className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors text-left">
+                                    <div className="flex items-center gap-1">
+                                        Categoría
+                                        {sortField === 'category' ? (
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                        ) : (
+                                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                                        )}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('amount')} className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                        Info. Pago
+                                        {sortField === 'amount' ? (
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                        ) : (
+                                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                                        )}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('status')} className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                        Estado
+                                        {sortField === 'status' ? (
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                        ) : (
+                                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                                        )}
+                                    </div>
+                                </th>
+                                <th className="px-6 py-4 font-medium text-right select-none">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-zinc-500">
+                                    <td colSpan={7} className="px-6 py-8 text-center text-zinc-500">
                                         Cargando recibos...
                                     </td>
                                 </tr>
-                            ) : filteredReceipts.length === 0 ? (
+                            ) : sortedReceipts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center">
+                                    <td colSpan={7} className="px-6 py-8 text-center">
                                         <div className="flex flex-col items-center justify-center">
                                             <Receipt className="w-10 h-10 text-zinc-600 mb-3" />
                                             <p className="text-zinc-500 font-medium">No se encontraron recibos</p>
@@ -655,7 +751,7 @@ export default function AdminReceipts() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredReceipts.map((receipt) => (
+                                sortedReceipts.map((receipt) => (
                                     <tr key={receipt.id} className="hover:bg-white/5 transition-colors">
                                         <td className="px-6 py-4 text-zinc-300 whitespace-nowrap">{receipt.date}</td>
                                         <td className="px-6 py-4">

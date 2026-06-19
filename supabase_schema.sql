@@ -136,3 +136,24 @@ DROP POLICY IF EXISTS "Workers and admins can insert comments" ON public.receipt
 CREATE POLICY "Anyone can view comments" ON public.receipt_comments FOR SELECT USING (auth.uid() IS NOT NULL);
 -- Escritura: Todos los autenticados pueden comentar
 CREATE POLICY "Workers and admins can insert comments" ON public.receipt_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- ==========================================
+-- 6. Papelera de Reciclaje (Elementos Eliminados)
+-- ==========================================
+
+-- Crear tabla de elementos eliminados
+CREATE TABLE IF NOT EXISTS public.deleted_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    table_name TEXT NOT NULL, -- 'receipts', 'projects', 'categories', 'workers'
+    original_id UUID NOT NULL,
+    data JSONB NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    deleted_by TEXT NOT NULL
+);
+
+-- Habilitar RLS
+ALTER TABLE public.deleted_records ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS para administradores
+DROP POLICY IF EXISTS "Admins can manage deleted_records" ON public.deleted_records;
+CREATE POLICY "Admins can manage deleted_records" ON public.deleted_records FOR ALL USING (auth.uid() IS NOT NULL);

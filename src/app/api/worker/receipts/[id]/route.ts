@@ -49,6 +49,17 @@ export async function DELETE(
 
         const adminSupabase = getAdminSupabase();
 
+        // Guardar en la papelera
+        const { error: binError } = await adminSupabase
+            .from('deleted_records')
+            .insert([{
+                table_name: 'receipts',
+                original_id: receiptId,
+                data: receipt,
+                deleted_by: user.email
+            }]);
+        if (binError) console.error("Error backing up worker receipt to recycle bin:", binError);
+
         // 4. Eliminar el recibo
         const { error: deleteError } = await adminSupabase
             .from('receipts')
@@ -61,7 +72,7 @@ export async function DELETE(
         await adminSupabase.from('audit_logs').insert([{
             user_email: user.email,
             action: 'Eliminar Recibo Colaborador',
-            details: `El colaborador eliminó su propio recibo ID: ${receiptId} (Estado previo: ${receipt.status || 'Pendiente'}, Comercio: ${receipt.merchant}, Monto: ${receipt.amount})`
+            details: `El colaborador envió a la papelera su propio recibo ID: ${receiptId} (Estado previo: ${receipt.status || 'Pendiente'}, Comercio: ${receipt.merchant}, Monto: ${receipt.amount})`
         }]);
 
         return NextResponse.json({ success: true, message: 'Gasto eliminado correctamente' });

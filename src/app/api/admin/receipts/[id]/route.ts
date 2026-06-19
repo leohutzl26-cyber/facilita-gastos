@@ -28,6 +28,28 @@ export async function DELETE(
         const resolvedParams = await context.params;
         const receiptId = resolvedParams.id;
 
+        // Obtener datos del recibo antes de eliminarlo
+        const { data: receipt, error: fetchError } = await adminSupabase
+            .from('receipts')
+            .select('*')
+            .eq('id', receiptId)
+            .single();
+
+        if (fetchError) {
+            console.error("Error fetching receipt before delete:", fetchError);
+        } else if (receipt) {
+            // Guardar en la papelera
+            const { error: binError } = await adminSupabase
+                .from('deleted_records')
+                .insert([{
+                    table_name: 'receipts',
+                    original_id: receiptId,
+                    data: receipt,
+                    deleted_by: user.email
+                }]);
+            if (binError) console.error("Error backing up receipt to recycle bin:", binError);
+        }
+
         // 2. Eliminar el recibo específico de la tabla `receipts`
         const { error: deleteError } = await adminSupabase
             .from('receipts')
@@ -40,7 +62,7 @@ export async function DELETE(
         await adminSupabase.from('audit_logs').insert([{
             user_email: user.email,
             action: 'Eliminar Recibo',
-            details: `Se eliminó permanentemente el recibo ID: ${receiptId}`
+            details: `Se envió a la papelera el recibo ID: ${receiptId} (Comercio: ${receipt?.merchant || 'Desconocido'}, Monto: ${receipt?.amount || 0})`
         }]);
 
         return NextResponse.json({ success: true, message: 'Recibo eliminado correctamente' });

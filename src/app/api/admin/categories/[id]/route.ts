@@ -46,9 +46,30 @@ export async function DELETE(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        // Next.js 15 route handler param handling
         const params = await context.params;
         const id = params.id;
+
+        // Obtener datos de la categoría antes de eliminarla
+        const { data: category, error: fetchError } = await supabase
+            .from('categories')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) {
+            console.error("Error fetching category before delete:", fetchError);
+        } else if (category) {
+            // Guardar en la papelera
+            const { error: binError } = await supabase
+                .from('deleted_records')
+                .insert([{
+                    table_name: 'categories',
+                    original_id: id,
+                    data: category,
+                    deleted_by: user.email
+                }]);
+            if (binError) console.error("Error backing up category to recycle bin:", binError);
+        }
 
         const { error } = await supabase
             .from('categories')

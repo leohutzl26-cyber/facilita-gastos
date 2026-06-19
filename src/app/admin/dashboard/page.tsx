@@ -10,6 +10,7 @@ import DangerZone from '@/components/admin/DangerZone';
 import SystemAuditLog from '@/components/admin/SystemAuditLog';
 import AdminDashboardCharts from '@/components/admin/AdminDashboardCharts';
 import CategoryCrud from '@/components/admin/CategoryCrud';
+import RecycleBin from '@/components/admin/RecycleBin';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -169,6 +170,8 @@ export default function AdminDashboard() {
                                 </div>
                             )}
                         </div>
+
+                        <RecycleBin />
 
                         <SystemAuditLog />
                     </div>

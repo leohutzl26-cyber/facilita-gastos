@@ -37,6 +37,7 @@ export default function AdminReceipts() {
     const [filterProject, setFilterProject] = useState('');
     const [filterWorker, setFilterWorker] = useState('');
     const [filterDocumentType, setFilterDocumentType] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
     const [filterStartDate, setFilterStartDate] = useState('');
     const [filterEndDate, setFilterEndDate] = useState('');
 
@@ -494,6 +495,9 @@ export default function AdminReceipts() {
         // 4.5 Document Type Match
         const matchDocType = !filterDocumentType || (r.document_type || 'boleta').toLowerCase() === filterDocumentType.toLowerCase();
 
+        // 4.7 Status Match
+        const matchStatus = !filterStatus || (r.status || 'Pendiente').toLowerCase() === filterStatus.toLowerCase();
+
         // 5. Date Range Match
         let matchDate = true;
         if (filterStartDate) {
@@ -503,7 +507,7 @@ export default function AdminReceipts() {
             matchDate = matchDate && new Date(r.date) <= new Date(filterEndDate);
         }
 
-        return matchSearch && matchCategory && matchProject && matchWorker && matchDocType && matchDate;
+        return matchSearch && matchCategory && matchProject && matchWorker && matchDocType && matchStatus && matchDate;
     });
 
     // Extract unique values for dropdowns based on actual data
@@ -511,6 +515,7 @@ export default function AdminReceipts() {
     const uniqueProjects = Array.from(new Map(receipts.filter(r => r.projects).map(r => [r.project_id, r.projects])).values()) as any[];
     const uniqueCategories = Array.from(new Set(receipts.map(r => r.category).filter(Boolean))) as string[];
     const uniqueDocTypes = Array.from(new Set(receipts.map(r => (r.document_type || 'boleta').toLowerCase()).filter(Boolean))) as string[];
+    const uniqueStatuses = Array.from(new Set(receipts.map(r => r.status || 'Pendiente').filter(Boolean))) as string[];
 
     const sortedReceipts = [...filteredReceipts].sort((a, b) => {
         let valA: any = '';
@@ -592,7 +597,7 @@ export default function AdminReceipts() {
                 </div>
 
                 {/* Filters Row */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 bg-[#1C2D54]/50 p-4 rounded-xl border border-white/5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 bg-[#1C2D54]/50 p-4 rounded-xl border border-white/5">
                     <div className="flex flex-col">
                         <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider">Desde (Fecha)</label>
                         <input
@@ -660,6 +665,19 @@ export default function AdminReceipts() {
                             <option value="">Todos los tipos</option>
                             {uniqueDocTypes.map(c => (
                                 <option key={c} value={c} className="capitalize">{c}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider">Estado</label>
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200 capitalize"
+                        >
+                            <option value="">Todos los estados</option>
+                            {uniqueStatuses.map(s => (
+                                <option key={s} value={s} className="capitalize">{s}</option>
                             ))}
                         </select>
                     </div>

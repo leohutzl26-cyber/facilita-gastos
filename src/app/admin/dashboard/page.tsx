@@ -1,5 +1,5 @@
 'use client';
-import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, ReceiptText, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, ReceiptText, AlertTriangle, Eye, EyeOff, Folder } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useState } from 'react';
@@ -25,7 +25,9 @@ export default function AdminDashboard() {
 
     const tabs = [
         { id: 'dashboard', label: 'Resumen', icon: LayoutDashboard },
-        { id: 'management', label: 'Gestión Básica', icon: Settings },
+        { id: 'workers', label: 'Colaboradores', icon: Users },
+        { id: 'projects', label: 'Proyectos', icon: Folder },
+        { id: 'categories', label: 'Categorías', icon: Settings },
         { id: 'reports', label: 'Reportes', icon: ReceiptText },
         { id: 'advanced', label: 'Avanzado', icon: AlertTriangle },
     ];
@@ -79,39 +81,38 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {activeTab === 'management' && (
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-in fade-in duration-300">
-                        {/* Columna 1: Trabajadores */}
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Users className="w-5 h-5 text-[#8CC63F]" />
-                                <h2 className="text-xl font-semibold">Gestión de Colaboradores</h2>
-                            </div>
-                            <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl h-full">
-                                <UserCrud />
-                            </div>
+                {activeTab === 'workers' && (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Users className="w-5 h-5 text-[#8CC63F]" />
+                            <h2 className="text-xl font-semibold">Gestión de Colaboradores</h2>
                         </div>
-
-                        {/* Columna 2: Proyectos */}
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2 mb-4">
-                                <FileText className="w-5 h-5 text-[#8CC63F]" />
-                                <h2 className="text-xl font-semibold">Proyectos Activos</h2>
-                            </div>
-                            <div className="h-[400px]">
-                                <ProjectCrud />
-                            </div>
+                        <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl">
+                            <UserCrud />
                         </div>
+                    </div>
+                )}
 
-                        {/* Columna 3: Categorías */}
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2 mb-4">
-                                <FileText className="w-5 h-5 text-[#8CC63F]" />
-                                <h2 className="text-xl font-semibold">Categorías y Límites</h2>
-                            </div>
-                            <div className="h-[400px]">
-                                <CategoryCrud />
-                            </div>
+                {activeTab === 'projects' && (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Folder className="w-5 h-5 text-[#8CC63F]" />
+                            <h2 className="text-xl font-semibold">Proyectos Activos</h2>
+                        </div>
+                        <div className="min-h-[400px]">
+                            <ProjectCrud />
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'categories' && (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Settings className="w-5 h-5 text-[#8CC63F]" />
+                            <h2 className="text-xl font-semibold">Categorías y Límites</h2>
+                        </div>
+                        <div className="min-h-[400px]">
+                            <CategoryCrud />
                         </div>
                     </div>
                 )}

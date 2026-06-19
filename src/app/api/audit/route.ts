@@ -57,6 +57,7 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1', 10);
         const limit = parseInt(searchParams.get('limit') || '50', 10);
+        const search = searchParams.get('search') || '';
 
         const validPage = isNaN(page) || page < 1 ? 1 : page;
         const validLimit = isNaN(limit) || limit < 1 ? 50 : limit;
@@ -64,17 +65,17 @@ export async function GET(request: Request) {
 
         const adminDbClient = getAdminSupabase();
 
-        // Obtener el conteo total de registros en la base de datos de manera eficiente
-        const { count, error: countError } = await adminDbClient
+        // Construir la consulta de manera eficiente obteniendo logs y total en una sola petición
+        let dbQuery = adminDbClient
             .from('audit_logs')
-            .select('*', { count: 'exact', head: true });
+            .select('*', { count: 'exact' });
 
-        if (countError) throw countError;
+        if (search.trim()) {
+            dbQuery = dbQuery.or(`action.ilike.%${search}%,user_email.ilike.%${search}%,details.ilike.%${search}%`);
+        }
 
         // Obtenemos los logs en el rango especificado por la paginación
-        const { data: logs, error } = await adminDbClient
-            .from('audit_logs')
-            .select('*')
+        const { data: logs, count, error } = await dbQuery
             .order('created_at', { ascending: false })
             .range(offset, offset + validLimit - 1);
 

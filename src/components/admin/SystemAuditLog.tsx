@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ShieldAlert, Clock, User, Activity, Loader2 } from 'lucide-react';
+import { ShieldAlert, Clock, User, Activity, Loader2, Search } from 'lucide-react';
 
 export default function SystemAuditLog() {
     const [logs, setLogs] = useState<any[]>([]);
@@ -8,13 +8,25 @@ export default function SystemAuditLog() {
     const [debugError, setDebugError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [totalLogs, setTotalLogs] = useState(0);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const limit = 50;
+
+    // Debounce del buscador
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setPage(1); // Reset a la primera página al buscar
+        }, 400);
+
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     useEffect(() => {
         const fetchLogs = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch(`/api/audit?page=${page}&limit=${limit}`, { cache: 'no-store' });
+                const res = await fetch(`/api/audit?page=${page}&limit=${limit}&search=${encodeURIComponent(debouncedSearch)}`, { cache: 'no-store' });
                 const data = await res.json();
                 if (res.ok && data.logs) {
                     setLogs(data.logs);
@@ -32,7 +44,7 @@ export default function SystemAuditLog() {
         };
 
         fetchLogs();
-    }, [page]);
+    }, [page, debouncedSearch]);
 
     const isDangerAction = (action: string) => {
         const lowerAction = action.toLowerCase();
@@ -54,6 +66,18 @@ export default function SystemAuditLog() {
             <p className="text-sm text-zinc-400 mb-6 max-w-3xl">
                 Registro inmutable de todas las acciones y accesos al sistema. Las acciones de alto riesgo se resaltan en <span className="text-red-400 font-medium">rojo</span>.
             </p>
+
+            {/* Buscador */}
+            <div className="relative mb-6 w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <input
+                    type="text"
+                    placeholder="Buscar por usuario, acción o detalle..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-[#121D38] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
+                />
+            </div>
 
             <div className="bg-[#121D38] border border-white/5 rounded-xl overflow-hidden">
                 <div className="overflow-y-auto max-h-[500px]">

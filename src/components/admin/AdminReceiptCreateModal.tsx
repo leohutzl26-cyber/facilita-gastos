@@ -359,6 +359,8 @@ export default function AdminReceiptCreateModal({
                                                 <option value="boleta" className="bg-[#121D38] text-white">Boleta</option>
                                                 <option value="factura" className="bg-[#121D38] text-white">Factura</option>
                                                 <option value="boleta de honorarios" className="bg-[#121D38] text-white">Boleta de Honorarios</option>
+                                                <option value="comprobante de pago" className="bg-[#121D38] text-white">Comprobante de Pago</option>
+                                                <option value="otro" className="bg-[#121D38] text-white">Otro</option>
                                             </select>
                                         </div>
                                     </div>

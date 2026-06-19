@@ -473,6 +473,8 @@ export default function ReceiptDetailModal({
                                             >
                                                 <option value="boleta">Boleta</option>
                                                 <option value="factura">Factura</option>
+                                                <option value="boleta de honorarios">Boleta de Honorarios</option>
+                                                <option value="comprobante de pago">Comprobante de Pago</option>
                                                 <option value="otro">Otro</option>
                                             </select>
                                             <input 

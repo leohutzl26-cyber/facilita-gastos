@@ -474,6 +474,8 @@ export default function WorkerCapture() {
                                                 <option value="boleta">Boleta</option>
                                                 <option value="factura">Factura</option>
                                                 <option value="boleta de honorarios">Boleta de Honorarios</option>
+                                                <option value="comprobante de pago">Comprobante de Pago</option>
+                                                <option value="otro">Otro</option>
                                             </select>
                                         </div>
                                         <div className="col-span-2 md:col-span-1">

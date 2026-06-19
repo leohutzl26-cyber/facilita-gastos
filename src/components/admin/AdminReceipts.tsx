@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye, Plus } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye, Plus, RotateCcw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -109,6 +109,29 @@ export default function AdminReceipts() {
                 setRejectionReason('');
             } else {
                 alert("Error al actualizar estado.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleRevertStatus = async (id: string) => {
+        if (!confirm('¿Estás seguro de revertir el estado de este recibo a Pendiente?')) return;
+
+        try {
+            const res = await fetch('/api/admin/receipts/status', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id,
+                    status: 'Pendiente',
+                    rejection_reason: null
+                })
+            });
+            if (res.ok) {
+                setReceipts(receipts.map(r => r.id === id ? { ...r, status: 'Pendiente', rejection_reason: null } : r));
+            } else {
+                alert("Error al revertir el estado.");
             }
         } catch (err) {
             console.error(err);
@@ -730,6 +753,15 @@ export default function AdminReceipts() {
                                                         title="Marcar como Reembolsado/Pagado"
                                                     >
                                                         <CreditCard className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                                {receipt.status && receipt.status !== 'Pendiente' && (
+                                                    <button
+                                                        onClick={() => handleRevertStatus(receipt.id)}
+                                                        className="p-1.5 bg-zinc-700/30 text-zinc-300 hover:bg-zinc-700 hover:text-white rounded-md transition"
+                                                        title="Revertir a Pendiente"
+                                                    >
+                                                        <RotateCcw className="w-4 h-4" />
                                                     </button>
                                                 )}
                                                 <button

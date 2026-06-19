@@ -162,13 +162,14 @@ export default function ReceiptDetailModal({
         setSuccessMsg('');
 
         try {
+            const resolvedReason = newStatus === 'Pendiente' ? null : (reason !== undefined ? reason : receipt.rejection_reason);
             const res = await fetch('/api/admin/receipts/status', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id: receipt.id,
                     status: newStatus,
-                    rejection_reason: reason
+                    rejection_reason: resolvedReason
                 })
             });
 
@@ -180,7 +181,7 @@ export default function ReceiptDetailModal({
             const updatedReceipt = { 
                 ...receipt, 
                 status: newStatus,
-                rejection_reason: reason || receipt.rejection_reason
+                rejection_reason: resolvedReason
             };
             onUpdate(updatedReceipt);
             fetchAuditLogs(); // Recargar historial
@@ -775,6 +776,22 @@ export default function ReceiptDetailModal({
                                 >
                                     {isActionLoading === 'Reembolsado' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
                                     Reembolsar
+                                </button>
+                            )}
+
+                            {/* Revertir */}
+                            {receipt.status && receipt.status !== 'Pendiente' && (
+                                <button 
+                                    onClick={() => {
+                                        if (window.confirm('¿Estás seguro de revertir el estado de este recibo a Pendiente?')) {
+                                            handleStatusChange('Pendiente');
+                                        }
+                                    }}
+                                    disabled={isActionLoading !== null}
+                                    className="flex items-center gap-1.5 bg-zinc-600 hover:bg-zinc-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
+                                >
+                                    {isActionLoading === 'Pendiente' ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                                    Revertir a Pendiente
                                 </button>
                             )}
                         </div>

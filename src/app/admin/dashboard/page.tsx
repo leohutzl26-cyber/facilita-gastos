@@ -97,7 +97,7 @@ export default function AdminDashboard() {
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="flex items-center gap-2 mb-4">
                             <Folder className="w-5 h-5 text-[#8CC63F]" />
-                            <h2 className="text-xl font-semibold">Proyectos Activos</h2>
+                            <h2 className="text-xl font-semibold">Proyectos</h2>
                         </div>
                         <div className="min-h-[400px]">
                             <ProjectCrud />

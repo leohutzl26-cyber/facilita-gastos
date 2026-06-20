@@ -145,11 +145,7 @@ export default function ProjectCrud() {
 
     return (
         <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl flex flex-col h-full">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                    <Folder className="w-5 h-5 text-[#8CC63F]" />
-                    <h2 className="text-xl font-semibold">Proyectos y Clientes</h2>
-                </div>
+            <div className="flex items-center justify-end mb-4">
                 <button
                     onClick={fetchProjects}
                     className="p-2 text-zinc-400 hover:text-white transition rounded-lg hover:bg-white/5"

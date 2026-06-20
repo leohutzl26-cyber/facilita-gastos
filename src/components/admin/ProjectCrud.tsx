@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Loader2, RefreshCw, Folder, Edit2, X, Search } from 'lucide-react';
+import { Plus, Trash2, Loader2, RefreshCw, Folder, Edit2, X, Search, PauseCircle, PlayCircle } from 'lucide-react';
 
 interface Project {
     id: string;
@@ -15,6 +15,7 @@ export default function ProjectCrud() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [togglingId, setTogglingId] = useState<string | null>(null);
 
     // Form state
     const [name, setName] = useState('');
@@ -116,6 +117,27 @@ export default function ProjectCrud() {
         setDescription('');
     };
 
+    const handleToggleActive = async (project: Project) => {
+        setTogglingId(project.id);
+        try {
+            const res = await fetch(`/api/admin/projects/${project.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: !project.active, name: project.name })
+            });
+            const data = await res.json();
+            if (res.ok && data.project) {
+                setProjects(projects.map(p => p.id === project.id ? data.project : p));
+            } else {
+                alert(data.error || "Error al cambiar el estado del proyecto");
+            }
+        } catch (error) {
+            console.error("Error toggling project status:", error);
+        } finally {
+            setTogglingId(null);
+        }
+    };
+
     const filteredProjects = projects.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -208,12 +230,31 @@ export default function ProjectCrud() {
                     filteredProjects.map(project => (
                         <div key={project.id} className="bg-black/30 border border-white/5 rounded-lg p-3 flex items-center justify-between group hover:border-white/10 transition">
                             <div className="flex-1 min-w-0 pr-2">
-                                <p className="font-medium text-sm text-zinc-200 truncate">{project.name}</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="font-medium text-sm text-zinc-200 truncate">{project.name}</p>
+                                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${project.active !== false ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-zinc-500/20 text-zinc-400 border border-zinc-500/30'}`}>
+                                        {project.active !== false ? 'Activo' : 'Desactivado'}
+                                    </span>
+                                </div>
                                 {project.description && (
                                     <p className="text-xs text-zinc-500 truncate">{project.description}</p>
                                 )}
                             </div>
                             <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+                                <button
+                                    onClick={() => handleToggleActive(project)}
+                                    disabled={togglingId === project.id}
+                                    className={`p-1.5 rounded-md transition ${project.active !== false ? 'text-zinc-500 hover:text-orange-400 hover:bg-[#121D38]/40' : 'text-zinc-500 hover:text-green-400 hover:bg-[#121D38]/40'}`}
+                                    title={project.active !== false ? "Desactivar proyecto" : "Activar proyecto"}
+                                >
+                                    {togglingId === project.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : project.active !== false ? (
+                                        <PauseCircle className="w-4 h-4" />
+                                    ) : (
+                                        <PlayCircle className="w-4 h-4" />
+                                    )}
+                                </button>
                                 <button
                                     onClick={() => handleStartEdit(project)}
                                     className="p-1.5 text-zinc-500 hover:text-amber-400 rounded-md hover:bg-amber-400/10"

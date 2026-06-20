@@ -56,15 +56,26 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
     try {
         const { id } = await context.params;
-        const { name, description } = await request.json();
+        const body = await request.json();
+        const { name, description, active } = body;
 
-        if (!name) {
-            return NextResponse.json({ error: 'El nombre es requerido' }, { status: 400 });
+        const updateData: any = {};
+        if (name !== undefined) {
+            if (!name && name !== '') {
+                return NextResponse.json({ error: 'El nombre es requerido' }, { status: 400 });
+            }
+            updateData.name = name;
+        }
+        if (description !== undefined) {
+            updateData.description = description;
+        }
+        if (active !== undefined) {
+            updateData.active = active;
         }
 
         const { data, error } = await supabaseSession
             .from('projects')
-            .update({ name, description })
+            .update(updateData)
             .eq('id', id)
             .select();
 

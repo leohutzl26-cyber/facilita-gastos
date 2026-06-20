@@ -25,10 +25,10 @@ export default function AdminDashboard() {
 
     const tabs = [
         { id: 'dashboard', label: 'Resumen', icon: LayoutDashboard },
+        { id: 'reports', label: 'Reportes', icon: ReceiptText },
         { id: 'workers', label: 'Colaboradores', icon: Users },
         { id: 'projects', label: 'Proyectos', icon: Folder },
         { id: 'categories', label: 'Categorías', icon: Settings },
-        { id: 'reports', label: 'Reportes', icon: ReceiptText },
         { id: 'advanced', label: 'Avanzado', icon: AlertTriangle },
     ];
 

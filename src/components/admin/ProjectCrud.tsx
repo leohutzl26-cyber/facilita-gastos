@@ -229,7 +229,7 @@ export default function ProjectCrud() {
                                 <div className="flex items-center gap-2">
                                     <p className="font-medium text-sm text-zinc-200 truncate">{project.name}</p>
                                     <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${project.active !== false ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-zinc-500/20 text-zinc-400 border border-zinc-500/30'}`}>
-                                        {project.active !== false ? 'Activo' : 'Desactivado'}
+                                        {project.active !== false ? 'Activo' : 'Cerrado'}
                                     </span>
                                 </div>
                                 {project.description && (
@@ -241,7 +241,7 @@ export default function ProjectCrud() {
                                     onClick={() => handleToggleActive(project)}
                                     disabled={togglingId === project.id}
                                     className={`p-1.5 rounded-md transition ${project.active !== false ? 'text-zinc-500 hover:text-orange-400 hover:bg-[#121D38]/40' : 'text-zinc-500 hover:text-green-400 hover:bg-[#121D38]/40'}`}
-                                    title={project.active !== false ? "Desactivar proyecto" : "Activar proyecto"}
+                                    title={project.active !== false ? "Cerrar proyecto" : "Activar proyecto"}
                                 >
                                     {togglingId === project.id ? (
                                         <Loader2 className="w-4 h-4 animate-spin" />

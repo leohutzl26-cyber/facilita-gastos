@@ -17,6 +17,14 @@ export default function ProjectCrud() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [togglingId, setTogglingId] = useState<string | null>(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
+
+    // Reset current page when search term changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
     // Form state
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -143,6 +151,11 @@ export default function ProjectCrud() {
         (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const paginatedProjects = filteredProjects.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+
     return (
         <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl flex flex-col h-full">
             <div className="flex items-center justify-end mb-4">
@@ -223,7 +236,7 @@ export default function ProjectCrud() {
                         {searchTerm ? 'No se encontraron proyectos para la búsqueda.' : 'No hay proyectos registrados aún.'}
                     </div>
                 ) : (
-                    filteredProjects.map(project => (
+                    paginatedProjects.map(project => (
                         <div key={project.id} className="bg-black/30 border border-white/5 rounded-lg p-3 flex items-center justify-between group hover:border-white/10 transition">
                             <div className="flex-1 min-w-0 pr-2">
                                 <div className="flex items-center gap-2">
@@ -270,6 +283,52 @@ export default function ProjectCrud() {
                     ))
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {filteredProjects.length > 0 && (
+                <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-white/5 bg-black/10 p-4 rounded-xl select-none">
+                    <div className="flex items-center gap-2 text-xs text-zinc-400">
+                        <span>Mostrar</span>
+                        <select
+                            value={itemsPerPage}
+                            onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1);
+                            }}
+                            className="bg-[#1C2D54] border border-white/10 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                        >
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                            <option value={200}>200</option>
+                        </select>
+                        <span>proyectos por página</span>
+                    </div>
+
+                    {totalPages > 0 && (
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1 bg-[#1C2D54] border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                Anterior
+                            </button>
+                            <span className="px-3 py-1 text-xs text-zinc-400">
+                                Página {currentPage} de {totalPages}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1 bg-[#1C2D54] border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                Siguiente
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

@@ -41,6 +41,14 @@ export default function AdminReceipts() {
     const [filterStartDate, setFilterStartDate] = useState('');
     const [filterEndDate, setFilterEndDate] = useState('');
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
+
+    // Reset current page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterCategory, filterProject, filterWorker, filterDocumentType, filterStatus, filterStartDate, filterEndDate]);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -548,6 +556,11 @@ export default function AdminReceipts() {
         return 0;
     });
 
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const paginatedReceipts = sortedReceipts.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(sortedReceipts.length / itemsPerPage);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-4">
@@ -782,7 +795,7 @@ export default function AdminReceipts() {
                                     </td>
                                 </tr>
                             ) : (
-                                sortedReceipts.map((receipt) => (
+                                paginatedReceipts.map((receipt) => (
                                     <tr key={receipt.id} className="hover:bg-white/5 transition-colors">
                                         <td className="px-6 py-4 text-zinc-300 whitespace-nowrap">{receipt.date}</td>
                                         <td className="px-6 py-4">
@@ -905,6 +918,48 @@ export default function AdminReceipts() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-t border-white/10 bg-[#1C2D54]/20 select-none">
+                    <div className="flex items-center gap-2 text-xs text-zinc-400">
+                        <span>Mostrar</span>
+                        <select
+                            value={itemsPerPage}
+                            onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1);
+                            }}
+                            className="bg-[#121D38] border border-white/10 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                        >
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                            <option value={200}>200</option>
+                        </select>
+                        <span>registros por página</span>
+                    </div>
+
+                    {totalPages > 0 && (
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1 bg-[#121D38]/50 border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                Anterior
+                            </button>
+                            <span className="px-3 py-1 text-xs text-zinc-400">
+                                Página {currentPage} de {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1 bg-[#121D38]/50 border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                Siguiente
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

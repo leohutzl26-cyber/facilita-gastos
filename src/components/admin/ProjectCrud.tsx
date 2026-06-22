@@ -213,7 +213,7 @@ export default function ProjectCrud() {
             </div>
 
             {/* Listado */}
-            <div className="flex-1 overflow-y-auto pr-2 space-y-2 min-h-[200px] max-h-[300px] custom-scrollbar">
+            <div className="flex-1 space-y-2">
                 {isLoading && projects.length === 0 ? (
                     <div className="flex items-center justify-center h-full text-zinc-400">
                         <Loader2 className="w-6 h-6 animate-spin" />

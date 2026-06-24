@@ -339,47 +339,43 @@ export default function ReceiptDetailModal({
                 {/* Left Side: Receipt Image & Viewer */}
                 <div className="w-full md:w-1/2 bg-black/40 border-r border-white/5 flex flex-col relative h-[40vh] md:h-full">
                     {/* Toolbar */}
-                    {receipt.image_url && (
+                    {!isPdf && receipt.image_url && (
                         <div className="absolute top-4 left-4 z-10 flex gap-1.5 bg-black/50 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
-                            {!isPdf && (
-                                <>
-                                    <button 
-                                        onClick={handleZoomIn}
-                                        type="button"
-                                        title="Acercar"
-                                        className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
-                                    >
-                                        <ZoomIn className="w-4 h-4" />
-                                    </button>
-                                    <button 
-                                        onClick={handleZoomOut}
-                                        type="button"
-                                        title="Alejar"
-                                        className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
-                                    >
-                                        <ZoomOut className="w-4 h-4" />
-                                    </button>
-                                    <button 
-                                        onClick={handleRotate}
-                                        type="button"
-                                        title="Rotar 90°"
-                                        className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
-                                    >
-                                        <RotateCw className="w-4 h-4" />
-                                    </button>
-                                    {(zoom !== 1 || rotate !== 0) && (
-                                        <button 
-                                            onClick={handleResetImage}
-                                            type="button"
-                                            title="Restablecer"
-                                            className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition text-[#8CC63F]"
-                                        >
-                                            <RotateCcw className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                    <div className="w-px h-5 bg-white/10 align-middle self-center mx-1"></div>
-                                </>
+                            <button 
+                                onClick={handleZoomIn}
+                                type="button"
+                                title="Acercar"
+                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                            >
+                                <ZoomIn className="w-4 h-4" />
+                            </button>
+                            <button 
+                                onClick={handleZoomOut}
+                                type="button"
+                                title="Alejar"
+                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                            >
+                                <ZoomOut className="w-4 h-4" />
+                            </button>
+                            <button 
+                                onClick={handleRotate}
+                                type="button"
+                                title="Rotar 90°"
+                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                            >
+                                <RotateCw className="w-4 h-4" />
+                            </button>
+                            {(zoom !== 1 || rotate !== 0) && (
+                                <button 
+                                    onClick={handleResetImage}
+                                    type="button"
+                                    title="Restablecer"
+                                    className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition text-[#8CC63F]"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                </button>
                             )}
+                            <div className="w-px h-5 bg-white/10 align-middle self-center mx-1"></div>
                             <button 
                                 onClick={handlePrint}
                                 type="button"

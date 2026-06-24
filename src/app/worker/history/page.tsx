@@ -463,47 +463,43 @@ function WorkerReceiptDetailModal({
 
                 {/* Left Side: Viewer */}
                 <div className="w-full md:w-1/2 bg-black/30 border-r border-white/5 flex flex-col relative h-[35vh] md:h-full">
-                    {receipt.image_url && (
+                    {!isPdf && receipt.image_url && (
                         <div className="absolute top-4 left-4 z-10 flex gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
-                            {!isPdf && (
-                                <>
-                                    <button 
-                                        onClick={() => setZoom(prev => Math.min(prev + 0.25, 2.5))} 
-                                        type="button"
-                                        title="Acercar"
-                                        className="p-1.5 hover:bg-white/10 rounded-full text-white"
-                                    >
-                                        <ZoomIn className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button 
-                                        onClick={() => setZoom(prev => Math.max(prev - 0.25, 0.75))} 
-                                        type="button"
-                                        title="Alejar"
-                                        className="p-1.5 hover:bg-white/10 rounded-full text-white"
-                                    >
-                                        <ZoomOut className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button 
-                                        onClick={() => setRotate(prev => (prev + 90) % 360)} 
-                                        type="button"
-                                        title="Rotar 90°"
-                                        className="p-1.5 hover:bg-white/10 rounded-full text-white"
-                                    >
-                                        <RotateCw className="w-3.5 h-3.5" />
-                                    </button>
-                                    {(zoom !== 1 || rotate !== 0) && (
-                                        <button 
-                                            onClick={() => { setZoom(1); setRotate(0); }} 
-                                            type="button"
-                                            title="Restablecer"
-                                            className="p-1.5 hover:bg-white/10 rounded-full text-[#8CC63F]"
-                                        >
-                                            <RotateCcw className="w-3.5 h-3.5" />
-                                        </button>
-                                    )}
-                                    <div className="w-px h-4 bg-white/10 align-middle self-center mx-0.5"></div>
-                                </>
+                            <button 
+                                onClick={() => setZoom(prev => Math.min(prev + 0.25, 2.5))} 
+                                type="button"
+                                title="Acercar"
+                                className="p-1.5 hover:bg-white/10 rounded-full text-white"
+                            >
+                                <ZoomIn className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                                onClick={() => setZoom(prev => Math.max(prev - 0.25, 0.75))} 
+                                type="button"
+                                title="Alejar"
+                                className="p-1.5 hover:bg-white/10 rounded-full text-white"
+                            >
+                                <ZoomOut className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                                onClick={() => setRotate(prev => (prev + 90) % 360)} 
+                                type="button"
+                                title="Rotar 90°"
+                                className="p-1.5 hover:bg-white/10 rounded-full text-white"
+                            >
+                                <RotateCw className="w-3.5 h-3.5" />
+                            </button>
+                            {(zoom !== 1 || rotate !== 0) && (
+                                <button 
+                                    onClick={() => { setZoom(1); setRotate(0); }} 
+                                    type="button"
+                                    title="Restablecer"
+                                    className="p-1.5 hover:bg-white/10 rounded-full text-[#8CC63F]"
+                                >
+                                    <RotateCcw className="w-3.5 h-3.5" />
+                                </button>
                             )}
+                            <div className="w-px h-4 bg-white/10 align-middle self-center mx-0.5"></div>
                             <button 
                                 onClick={handlePrint}
                                 type="button"

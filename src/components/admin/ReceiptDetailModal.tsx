@@ -4,7 +4,7 @@ import {
     X, RotateCw, ZoomIn, ZoomOut, Edit, Save, RotateCcw,
     Send, CheckCircle, XCircle, CreditCard, Trash2, Loader2,
     Calendar, MapPin, User, Tag, FolderOpen, AlertCircle,
-    MessageSquare, History, Check, Eye
+    MessageSquare, History, Check, Eye, Printer, Download
 } from 'lucide-react';
 
 type ReceiptDetailModalProps = {
@@ -121,6 +121,77 @@ export default function ReceiptDetailModal({
     const handleResetImage = () => {
         setZoom(1);
         setRotate(0);
+    };
+
+    const handleDownload = async () => {
+        if (!receipt.image_url) return;
+        try {
+            const response = await fetch(receipt.image_url);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const extension = receipt.image_url.split('?')[0].split('.').pop() || 'jpg';
+            a.download = `boleta_${receipt.merchant || 'gasto'}_${receipt.id}.${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error downloading file:", error);
+            window.open(receipt.image_url, '_blank');
+        }
+    };
+
+    const handlePrint = () => {
+        if (!receipt.image_url) return;
+        
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert("Por favor habilita las ventanas emergentes para imprimir.");
+            return;
+        }
+        
+        if (isPdf) {
+            printWindow.location.href = receipt.image_url;
+        } else {
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Imprimir Comprobante - ${receipt.merchant || 'Gasto'}</title>
+                        <style>
+                            body {
+                                margin: 0;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                min-height: 100vh;
+                                background-color: white;
+                            }
+                            img {
+                                max-width: 100%;
+                                max-height: 100vh;
+                                object-fit: contain;
+                            }
+                            @media print {
+                                body {
+                                    margin: 0;
+                                }
+                                img {
+                                    max-width: 100%;
+                                    max-height: 100%;
+                                    page-break-inside: avoid;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <img src="${receipt.image_url}" onload="window.print(); window.close();" onerror="window.close(); alert('No se pudo cargar la imagen para imprimir.');" />
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -268,38 +339,63 @@ export default function ReceiptDetailModal({
                 {/* Left Side: Receipt Image & Viewer */}
                 <div className="w-full md:w-1/2 bg-black/40 border-r border-white/5 flex flex-col relative h-[40vh] md:h-full">
                     {/* Toolbar */}
-                    {!isPdf && (
+                    {receipt.image_url && (
                         <div className="absolute top-4 left-4 z-10 flex gap-1.5 bg-black/50 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
-                            <button 
-                                onClick={handleZoomIn}
-                                title="Acercar"
-                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
-                            >
-                                <ZoomIn className="w-4 h-4" />
-                            </button>
-                            <button 
-                                onClick={handleZoomOut}
-                                title="Alejar"
-                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
-                            >
-                                <ZoomOut className="w-4 h-4" />
-                            </button>
-                            <button 
-                                onClick={handleRotate}
-                                title="Rotar 90°"
-                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
-                            >
-                                <RotateCw className="w-4 h-4" />
-                            </button>
-                            {(zoom !== 1 || rotate !== 0) && (
-                                <button 
-                                    onClick={handleResetImage}
-                                    title="Restablecer"
-                                    className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition text-[#8CC63F]"
-                                >
-                                    <RotateCcw className="w-4 h-4" />
-                                </button>
+                            {!isPdf && (
+                                <>
+                                    <button 
+                                        onClick={handleZoomIn}
+                                        type="button"
+                                        title="Acercar"
+                                        className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                                    >
+                                        <ZoomIn className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                        onClick={handleZoomOut}
+                                        type="button"
+                                        title="Alejar"
+                                        className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                                    >
+                                        <ZoomOut className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                        onClick={handleRotate}
+                                        type="button"
+                                        title="Rotar 90°"
+                                        className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                                    >
+                                        <RotateCw className="w-4 h-4" />
+                                    </button>
+                                    {(zoom !== 1 || rotate !== 0) && (
+                                        <button 
+                                            onClick={handleResetImage}
+                                            type="button"
+                                            title="Restablecer"
+                                            className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition text-[#8CC63F]"
+                                        >
+                                            <RotateCcw className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    <div className="w-px h-5 bg-white/10 align-middle self-center mx-1"></div>
+                                </>
                             )}
+                            <button 
+                                onClick={handlePrint}
+                                type="button"
+                                title="Imprimir Comprobante"
+                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                            >
+                                <Printer className="w-4 h-4" />
+                            </button>
+                            <button 
+                                onClick={handleDownload}
+                                type="button"
+                                title="Descargar Comprobante"
+                                className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition"
+                            >
+                                <Download className="w-4 h-4" />
+                            </button>
                         </div>
                     )}
 

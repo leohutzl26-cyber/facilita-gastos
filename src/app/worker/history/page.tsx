@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Camera, Search, Filter, History, MapPin, Receipt, ArrowLeft, Trash2, Eye, Edit, Save, X, ZoomIn, ZoomOut, RotateCw, RotateCcw, AlertCircle, Loader2, Calendar, User, Tag, FolderOpen } from 'lucide-react';
+import { Camera, Search, Filter, History, MapPin, Receipt, ArrowLeft, Trash2, Eye, Edit, Save, X, ZoomIn, ZoomOut, RotateCw, RotateCcw, AlertCircle, Loader2, Calendar, User, Tag, FolderOpen, Printer, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
@@ -378,6 +378,77 @@ function WorkerReceiptDetailModal({
         }
     };
 
+    const handleDownload = async () => {
+        if (!receipt.image_url) return;
+        try {
+            const response = await fetch(receipt.image_url);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const extension = receipt.image_url.split('?')[0].split('.').pop() || 'jpg';
+            a.download = `boleta_${receipt.merchant || 'gasto'}_${receipt.id}.${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error downloading file:", error);
+            window.open(receipt.image_url, '_blank');
+        }
+    };
+
+    const handlePrint = () => {
+        if (!receipt.image_url) return;
+        
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert("Por favor habilita las ventanas emergentes para imprimir.");
+            return;
+        }
+        
+        if (isPdf) {
+            printWindow.location.href = receipt.image_url;
+        } else {
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Imprimir Comprobante - ${receipt.merchant || 'Gasto'}</title>
+                        <style>
+                            body {
+                                margin: 0;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                min-height: 100vh;
+                                background-color: white;
+                            }
+                            img {
+                                max-width: 100%;
+                                max-height: 100vh;
+                                object-fit: contain;
+                            }
+                            @media print {
+                                body {
+                                    margin: 0;
+                                }
+                                img {
+                                    max-width: 100%;
+                                    max-height: 100%;
+                                    page-break-inside: avoid;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <img src="${receipt.image_url}" onload="window.print(); window.close();" onerror="window.close(); alert('No se pudo cargar la imagen para imprimir.');" />
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
             <div className="bg-[#121D38] border border-white/10 rounded-[2rem] w-full max-w-5xl h-[90vh] md:h-[80vh] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
@@ -392,14 +463,63 @@ function WorkerReceiptDetailModal({
 
                 {/* Left Side: Viewer */}
                 <div className="w-full md:w-1/2 bg-black/30 border-r border-white/5 flex flex-col relative h-[35vh] md:h-full">
-                    {!isPdf && receipt.image_url && (
-                        <div className="absolute top-4 left-4 z-10 flex gap-1 bg-black/60 border border-white/10 p-1 rounded-full shadow">
-                            <button onClick={() => setZoom(prev => Math.min(prev + 0.25, 2.5))} className="p-1.5 hover:bg-white/10 rounded-full text-white"><ZoomIn className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => setZoom(prev => Math.max(prev - 0.25, 0.75))} className="p-1.5 hover:bg-white/10 rounded-full text-white"><ZoomOut className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => setRotate(prev => (prev + 90) % 360)} className="p-1.5 hover:bg-white/10 rounded-full text-white"><RotateCw className="w-3.5 h-3.5" /></button>
-                            {(zoom !== 1 || rotate !== 0) && (
-                                <button onClick={() => { setZoom(1); setRotate(0); }} className="p-1.5 hover:bg-white/10 rounded-full text-[#8CC63F]"><RotateCcw className="w-3.5 h-3.5" /></button>
+                    {receipt.image_url && (
+                        <div className="absolute top-4 left-4 z-10 flex gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
+                            {!isPdf && (
+                                <>
+                                    <button 
+                                        onClick={() => setZoom(prev => Math.min(prev + 0.25, 2.5))} 
+                                        type="button"
+                                        title="Acercar"
+                                        className="p-1.5 hover:bg-white/10 rounded-full text-white"
+                                    >
+                                        <ZoomIn className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button 
+                                        onClick={() => setZoom(prev => Math.max(prev - 0.25, 0.75))} 
+                                        type="button"
+                                        title="Alejar"
+                                        className="p-1.5 hover:bg-white/10 rounded-full text-white"
+                                    >
+                                        <ZoomOut className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button 
+                                        onClick={() => setRotate(prev => (prev + 90) % 360)} 
+                                        type="button"
+                                        title="Rotar 90°"
+                                        className="p-1.5 hover:bg-white/10 rounded-full text-white"
+                                    >
+                                        <RotateCw className="w-3.5 h-3.5" />
+                                    </button>
+                                    {(zoom !== 1 || rotate !== 0) && (
+                                        <button 
+                                            onClick={() => { setZoom(1); setRotate(0); }} 
+                                            type="button"
+                                            title="Restablecer"
+                                            className="p-1.5 hover:bg-white/10 rounded-full text-[#8CC63F]"
+                                        >
+                                            <RotateCcw className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
+                                    <div className="w-px h-4 bg-white/10 align-middle self-center mx-0.5"></div>
+                                </>
                             )}
+                            <button 
+                                onClick={handlePrint}
+                                type="button"
+                                title="Imprimir Comprobante"
+                                className="p-1.5 hover:bg-white/10 rounded-full text-white"
+                            >
+                                <Printer className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                                onClick={handleDownload}
+                                type="button"
+                                title="Descargar Comprobante"
+                                className="p-1.5 hover:bg-white/10 rounded-full text-white"
+                            >
+                                <Download className="w-3.5 h-3.5" />
+                            </button>
                         </div>
                     )}
 

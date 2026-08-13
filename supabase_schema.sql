@@ -157,3 +157,66 @@ ALTER TABLE public.deleted_records ENABLE ROW LEVEL SECURITY;
 -- Políticas de RLS para administradores
 DROP POLICY IF EXISTS "Admins can manage deleted_records" ON public.deleted_records;
 CREATE POLICY "Admins can manage deleted_records" ON public.deleted_records FOR ALL USING (auth.uid() IS NOT NULL);
+
+-- ==========================================
+-- 7. Comprobantes de Pago (Payments)
+-- ==========================================
+
+-- Un comprobante (ej. transferencia) puede respaldar una o varias boletas
+CREATE TABLE IF NOT EXISTS public.payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    amount NUMERIC,
+    paid_at DATE,
+    file_url TEXT NOT NULL,
+    file_type TEXT,
+    source TEXT NOT NULL DEFAULT 'manual', -- 'share_target' | 'email' | 'manual' | 'whatsapp'
+    status TEXT NOT NULL DEFAULT 'pendiente', -- 'pendiente' | 'asociado' | 'descartado'
+    uploaded_by UUID REFERENCES auth.users(id),
+    uploaded_by_email TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Authenticated users can manage payments" ON public.payments;
+CREATE POLICY "Authenticated users can manage payments" ON public.payments FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);
+
+-- Tabla puente: relación muchos-a-muchos entre payments y receipts
+CREATE TABLE IF NOT EXISTS public.payment_receipts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    payment_id UUID NOT NULL REFERENCES public.payments(id) ON DELETE CASCADE,
+    receipt_id UUID NOT NULL REFERENCES public.receipts(id) ON DELETE CASCADE,
+    amount_applied NUMERIC,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    UNIQUE (payment_id, receipt_id)
+);
+
+ALTER TABLE public.payment_receipts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Authenticated users can manage payment_receipts" ON public.payment_receipts;
+CREATE POLICY "Authenticated users can manage payment_receipts" ON public.payment_receipts FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE INDEX IF NOT EXISTS idx_payment_receipts_payment_id ON public.payment_receipts(payment_id);
+CREATE INDEX IF NOT EXISTS idx_payment_receipts_receipt_id ON public.payment_receipts(receipt_id);
+
+-- Bucket de Storage para comprobantes de pago
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('payment-proofs', 'payment-proofs', true)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Authenticated users can upload payment proofs" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can view payment proofs" ON storage.objects;
+
+CREATE POLICY "Authenticated users can upload payment proofs"
+ON storage.objects FOR INSERT
+WITH CHECK (
+    bucket_id = 'payment-proofs'
+    AND auth.uid() IS NOT NULL
+);
+
+CREATE POLICY "Anyone can view payment proofs"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'payment-proofs');

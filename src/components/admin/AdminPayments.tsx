@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
-import { Landmark, Search, Loader2, CheckCircle2, FileText, Share2, Mail, Upload, X } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Landmark, Search, Loader2, CheckCircle2, FileText, Share2, Mail, Upload, X, Plus } from 'lucide-react';
 
 const SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
     share_target: { label: 'Compartido', icon: Share2 },
@@ -18,6 +18,14 @@ export default function AdminPayments() {
     const [receiptSearch, setReceiptSearch] = useState('');
     const [isConfirming, setIsConfirming] = useState(false);
     const [error, setError] = useState('');
+
+    const [isUploadOpen, setIsUploadOpen] = useState(false);
+    const [uploadFile, setUploadFile] = useState<{ base64: string; name: string } | null>(null);
+    const [uploadAmount, setUploadAmount] = useState('');
+    const [uploadPaidAt, setUploadPaidAt] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchPayments = async () => {
         try {
@@ -105,6 +113,53 @@ export default function AdminPayments() {
         }
     };
 
+    const handleFileSelect = (file: File) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const base64 = event.target?.result as string;
+            setUploadFile({ base64, name: file.name });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const resetUploadForm = () => {
+        setIsUploadOpen(false);
+        setUploadFile(null);
+        setUploadAmount('');
+        setUploadPaidAt('');
+        setUploadError('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleManualUpload = async () => {
+        if (!uploadFile) {
+            setUploadError('Selecciona un archivo primero');
+            return;
+        }
+        setIsUploading(true);
+        setUploadError('');
+        try {
+            const res = await fetch('/api/admin/payments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fileBase64: uploadFile.base64,
+                    amount: uploadAmount || null,
+                    paid_at: uploadPaidAt || null
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error al subir comprobante');
+
+            resetUploadForm();
+            await fetchPayments();
+        } catch (err: any) {
+            setUploadError(err.message);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -115,6 +170,69 @@ export default function AdminPayments() {
 
     return (
         <div className="space-y-6">
+            <div className="flex justify-end">
+                <button
+                    onClick={() => setIsUploadOpen(prev => !prev)}
+                    className="flex items-center gap-2 bg-[#1C2D54]/60 hover:bg-[#1C2D54] border border-[#8CC63F]/20 text-sm text-zinc-200 px-4 py-2 rounded-xl transition"
+                >
+                    <Plus className="w-4 h-4 text-[#8CC63F]" />
+                    Subir comprobante manualmente
+                </button>
+            </div>
+
+            {isUploadOpen && (
+                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-5 space-y-4 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-white">Nuevo comprobante manual</h3>
+                        <button onClick={resetUploadForm} className="text-zinc-500 hover:text-white transition">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+                        className="block w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#8CC63F]/15 file:text-[#8CC63F] file:text-xs file:font-medium hover:file:bg-[#8CC63F]/25"
+                    />
+                    {uploadFile && <p className="text-xs text-zinc-500">Seleccionado: {uploadFile.name}</p>}
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-[11px] text-zinc-500 block mb-1">Monto (opcional)</label>
+                            <input
+                                type="number"
+                                value={uploadAmount}
+                                onChange={e => setUploadAmount(e.target.value)}
+                                placeholder="45000"
+                                className="w-full bg-[#0F1830] border border-white/5 rounded-xl px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#8CC63F]/40"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[11px] text-zinc-500 block mb-1">Fecha de pago (opcional)</label>
+                            <input
+                                type="date"
+                                value={uploadPaidAt}
+                                onChange={e => setUploadPaidAt(e.target.value)}
+                                className="w-full bg-[#0F1830] border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#8CC63F]/40"
+                            />
+                        </div>
+                    </div>
+
+                    {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
+
+                    <button
+                        onClick={handleManualUpload}
+                        disabled={!uploadFile || isUploading}
+                        className="flex items-center gap-2 bg-[#8CC63F] hover:bg-[#3EAE49] disabled:opacity-40 disabled:cursor-not-allowed text-[#121D38] px-4 py-2 rounded-xl text-xs font-bold transition"
+                    >
+                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Subir comprobante
+                    </button>
+                </div>
+            )}
+
             {payments.length === 0 ? (
                 <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-10 text-center">
                     <Landmark className="w-8 h-8 text-zinc-500 mx-auto mb-3" />

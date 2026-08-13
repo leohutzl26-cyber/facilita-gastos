@@ -1,6 +1,21 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Landmark, Search, Loader2, CheckCircle2, FileText, Share2, Mail, Upload, X, Plus } from 'lucide-react';
+import { Landmark, Search, Loader2, CheckCircle2, FileText, Share2, Mail, Upload, X, Plus, Sparkles } from 'lucide-react';
+
+// Busca una boleta o un par de boletas cuyo monto sume exactamente el monto objetivo
+function findMatchingReceiptIds(candidates: any[], targetAmount: number): string[] {
+    const exact = candidates.find(r => Number(r.amount) === targetAmount);
+    if (exact) return [exact.id];
+
+    for (let i = 0; i < candidates.length; i++) {
+        for (let j = i + 1; j < candidates.length; j++) {
+            if (Number(candidates[i].amount) + Number(candidates[j].amount) === targetAmount) {
+                return [candidates[i].id, candidates[j].id];
+            }
+        }
+    }
+    return [];
+}
 
 const SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
     share_target: { label: 'Compartido', icon: Share2 },
@@ -18,6 +33,8 @@ export default function AdminPayments() {
     const [receiptSearch, setReceiptSearch] = useState('');
     const [isConfirming, setIsConfirming] = useState(false);
     const [error, setError] = useState('');
+    const [isSuggesting, setIsSuggesting] = useState(false);
+    const [suggestionApplied, setSuggestionApplied] = useState(false);
 
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [uploadFile, setUploadFile] = useState<{ base64: string; name: string } | null>(null);
@@ -74,14 +91,37 @@ export default function AdminPayments() {
             .reduce((sum, r) => sum + Number(r.amount || 0), 0);
     }, [receipts, selectedReceiptIds]);
 
-    const openPayment = (paymentId: string) => {
+    const openPayment = async (paymentId: string) => {
         setActivePaymentId(paymentId);
         setSelectedReceiptIds(new Set());
         setReceiptSearch('');
         setError('');
+        setSuggestionApplied(false);
+
+        setIsSuggesting(true);
+        try {
+            const res = await fetch(`/api/admin/payments/${paymentId}/suggest`, { method: 'POST' });
+            const data = await res.json();
+            if (!res.ok || !data.amount) return;
+
+            const targetAmount = Number(data.amount);
+            setPayments(prev => prev.map(p => p.id === paymentId ? { ...p, amount: data.amount, paid_at: data.paid_at } : p));
+
+            const approved = receipts.filter(r => r.status === 'Aprobado por Supervisor');
+            const matchIds = findMatchingReceiptIds(approved, targetAmount);
+            if (matchIds.length > 0) {
+                setSelectedReceiptIds(new Set(matchIds));
+                setSuggestionApplied(true);
+            }
+        } catch (err) {
+            console.error('Error obteniendo sugerencia IA', err);
+        } finally {
+            setIsSuggesting(false);
+        }
     };
 
     const toggleReceipt = (receiptId: string) => {
+        setSuggestionApplied(false);
         setSelectedReceiptIds(prev => {
             const next = new Set(prev);
             if (next.has(receiptId)) next.delete(receiptId);
@@ -293,9 +333,16 @@ export default function AdminPayments() {
                                 <a href={activePayment.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#8CC63F] hover:underline">
                                     Ver comprobante completo
                                 </a>
-                                <p className="text-xs text-zinc-500 mt-2">
-                                    {activePayment.amount ? `Monto del comprobante: $${Number(activePayment.amount).toLocaleString('es-CL')}` : 'Sin monto informado — asocia por criterio manual'}
+                                <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1.5">
+                                    {isSuggesting && <Loader2 className="w-3 h-3 animate-spin text-[#8CC63F]" />}
+                                    {activePayment.amount ? `Monto del comprobante: $${Number(activePayment.amount).toLocaleString('es-CL')}` : isSuggesting ? 'Leyendo comprobante con IA...' : 'Sin monto informado — asocia por criterio manual'}
                                 </p>
+                                {suggestionApplied && (
+                                    <p className="text-[11px] text-[#8CC63F] flex items-center gap-1 mt-1">
+                                        <Sparkles className="w-3 h-3" />
+                                        Boleta(s) sugerida(s) automáticamente por monto — revisa antes de confirmar
+                                    </p>
+                                )}
                             </div>
                         </div>
                         <button onClick={() => setActivePaymentId(null)} className="text-zinc-500 hover:text-white transition shrink-0">

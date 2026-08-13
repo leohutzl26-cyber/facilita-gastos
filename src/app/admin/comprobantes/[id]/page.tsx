@@ -86,9 +86,12 @@ export default async function ComprobanteDetailPage({ params }: { params: Promis
                         <span>{new Date(payment.created_at).toLocaleString('es-CL')}</span>
                     </div>
 
-                    <p className="text-xs text-zinc-500">
-                        Próximamente podrás asociar este comprobante a una o más boletas desde el panel de administración.
-                    </p>
+                    <Link
+                        href="/admin/dashboard?tab=comprobantes"
+                        className="inline-flex items-center justify-center gap-2 w-full bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] px-4 py-2.5 rounded-xl text-sm font-bold transition"
+                    >
+                        Asociar a boletas ahora
+                    </Link>
                 </div>
             </div>
         </div>

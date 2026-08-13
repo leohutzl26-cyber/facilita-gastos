@@ -1,8 +1,8 @@
 'use client';
-import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, ReceiptText, AlertTriangle, Eye, EyeOff, Folder } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, ReceiptText, AlertTriangle, Eye, EyeOff, Folder, Landmark } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import UserCrud from '@/components/admin/UserCrud';
 import AdminReceipts from '@/components/admin/AdminReceipts';
 import ProjectCrud from '@/components/admin/ProjectCrud';
@@ -11,10 +11,13 @@ import SystemAuditLog from '@/components/admin/SystemAuditLog';
 import AdminDashboardCharts from '@/components/admin/AdminDashboardCharts';
 import CategoryCrud from '@/components/admin/CategoryCrud';
 import RecycleBin from '@/components/admin/RecycleBin';
+import AdminPayments from '@/components/admin/AdminPayments';
 
-export default function AdminDashboard() {
+function AdminDashboardInner() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const searchParams = useSearchParams();
+    const initialTab = searchParams.get('tab') || 'dashboard';
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [showDangerZone, setShowDangerZone] = useState(false);
 
     const handleLogout = async () => {
@@ -26,6 +29,7 @@ export default function AdminDashboard() {
     const tabs = [
         { id: 'dashboard', label: 'Resumen', icon: LayoutDashboard },
         { id: 'reports', label: 'Reportes', icon: ReceiptText },
+        { id: 'comprobantes', label: 'Comprobantes', icon: Landmark },
         { id: 'workers', label: 'Colaboradores', icon: Users },
         { id: 'projects', label: 'Proyectos', icon: Folder },
         { id: 'categories', label: 'Categorías', icon: Settings },
@@ -78,6 +82,16 @@ export default function AdminDashboard() {
                 {activeTab === 'dashboard' && (
                     <div className="animate-in fade-in duration-300">
                         <AdminDashboardCharts />
+                    </div>
+                )}
+
+                {activeTab === 'comprobantes' && (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Landmark className="w-5 h-5 text-[#8CC63F]" />
+                            <h2 className="text-xl font-semibold">Comprobantes de Pago</h2>
+                        </div>
+                        <AdminPayments />
                     </div>
                 )}
 
@@ -179,5 +193,13 @@ export default function AdminDashboard() {
                 )}
             </main>
         </div>
+    );
+}
+
+export default function AdminDashboard() {
+    return (
+        <Suspense fallback={null}>
+            <AdminDashboardInner />
+        </Suspense>
     );
 }

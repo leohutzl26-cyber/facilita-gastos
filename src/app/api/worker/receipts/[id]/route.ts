@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { parseCLPAmount } from '@/utils/currency';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -132,8 +133,7 @@ export async function PATCH(
         if (document_type !== undefined) updateData.document_type = document_type || 'boleta';
         if (document_number !== undefined) updateData.document_number = document_number || null;
         if (amount !== undefined) {
-            const cleanAmount = String(amount).replace(/[^\d.,]/g, '').replace(',', '.');
-            updateData.amount = parseFloat(cleanAmount) || 0;
+            updateData.amount = parseCLPAmount(amount);
         }
         if (date !== undefined) updateData.date = date;
         if (category !== undefined) updateData.category = category;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { parseCLPAmount } from '@/utils/currency';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -51,7 +52,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         const prompt = `Eres un asistente experto en contabilidad. Analiza este comprobante de transferencia o pago electrónico y devuelve estrictamente el siguiente JSON puro (sin markdown ni explicaciones):
 
 {
-  "amount": "Monto total transferido/pagado, como texto numérico limpio (solo números, sin puntos de miles ni símbolos, ej: 45000)",
+  "amount": "Monto total transferido/pagado en pesos chilenos (CLP), como SOLO DÍGITOS sin puntos, comas ni símbolos (ej: si el comprobante muestra $45.000, devuelve 45000). CLP no usa decimales/centavos: ignora cualquier ',00' o '.00' final.",
   "paid_at": "Fecha en que se realizó la transferencia, formato YYYY-MM-DD"
 }
 
@@ -81,7 +82,7 @@ Si algún dato no es visible o no estás seguro, devuelve cadena vacía para ese
         const cleanJsonString = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanJsonString);
 
-        const extractedAmount = parsed.amount ? parseFloat(String(parsed.amount).replace(/[^\d.]/g, '')) : null;
+        const extractedAmount = parsed.amount ? parseCLPAmount(parsed.amount) : null;
         const extractedDate = parsed.paid_at || null;
 
         const updateData: Record<string, any> = {};

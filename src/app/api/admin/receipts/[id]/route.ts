@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { parseCLPAmount } from '@/utils/currency';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -109,7 +110,7 @@ export async function PATCH(
         if (merchant_rut !== undefined) updateData.merchant_rut = merchant_rut;
         if (document_type !== undefined) updateData.document_type = document_type;
         if (document_number !== undefined) updateData.document_number = document_number;
-        if (amount !== undefined) updateData.amount = parseFloat(amount) || 0;
+        if (amount !== undefined) updateData.amount = parseCLPAmount(amount);
         if (date !== undefined) updateData.date = date;
         if (category !== undefined) updateData.category = category;
         if (project_id !== undefined) updateData.project_id = project_id === '' ? null : project_id;
@@ -128,7 +129,7 @@ export async function PATCH(
         // Construir detalles de cambios para la auditoría
         const changes: string[] = [];
         if (merchant && merchant !== oldReceipt.merchant) changes.push(`Comercio: ${oldReceipt.merchant} -> ${merchant}`);
-        if (amount && parseFloat(amount) !== parseFloat(oldReceipt.amount)) changes.push(`Monto: $${oldReceipt.amount} -> $${amount}`);
+        if (amount && parseCLPAmount(amount) !== parseFloat(oldReceipt.amount)) changes.push(`Monto: $${oldReceipt.amount} -> $${parseCLPAmount(amount)}`);
         if (category && category !== oldReceipt.category) changes.push(`Categoría: ${oldReceipt.category} -> ${category}`);
         if (status && status !== oldReceipt.status) changes.push(`Estado: ${oldReceipt.status} -> ${status}`);
         if (date && date !== oldReceipt.date) changes.push(`Fecha: ${oldReceipt.date} -> ${date}`);

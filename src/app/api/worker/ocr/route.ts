@@ -72,7 +72,7 @@ Extrae los datos de esta imagen de documento (recibo, factura o boleta) y devué
   "document_type": "Clasifica el tipo de documento. Debe ser estrictamente 'factura', 'boleta', 'boleta de honorarios', o 'comprobante de pago'. Si no estás seguro, usa 'boleta'.",
   "document_number": "Número del documento, folio de la factura o número impreso de la boleta (ej: '1459', '000122'). Si no hay número, devuelve cadena vacía.",
   "date": "Fecha en formato YYYY-MM-DD",
-  "amount": "Monto total como texto numérico limpio (solo números y coma/punto, ej: 15500 o 150.50)",
+  "amount": "Monto total en pesos chilenos (CLP), como SOLO DÍGITOS sin puntos, comas ni símbolos (ej: si el documento muestra $15.500, devuelve 15500). CLP no usa decimales/centavos: ignora cualquier ',00' o '.00' final.",
   "category": "Estrictamente UNA de estas opciones exactas, la que mejor describa la compra: ${categoryNamesList}"
 }
 

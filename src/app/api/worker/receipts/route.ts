@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { parseCLPAmount } from '@/utils/currency';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -44,8 +45,7 @@ export async function POST(request: Request) {
         const { merchant, merchant_rut, document_type, document_number, amount, date, category, imageBase64, project_id, location } = body;
 
         let formattedDate = date;
-        const cleanAmount = amount.replace(/[^\d.,]/g, '').replace(',', '.'); // Permite solo dígitos y punto
-        const parsedAmount = parseFloat(cleanAmount) || 0;
+        const parsedAmount = parseCLPAmount(amount);
 
         // 0.1 Check de Fraude Global: Comprobar si este mismo Folio ya fue usado por CUALQUIER usuario
         // Solo chequeamos si tenemos un número de documento válido subido.

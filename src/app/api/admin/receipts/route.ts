@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { parseCLPAmount } from '@/utils/currency';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -67,8 +68,7 @@ export async function POST(request: Request) {
         const worker_email = user.email || '';
 
         let formattedDate = date;
-        const cleanAmount = String(amount).replace(/[^\d.,]/g, '').replace(',', '.');
-        const parsedAmount = parseFloat(cleanAmount) || 0;
+        const parsedAmount = parseCLPAmount(amount);
 
         // Comprobación de duplicados
         if (document_number && String(document_number).trim() !== '') {

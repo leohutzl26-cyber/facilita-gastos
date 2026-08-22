@@ -35,6 +35,7 @@ export default function AdminPayments() {
     const [error, setError] = useState('');
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [suggestionApplied, setSuggestionApplied] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<'pendiente' | 'asociado' | 'todos'>('pendiente');
 
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [uploadFile, setUploadFile] = useState<{ base64: string; name: string } | null>(null);
@@ -46,7 +47,7 @@ export default function AdminPayments() {
 
     const fetchPayments = async () => {
         try {
-            const res = await fetch('/api/admin/payments?status=pendiente');
+            const res = await fetch('/api/admin/payments');
             const data = await res.json();
             if (res.ok) setPayments(data.payments || []);
         } catch (err) {
@@ -70,6 +71,27 @@ export default function AdminPayments() {
     }, []);
 
     const activePayment = payments.find(p => p.id === activePaymentId) || null;
+
+    const pendingCount = payments.filter(p => p.status === 'pendiente').length;
+    const associatedCount = payments.filter(p => p.status === 'asociado').length;
+
+    const visiblePayments = useMemo(() => {
+        if (statusFilter === 'todos') return payments;
+        return payments.filter(p => p.status === statusFilter);
+    }, [payments, statusFilter]);
+
+    const isActiveAssociated = activePayment?.status === 'asociado';
+
+    // Boletas ya vinculadas al comprobante abierto (para la vista de solo lectura)
+    const linkedReceipts = useMemo(() => {
+        return (activePayment?.payment_receipts || [])
+            .map((link: any) => link.receipts)
+            .filter(Boolean);
+    }, [activePayment]);
+
+    const linkedReceiptsTotal = useMemo(() => {
+        return linkedReceipts.reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0);
+    }, [linkedReceipts]);
 
     const candidateReceipts = useMemo(() => {
         const term = receiptSearch.trim().toLowerCase();
@@ -97,6 +119,11 @@ export default function AdminPayments() {
         setReceiptSearch('');
         setError('');
         setSuggestionApplied(false);
+
+        // Los comprobantes ya asociados se abren en modo lectura: no hay
+        // nada que sugerir ni que seleccionar.
+        const target = payments.find(p => p.id === paymentId);
+        if (target?.status !== 'pendiente') return;
 
         setIsSuggesting(true);
         try {
@@ -273,17 +300,43 @@ export default function AdminPayments() {
                 </div>
             )}
 
-            {payments.length === 0 ? (
+            <div className="flex gap-1 border-b border-white/5">
+                {([
+                    { id: 'pendiente' as const, label: 'Pendientes', count: pendingCount },
+                    { id: 'asociado' as const, label: 'Asociados', count: associatedCount },
+                    { id: 'todos' as const, label: 'Todos', count: payments.length },
+                ]).map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => { setStatusFilter(tab.id); setActivePaymentId(null); }}
+                        className={`px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors ${statusFilter === tab.id
+                            ? 'border-[#8CC63F] text-[#8CC63F]'
+                            : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                            }`}
+                    >
+                        {tab.label} ({tab.count})
+                    </button>
+                ))}
+            </div>
+
+            {visiblePayments.length === 0 ? (
                 <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-10 text-center">
                     <Landmark className="w-8 h-8 text-zinc-500 mx-auto mb-3" />
-                    <p className="text-zinc-400 text-sm">No hay comprobantes pendientes por asociar.</p>
+                    <p className="text-zinc-400 text-sm">
+                        {statusFilter === 'pendiente'
+                            ? 'No hay comprobantes pendientes por asociar.'
+                            : statusFilter === 'asociado'
+                                ? 'Todavía no hay comprobantes asociados a boletas.'
+                                : 'Aún no se ha registrado ningún comprobante de pago.'}
+                    </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {payments.map(payment => {
+                    {visiblePayments.map(payment => {
                         const source = SOURCE_LABELS[payment.source] || SOURCE_LABELS.manual;
                         const SourceIcon = source.icon;
                         const linkedCount = payment.payment_receipts?.length || 0;
+                        const isAssociated = payment.status === 'asociado';
                         return (
                             <button
                                 key={payment.id}
@@ -295,18 +348,28 @@ export default function AdminPayments() {
                                         <SourceIcon className="w-3.5 h-3.5" />
                                         {source.label}
                                     </div>
-                                    <span className="text-[10px] bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
-                                        Pendiente
-                                    </span>
+                                    {isAssociated ? (
+                                        <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                            Asociado
+                                        </span>
+                                    ) : (
+                                        <span className="text-[10px] bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                            Pendiente
+                                        </span>
+                                    )}
                                 </div>
                                 <p className="text-sm font-medium text-white truncate">
                                     {payment.amount ? `$${Number(payment.amount).toLocaleString('es-CL')}` : 'Monto no informado'}
                                 </p>
                                 <p className="text-xs text-zinc-500 mt-1">
-                                    {new Date(payment.created_at).toLocaleString('es-CL')}
+                                    {payment.paid_at
+                                        ? `Pagado el ${payment.paid_at}`
+                                        : new Date(payment.created_at).toLocaleString('es-CL')}
                                 </p>
                                 {linkedCount > 0 && (
-                                    <p className="text-[11px] text-[#8CC63F] mt-2">{linkedCount} boleta(s) ya vinculada(s)</p>
+                                    <p className="text-[11px] text-[#8CC63F] mt-2">
+                                        {linkedCount === 1 ? '1 boleta vinculada' : `${linkedCount} boletas vinculadas`}
+                                    </p>
                                 )}
                             </button>
                         );
@@ -329,14 +392,25 @@ export default function AdminPayments() {
                                 )}
                             </div>
                             <div className="min-w-0">
-                                <h3 className="text-sm font-semibold text-white">Asociar comprobante a boletas</h3>
+                                <h3 className="text-sm font-semibold text-white">
+                                    {isActiveAssociated ? 'Comprobante asociado' : 'Asociar comprobante a boletas'}
+                                </h3>
                                 <a href={activePayment.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#8CC63F] hover:underline">
                                     Ver comprobante completo
                                 </a>
                                 <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1.5">
                                     {isSuggesting && <Loader2 className="w-3 h-3 animate-spin text-[#8CC63F]" />}
-                                    {activePayment.amount ? `Monto del comprobante: $${Number(activePayment.amount).toLocaleString('es-CL')}` : isSuggesting ? 'Leyendo comprobante con IA...' : 'Sin monto informado — asocia por criterio manual'}
+                                    {activePayment.amount
+                                        ? `Monto del comprobante: $${Number(activePayment.amount).toLocaleString('es-CL')}`
+                                        : isSuggesting
+                                            ? 'Leyendo comprobante con IA...'
+                                            : isActiveAssociated
+                                                ? 'Sin monto informado'
+                                                : 'Sin monto informado — asocia por criterio manual'}
                                 </p>
+                                {isActiveAssociated && activePayment.paid_at && (
+                                    <p className="text-[11px] text-zinc-500 mt-1">Fecha de pago: {activePayment.paid_at}</p>
+                                )}
                                 {suggestionApplied && (
                                     <p className="text-[11px] text-[#8CC63F] flex items-center gap-1 mt-1">
                                         <Sparkles className="w-3 h-3" />
@@ -350,6 +424,49 @@ export default function AdminPayments() {
                         </button>
                     </div>
 
+                    {isActiveAssociated ? (
+                        <div className="space-y-2">
+                            <p className="text-xs text-zinc-400">
+                                Boletas cubiertas por este comprobante
+                                <span className="text-zinc-500"> ({linkedReceipts.length})</span>
+                            </p>
+                            {linkedReceipts.length === 0 ? (
+                                <p className="text-xs text-zinc-500 py-3">No se encontraron las boletas vinculadas.</p>
+                            ) : (
+                                <>
+                                    <div className="space-y-1.5">
+                                        {linkedReceipts.map((receipt: any) => (
+                                            <div
+                                                key={receipt.id}
+                                                className="flex items-center gap-3 bg-[#1C2D54]/50 rounded-xl px-3 py-2"
+                                            >
+                                                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                <span className="flex-1 min-w-0 text-xs text-zinc-200 truncate">
+                                                    {receipt.merchant} · {receipt.worker_email}
+                                                </span>
+                                                <span className="text-xs text-zinc-500 whitespace-nowrap">{receipt.date}</span>
+                                                <span className="text-xs text-zinc-300 whitespace-nowrap font-medium">
+                                                    ${Number(receipt.amount || 0).toLocaleString('es-CL')}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center justify-end gap-2 border-t border-white/5 pt-3 text-xs">
+                                        <span className="text-zinc-400">Total boletas:</span>
+                                        <span className="text-[#8CC63F] font-medium">
+                                            ${linkedReceiptsTotal.toLocaleString('es-CL')}
+                                        </span>
+                                        {activePayment.amount && Number(activePayment.amount) !== linkedReceiptsTotal && (
+                                            <span className="text-yellow-400 ml-1">
+                                                (no calza con el comprobante)
+                                            </span>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    ) : (
+                    <>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                         <input
@@ -403,6 +520,8 @@ export default function AdminPayments() {
                             Confirmar y marcar Reembolsado
                         </button>
                     </div>
+                    </>
+                    )}
                 </div>
             )}
         </div>

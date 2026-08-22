@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
         let query = supabaseSession
             .from('payments')
-            .select('*, payment_receipts(id, receipt_id, amount_applied)')
+            .select('*, payment_receipts(id, receipt_id, amount_applied, receipts(id, merchant, amount, date, worker_email, status))')
             .order('created_at', { ascending: false });
 
         if (status) {

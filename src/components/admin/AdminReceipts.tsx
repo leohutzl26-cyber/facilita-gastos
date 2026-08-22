@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye, Plus, RotateCcw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye, Plus, RotateCcw, ArrowUp, ArrowDown, ArrowUpDown, Landmark } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -858,6 +858,21 @@ export default function AdminReceipts() {
                                                     Motivo: {receipt.rejection_reason}
                                                 </div>
                                             )}
+                                            {receipt.payment_receipts?.length > 0 ? (
+                                                <button
+                                                    onClick={() => setSelectedReceipt(receipt)}
+                                                    className="mt-1.5 inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-medium hover:bg-emerald-500/25 transition"
+                                                    title="Ver comprobante de pago asociado"
+                                                >
+                                                    <Landmark className="w-3 h-3" />
+                                                    Con comprobante
+                                                </button>
+                                            ) : receipt.status === 'Reembolsado' ? (
+                                                <div className="mt-1.5 inline-flex items-center gap-1 text-zinc-500 border border-white/5 px-2 py-0.5 rounded-full text-[10px]" title="Marcado como pagado, pero sin comprobante de pago adjunto">
+                                                    <Landmark className="w-3 h-3" />
+                                                    Sin comprobante
+                                                </div>
+                                            ) : null}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
@@ -999,8 +1014,10 @@ export default function AdminReceipts() {
                     receipt={selectedReceipt}
                     onClose={() => setSelectedReceipt(null)}
                     onUpdate={(updated) => {
-                        setReceipts(prev => prev.map(r => r.id === updated.id ? updated : r));
-                        setSelectedReceipt(updated);
+                        // Merge para no perder relaciones anidadas (projects, payment_receipts)
+                        // que el PATCH no devuelve en su respuesta.
+                        setReceipts(prev => prev.map(r => r.id === updated.id ? { ...r, ...updated } : r));
+                        setSelectedReceipt((prev: any) => prev ? { ...prev, ...updated } : updated);
                     }}
                     onDelete={(id) => {
                         setReceipts(prev => prev.filter(r => r.id !== id));

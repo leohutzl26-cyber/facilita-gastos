@@ -4,8 +4,16 @@ import {
     X, RotateCw, ZoomIn, ZoomOut, Edit, Save, RotateCcw,
     Send, CheckCircle, XCircle, CreditCard, Trash2, Loader2,
     Calendar, MapPin, User, Tag, FolderOpen, AlertCircle,
-    MessageSquare, History, Check, Eye, Printer, Download
+    MessageSquare, History, Check, Eye, Printer, Download,
+    Landmark, Share2, Mail, Upload, ExternalLink, FileText
 } from 'lucide-react';
+
+const PAYMENT_SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
+    share_target: { label: 'Compartido desde el celular', icon: Share2 },
+    email: { label: 'Recibido por correo', icon: Mail },
+    manual: { label: 'Subido manualmente', icon: Upload },
+    whatsapp: { label: 'Recibido por WhatsApp', icon: Share2 },
+};
 
 type ReceiptDetailModalProps = {
     receipt: any;
@@ -65,6 +73,11 @@ export default function ReceiptDetailModal({
     const commentsEndRef = useRef<HTMLDivElement>(null);
 
     const isPdf = receipt.image_url?.toLowerCase().split('?')[0].endsWith('.pdf');
+
+    // Comprobantes de pago asociados a esta boleta (una transferencia puede cubrir varias)
+    const linkedPayments = (receipt.payment_receipts || [])
+        .map((link: any) => link.payments)
+        .filter(Boolean);
 
     // Load comments and audit logs
     useEffect(() => {
@@ -713,6 +726,72 @@ export default function ReceiptDetailModal({
                             </div>
                         )}
                     </form>
+
+                    {/* Comprobante(s) de Pago Asociado(s) */}
+                    <div className="px-6 py-5 border-b border-white/5 space-y-3">
+                        <h4 className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
+                            <Landmark className="w-4 h-4 text-[#8CC63F]" />
+                            Comprobante de Pago
+                        </h4>
+
+                        {linkedPayments.length === 0 ? (
+                            <div className="text-xs text-zinc-500 bg-[#1C2D54]/30 border border-white/5 rounded-xl px-3 py-2.5">
+                                {receipt.status === 'Reembolsado'
+                                    ? 'Marcado como reembolsado, pero aún no tiene un comprobante de pago asociado.'
+                                    : 'Sin comprobante de pago asociado todavía.'}
+                            </div>
+                        ) : (
+                            linkedPayments.map((payment: any) => {
+                                const source = PAYMENT_SOURCE_LABELS[payment.source] || PAYMENT_SOURCE_LABELS.manual;
+                                const SourceIcon = source.icon;
+                                const isProofPdf = payment.file_type === 'pdf';
+                                return (
+                                    <div key={payment.id} className="bg-[#1C2D54]/30 border border-emerald-500/20 rounded-xl p-3 flex gap-3">
+                                        <a
+                                            href={payment.file_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-white/5 bg-zinc-950/40 flex items-center justify-center hover:border-[#8CC63F]/40 transition"
+                                            title="Abrir comprobante en una pestaña nueva"
+                                        >
+                                            {isProofPdf ? (
+                                                <FileText className="w-7 h-7 text-zinc-500" />
+                                            ) : (
+                                                <img
+                                                    src={payment.file_url}
+                                                    alt="Comprobante de pago"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            )}
+                                        </a>
+                                        <div className="min-w-0 flex-1 space-y-1">
+                                            <p className="text-sm font-semibold text-white">
+                                                {payment.amount ? `$${Number(payment.amount).toLocaleString('es-CL')}` : 'Monto no informado'}
+                                            </p>
+                                            <p className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                                                <SourceIcon className="w-3 h-3" />
+                                                {source.label}
+                                            </p>
+                                            <p className="text-[11px] text-zinc-500">
+                                                {payment.paid_at
+                                                    ? `Pagado el ${payment.paid_at}`
+                                                    : `Recibido el ${new Date(payment.created_at).toLocaleDateString('es-CL')}`}
+                                            </p>
+                                            <a
+                                                href={payment.file_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-[11px] text-[#8CC63F] hover:underline inline-flex items-center gap-1"
+                                            >
+                                                <ExternalLink className="w-3 h-3" />
+                                                Ver comprobante completo
+                                            </a>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
 
                     {/* Timeline (Reimbursement Logs) & Comments Tabs */}
                     <div className="flex-1 flex flex-col bg-[#1C2D54]/20">

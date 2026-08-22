@@ -6,6 +6,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import ReceiptDetailModal from './ReceiptDetailModal';
 import AdminReceiptCreateModal from './AdminReceiptCreateModal';
+import { getReceiptBalance } from '@/utils/payments';
 
 export default function AdminReceipts() {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -858,21 +859,40 @@ export default function AdminReceipts() {
                                                     Motivo: {receipt.rejection_reason}
                                                 </div>
                                             )}
-                                            {receipt.payment_receipts?.length > 0 ? (
-                                                <button
-                                                    onClick={() => setSelectedReceipt(receipt)}
-                                                    className="mt-1.5 inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-medium hover:bg-emerald-500/25 transition"
-                                                    title="Ver comprobante de pago asociado"
-                                                >
-                                                    <Landmark className="w-3 h-3" />
-                                                    Con comprobante
-                                                </button>
-                                            ) : receipt.status === 'Reembolsado' ? (
-                                                <div className="mt-1.5 inline-flex items-center gap-1 text-zinc-500 border border-white/5 px-2 py-0.5 rounded-full text-[10px]" title="Marcado como pagado, pero sin comprobante de pago adjunto">
-                                                    <Landmark className="w-3 h-3" />
-                                                    Sin comprobante
-                                                </div>
-                                            ) : null}
+                                            {(() => {
+                                                const linkCount = receipt.payment_receipts?.length || 0;
+                                                if (linkCount === 0) {
+                                                    return receipt.status === 'Reembolsado' ? (
+                                                        <div className="mt-1.5 inline-flex items-center gap-1 text-zinc-500 border border-white/5 px-2 py-0.5 rounded-full text-[10px]" title="Marcado como pagado, pero sin comprobante de pago adjunto">
+                                                            <Landmark className="w-3 h-3" />
+                                                            Sin comprobante
+                                                        </div>
+                                                    ) : null;
+                                                }
+
+                                                const balance = getReceiptBalance(receipt);
+                                                const label = linkCount > 1 ? `${linkCount} comprobantes` : 'Con comprobante';
+
+                                                return balance.isPartial ? (
+                                                    <button
+                                                        onClick={() => setSelectedReceipt(receipt)}
+                                                        className="mt-1.5 inline-flex items-center gap-1 bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full text-[10px] font-medium hover:bg-amber-500/25 transition"
+                                                        title={`Abonado $${balance.paid.toLocaleString('es-CL')} de $${balance.total.toLocaleString('es-CL')} — saldo $${balance.remaining.toLocaleString('es-CL')}`}
+                                                    >
+                                                        <Landmark className="w-3 h-3" />
+                                                        Abonado ${balance.paid.toLocaleString('es-CL')} de ${balance.total.toLocaleString('es-CL')}
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setSelectedReceipt(receipt)}
+                                                        className="mt-1.5 inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-medium hover:bg-emerald-500/25 transition"
+                                                        title="Ver comprobante(s) de pago asociado(s)"
+                                                    >
+                                                        <Landmark className="w-3 h-3" />
+                                                        {label}
+                                                    </button>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">

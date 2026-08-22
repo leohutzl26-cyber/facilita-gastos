@@ -1,16 +1,19 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Landmark, Search, Loader2, CheckCircle2, FileText, Share2, Mail, Upload, X, Plus, Sparkles } from 'lucide-react';
+import { getReceiptBalance } from '@/utils/payments';
 
-// Busca una boleta o un par de boletas cuyo monto sume exactamente el monto objetivo
+// Busca una boleta o un par de boletas cuyo saldo pendiente sume exactamente el monto objetivo
 function findMatchingReceiptIds(candidates: any[], targetAmount: number): string[] {
-    const exact = candidates.find(r => Number(r.amount) === targetAmount);
+    const balances = candidates.map(r => ({ id: r.id, remaining: getReceiptBalance(r).remaining }));
+
+    const exact = balances.find(b => b.remaining === targetAmount);
     if (exact) return [exact.id];
 
-    for (let i = 0; i < candidates.length; i++) {
-        for (let j = i + 1; j < candidates.length; j++) {
-            if (Number(candidates[i].amount) + Number(candidates[j].amount) === targetAmount) {
-                return [candidates[i].id, candidates[j].id];
+    for (let i = 0; i < balances.length; i++) {
+        for (let j = i + 1; j < balances.length; j++) {
+            if (balances[i].remaining + balances[j].remaining === targetAmount) {
+                return [balances[i].id, balances[j].id];
             }
         }
     }
@@ -81,16 +84,19 @@ export default function AdminPayments() {
     }, [payments, statusFilter]);
 
     const isActiveAssociated = activePayment?.status === 'asociado';
+    const activePaymentAmount = Number(activePayment?.amount || 0);
 
-    // Boletas ya vinculadas al comprobante abierto (para la vista de solo lectura)
+    // Boletas ya vinculadas al comprobante abierto (para la vista de solo lectura).
+    // amount_applied es lo que ESTE comprobante aportó a cada boleta, que puede
+    // ser menos que el total de la boleta si se pagó en varias transferencias.
     const linkedReceipts = useMemo(() => {
         return (activePayment?.payment_receipts || [])
-            .map((link: any) => link.receipts)
-            .filter(Boolean);
+            .filter((link: any) => link.receipts)
+            .map((link: any) => ({ ...link.receipts, amount_applied: link.amount_applied }));
     }, [activePayment]);
 
-    const linkedReceiptsTotal = useMemo(() => {
-        return linkedReceipts.reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0);
+    const linkedAppliedTotal = useMemo(() => {
+        return linkedReceipts.reduce((sum: number, r: any) => sum + Number(r.amount_applied ?? r.amount ?? 0), 0);
     }, [linkedReceipts]);
 
     const candidateReceipts = useMemo(() => {
@@ -107,11 +113,16 @@ export default function AdminPayments() {
             });
     }, [receipts, receiptSearch]);
 
+    // Lo que este comprobante debe cubrir es el saldo pendiente de las boletas
+    // seleccionadas, no su monto total (pueden traer pagos previos).
     const selectedTotal = useMemo(() => {
         return receipts
             .filter(r => selectedReceiptIds.has(r.id))
-            .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+            .reduce((sum, r) => sum + getReceiptBalance(r).remaining, 0);
     }, [receipts, selectedReceiptIds]);
+
+    // El comprobante no alcanza a cubrir todo lo seleccionado: quedará saldo pendiente.
+    const leavesBalance = activePaymentAmount > 0 && selectedTotal > activePaymentAmount;
 
     const openPayment = async (paymentId: string) => {
         setActivePaymentId(paymentId);
@@ -435,30 +446,42 @@ export default function AdminPayments() {
                             ) : (
                                 <>
                                     <div className="space-y-1.5">
-                                        {linkedReceipts.map((receipt: any) => (
-                                            <div
-                                                key={receipt.id}
-                                                className="flex items-center gap-3 bg-[#1C2D54]/50 rounded-xl px-3 py-2"
-                                            >
-                                                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                                                <span className="flex-1 min-w-0 text-xs text-zinc-200 truncate">
-                                                    {receipt.merchant} · {receipt.worker_email}
-                                                </span>
-                                                <span className="text-xs text-zinc-500 whitespace-nowrap">{receipt.date}</span>
-                                                <span className="text-xs text-zinc-300 whitespace-nowrap font-medium">
-                                                    ${Number(receipt.amount || 0).toLocaleString('es-CL')}
-                                                </span>
-                                            </div>
-                                        ))}
+                                        {linkedReceipts.map((receipt: any) => {
+                                            const applied = Number(receipt.amount_applied ?? receipt.amount ?? 0);
+                                            const total = Number(receipt.amount || 0);
+                                            const isPartial = applied < total;
+                                            return (
+                                                <div
+                                                    key={receipt.id}
+                                                    className="flex items-center gap-3 bg-[#1C2D54]/50 rounded-xl px-3 py-2"
+                                                >
+                                                    {isPartial
+                                                        ? <Landmark className="w-4 h-4 text-amber-400 shrink-0" />
+                                                        : <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+                                                    <span className="flex-1 min-w-0 text-xs text-zinc-200 truncate">
+                                                        {receipt.merchant} · {receipt.worker_email}
+                                                        {isPartial && (
+                                                            <span className="block text-[10px] text-amber-400/90">
+                                                                Abono parcial sobre un gasto de ${total.toLocaleString('es-CL')}
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                    <span className="text-xs text-zinc-500 whitespace-nowrap">{receipt.date}</span>
+                                                    <span className="text-xs text-zinc-300 whitespace-nowrap font-medium">
+                                                        ${applied.toLocaleString('es-CL')}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                     <div className="flex items-center justify-end gap-2 border-t border-white/5 pt-3 text-xs">
-                                        <span className="text-zinc-400">Total boletas:</span>
+                                        <span className="text-zinc-400">Total aplicado:</span>
                                         <span className="text-[#8CC63F] font-medium">
-                                            ${linkedReceiptsTotal.toLocaleString('es-CL')}
+                                            ${linkedAppliedTotal.toLocaleString('es-CL')}
                                         </span>
-                                        {activePayment.amount && Number(activePayment.amount) !== linkedReceiptsTotal && (
+                                        {activePaymentAmount > 0 && activePaymentAmount !== linkedAppliedTotal && (
                                             <span className="text-yellow-400 ml-1">
-                                                (no calza con el comprobante)
+                                                (el comprobante es de ${activePaymentAmount.toLocaleString('es-CL')})
                                             </span>
                                         )}
                                     </div>
@@ -482,42 +505,61 @@ export default function AdminPayments() {
                         {candidateReceipts.length === 0 ? (
                             <p className="text-xs text-zinc-500 py-4 text-center">No hay boletas aprobadas que coincidan.</p>
                         ) : (
-                            candidateReceipts.map(receipt => (
-                                <label
-                                    key={receipt.id}
-                                    className="flex items-center gap-3 bg-[#1C2D54]/50 hover:bg-[#1C2D54] rounded-xl px-3 py-2 cursor-pointer transition"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedReceiptIds.has(receipt.id)}
-                                        onChange={() => toggleReceipt(receipt.id)}
-                                        className="accent-[#8CC63F] w-4 h-4"
-                                    />
-                                    <span className="flex-1 min-w-0 text-xs text-zinc-200 truncate">
-                                        {receipt.merchant} · {receipt.worker_email}
-                                    </span>
-                                    <span className="text-xs text-zinc-400 whitespace-nowrap">
-                                        ${Number(receipt.amount || 0).toLocaleString('es-CL')}
-                                    </span>
-                                </label>
-                            ))
+                            candidateReceipts.map(receipt => {
+                                const balance = getReceiptBalance(receipt);
+                                const isPartiallyPaid = balance.paid > 0;
+                                return (
+                                    <label
+                                        key={receipt.id}
+                                        className="flex items-center gap-3 bg-[#1C2D54]/50 hover:bg-[#1C2D54] rounded-xl px-3 py-2 cursor-pointer transition"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedReceiptIds.has(receipt.id)}
+                                            onChange={() => toggleReceipt(receipt.id)}
+                                            className="accent-[#8CC63F] w-4 h-4"
+                                        />
+                                        <span className="flex-1 min-w-0 text-xs text-zinc-200 truncate">
+                                            {receipt.merchant} · {receipt.worker_email}
+                                            {isPartiallyPaid && (
+                                                <span className="block text-[10px] text-amber-400/90">
+                                                    Abonado ${balance.paid.toLocaleString('es-CL')} de ${balance.total.toLocaleString('es-CL')}
+                                                </span>
+                                            )}
+                                        </span>
+                                        <span className="text-xs whitespace-nowrap text-right">
+                                            <span className={isPartiallyPaid ? 'text-amber-400 font-medium' : 'text-zinc-400'}>
+                                                ${balance.remaining.toLocaleString('es-CL')}
+                                            </span>
+                                            {isPartiallyPaid && <span className="block text-[10px] text-zinc-500">saldo</span>}
+                                        </span>
+                                    </label>
+                                );
+                            })
                         )}
                     </div>
 
                     {error && <p className="text-xs text-red-400">{error}</p>}
 
-                    <div className="flex items-center justify-between border-t border-white/5 pt-4">
-                        <span className="text-xs text-zinc-400">
-                            Seleccionado: <span className="text-[#8CC63F] font-medium">${selectedTotal.toLocaleString('es-CL')}</span>
-                            {activePayment.amount ? ` de $${Number(activePayment.amount).toLocaleString('es-CL')}` : ''}
-                        </span>
+                    <div className="flex items-center justify-between gap-4 border-t border-white/5 pt-4">
+                        <div className="text-xs text-zinc-400 min-w-0">
+                            <div>
+                                Saldo seleccionado: <span className="text-[#8CC63F] font-medium">${selectedTotal.toLocaleString('es-CL')}</span>
+                                {activePaymentAmount > 0 ? ` · comprobante $${activePaymentAmount.toLocaleString('es-CL')}` : ''}
+                            </div>
+                            {leavesBalance && (
+                                <div className="text-amber-400 text-[11px] mt-1">
+                                    Abono parcial: quedará un saldo de ${(selectedTotal - activePaymentAmount).toLocaleString('es-CL')} por pagar con otra transferencia.
+                                </div>
+                            )}
+                        </div>
                         <button
                             onClick={handleConfirm}
                             disabled={selectedReceiptIds.size === 0 || isConfirming}
-                            className="flex items-center gap-2 bg-[#8CC63F] hover:bg-[#3EAE49] disabled:opacity-40 disabled:cursor-not-allowed text-[#121D38] px-4 py-2 rounded-xl text-xs font-bold transition"
+                            className="flex items-center gap-2 bg-[#8CC63F] hover:bg-[#3EAE49] disabled:opacity-40 disabled:cursor-not-allowed text-[#121D38] px-4 py-2 rounded-xl text-xs font-bold transition shrink-0"
                         >
                             {isConfirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                            Confirmar y marcar Reembolsado
+                            {leavesBalance ? 'Confirmar abono parcial' : 'Confirmar y marcar Reembolsado'}
                         </button>
                     </div>
                     </>

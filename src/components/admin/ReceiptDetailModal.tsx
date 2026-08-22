@@ -7,6 +7,7 @@ import {
     MessageSquare, History, Check, Eye, Printer, Download,
     Landmark, Share2, Mail, Upload, ExternalLink, FileText
 } from 'lucide-react';
+import { getReceiptBalance } from '@/utils/payments';
 
 const PAYMENT_SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
     share_target: { label: 'Compartido desde el celular', icon: Share2 },
@@ -74,10 +75,14 @@ export default function ReceiptDetailModal({
 
     const isPdf = receipt.image_url?.toLowerCase().split('?')[0].endsWith('.pdf');
 
-    // Comprobantes de pago asociados a esta boleta (una transferencia puede cubrir varias)
+    // Comprobantes de pago asociados a esta boleta. Una transferencia puede cubrir
+    // varias boletas, y una boleta puede pagarse con varias transferencias, por eso
+    // se arrastra amount_applied (lo que cada comprobante aportó a ESTA boleta).
     const linkedPayments = (receipt.payment_receipts || [])
-        .map((link: any) => link.payments)
-        .filter(Boolean);
+        .filter((link: any) => link.payments)
+        .map((link: any) => ({ ...link.payments, amount_applied: link.amount_applied }));
+
+    const balance = getReceiptBalance(receipt);
 
     // Load comments and audit logs
     useEffect(() => {
@@ -731,8 +736,31 @@ export default function ReceiptDetailModal({
                     <div className="px-6 py-5 border-b border-white/5 space-y-3">
                         <h4 className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
                             <Landmark className="w-4 h-4 text-[#8CC63F]" />
-                            Comprobante de Pago
+                            {linkedPayments.length > 1
+                                ? `Comprobantes de Pago (${linkedPayments.length})`
+                                : 'Comprobante de Pago'}
                         </h4>
+
+                        {linkedPayments.length > 0 && (
+                            <div className={`rounded-xl px-3 py-2.5 border text-xs ${balance.isPartial
+                                ? 'bg-amber-500/10 border-amber-500/30'
+                                : 'bg-emerald-500/10 border-emerald-500/25'
+                                }`}>
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className={balance.isPartial ? 'text-amber-300' : 'text-emerald-300'}>
+                                        {balance.isPartial ? 'Pagado parcialmente' : 'Pagado por completo'}
+                                    </span>
+                                    <span className="text-white font-medium">
+                                        ${balance.paid.toLocaleString('es-CL')} de ${balance.total.toLocaleString('es-CL')}
+                                    </span>
+                                </div>
+                                {balance.isPartial && (
+                                    <p className="text-amber-400/90 text-[11px] mt-1">
+                                        Saldo pendiente: ${balance.remaining.toLocaleString('es-CL')}
+                                    </p>
+                                )}
+                            </div>
+                        )}
 
                         {linkedPayments.length === 0 ? (
                             <div className="text-xs text-zinc-500 bg-[#1C2D54]/30 border border-white/5 rounded-xl px-3 py-2.5">
@@ -766,7 +794,18 @@ export default function ReceiptDetailModal({
                                         </a>
                                         <div className="min-w-0 flex-1 space-y-1">
                                             <p className="text-sm font-semibold text-white">
-                                                {payment.amount ? `$${Number(payment.amount).toLocaleString('es-CL')}` : 'Monto no informado'}
+                                                {payment.amount_applied != null
+                                                    ? `$${Number(payment.amount_applied).toLocaleString('es-CL')}`
+                                                    : payment.amount
+                                                        ? `$${Number(payment.amount).toLocaleString('es-CL')}`
+                                                        : 'Monto no informado'}
+                                                {payment.amount_applied != null
+                                                    && payment.amount != null
+                                                    && Number(payment.amount_applied) !== Number(payment.amount) && (
+                                                        <span className="text-[11px] font-normal text-zinc-500">
+                                                            {' '}(de una transferencia de ${Number(payment.amount).toLocaleString('es-CL')})
+                                                        </span>
+                                                    )}
                                             </p>
                                             <p className="text-[11px] text-zinc-400 flex items-center gap-1.5">
                                                 <SourceIcon className="w-3 h-3" />

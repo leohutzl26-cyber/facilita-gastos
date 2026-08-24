@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Landmark, Search, Loader2, CheckCircle2, FileText, Share2, Mail, Upload, X, Plus, Sparkles } from 'lucide-react';
+import { Landmark, Search, Loader2, CheckCircle2, FileText, Share2, Mail, Upload, X, Plus, Sparkles, Trash2, Link2Off } from 'lucide-react';
 import { getReceiptBalance } from '@/utils/payments';
 
 // Busca una boleta o un par de boletas cuyo saldo pendiente sume exactamente el monto objetivo
@@ -47,6 +47,8 @@ export default function AdminPayments() {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isDeletingPayment, setIsDeletingPayment] = useState(false);
+    const [unassigningReceiptId, setUnassigningReceiptId] = useState<string | null>(null);
 
     const fetchPayments = async () => {
         try {
@@ -188,6 +190,48 @@ export default function AdminPayments() {
             setError(err.message);
         } finally {
             setIsConfirming(false);
+        }
+    };
+
+    const handleDeletePayment = async (paymentId: string) => {
+        if (!confirm('¿Eliminar este comprobante? Si estaba cubriendo alguna boleta, esta volverá a quedar pendiente de pago. Esta acción no se puede deshacer.')) return;
+
+        setIsDeletingPayment(true);
+        setError('');
+        try {
+            const res = await fetch(`/api/admin/payments/${paymentId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error al eliminar el comprobante');
+
+            if (activePaymentId === paymentId) setActivePaymentId(null);
+            await Promise.all([fetchPayments(), fetchReceipts()]);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsDeletingPayment(false);
+        }
+    };
+
+    const handleUnassignReceipt = async (paymentId: string, receiptId: string) => {
+        if (!confirm('¿Quitar esta boleta del comprobante? La boleta volverá a quedar pendiente de pago (o con el saldo que le falte).')) return;
+
+        setUnassigningReceiptId(receiptId);
+        setError('');
+        try {
+            const res = await fetch(`/api/admin/payments/${paymentId}/unassign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ receiptId })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error al desasociar la boleta');
+
+            if (data.paymentBackToPending) setActivePaymentId(null);
+            await Promise.all([fetchPayments(), fetchReceipts()]);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setUnassigningReceiptId(null);
         }
     };
 
@@ -349,25 +393,38 @@ export default function AdminPayments() {
                         const linkedCount = payment.payment_receipts?.length || 0;
                         const isAssociated = payment.status === 'asociado';
                         return (
-                            <button
+                            <div
                                 key={payment.id}
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => openPayment(payment.id)}
-                                className={`text-left bg-[#1C2D54]/40 border rounded-2xl p-4 transition hover:border-[#8CC63F]/40 ${activePaymentId === payment.id ? 'border-[#8CC63F]' : 'border-[#8CC63F]/10'}`}
+                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') openPayment(payment.id); }}
+                                className={`text-left bg-[#1C2D54]/40 border rounded-2xl p-4 transition hover:border-[#8CC63F]/40 cursor-pointer ${activePaymentId === payment.id ? 'border-[#8CC63F]' : 'border-[#8CC63F]/10'}`}
                             >
                                 <div className="flex items-start justify-between gap-2 mb-2">
                                     <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                                         <SourceIcon className="w-3.5 h-3.5" />
                                         {source.label}
                                     </div>
-                                    {isAssociated ? (
-                                        <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
-                                            Asociado
-                                        </span>
-                                    ) : (
-                                        <span className="text-[10px] bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
-                                            Pendiente
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-1.5">
+                                        {isAssociated ? (
+                                            <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                                Asociado
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                                Pendiente
+                                            </span>
+                                        )}
+                                        <button
+                                            onClick={e => { e.stopPropagation(); handleDeletePayment(payment.id); }}
+                                            disabled={isDeletingPayment}
+                                            className="text-zinc-500 hover:text-red-400 transition disabled:opacity-40 shrink-0"
+                                            title="Eliminar comprobante (cargado por error)"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
                                 <p className="text-sm font-medium text-white truncate">
                                     {payment.amount ? `$${Number(payment.amount).toLocaleString('es-CL')}` : 'Monto no informado'}
@@ -382,7 +439,7 @@ export default function AdminPayments() {
                                         {linkedCount === 1 ? '1 boleta vinculada' : `${linkedCount} boletas vinculadas`}
                                     </p>
                                 )}
-                            </button>
+                            </div>
                         );
                     })}
                 </div>
@@ -470,6 +527,16 @@ export default function AdminPayments() {
                                                     <span className="text-xs text-zinc-300 whitespace-nowrap font-medium">
                                                         ${applied.toLocaleString('es-CL')}
                                                     </span>
+                                                    <button
+                                                        onClick={() => handleUnassignReceipt(activePayment.id, receipt.id)}
+                                                        disabled={unassigningReceiptId === receipt.id}
+                                                        className="text-zinc-500 hover:text-red-400 transition disabled:opacity-40 shrink-0"
+                                                        title="Quitar esta boleta del comprobante (mal asignada)"
+                                                    >
+                                                        {unassigningReceiptId === receipt.id
+                                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                            : <Link2Off className="w-3.5 h-3.5" />}
+                                                    </button>
                                                 </div>
                                             );
                                         })}
@@ -487,6 +554,7 @@ export default function AdminPayments() {
                                     </div>
                                 </>
                             )}
+                            {error && <p className="text-xs text-red-400">{error}</p>}
                         </div>
                     ) : (
                     <>

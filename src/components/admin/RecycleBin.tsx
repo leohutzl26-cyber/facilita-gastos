@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Trash2, RotateCcw, Trash, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Trash2, RotateCcw, Trash, Loader2, AlertCircle, RefreshCw, Eye } from 'lucide-react';
+import RecycleBinDetailModal from './RecycleBinDetailModal';
 
 type DeletedRecord = {
     id: string;
@@ -17,6 +18,7 @@ export default function RecycleBin() {
     const [isActionLoading, setIsActionLoading] = useState<string | null>(null); // record ID or 'vaciar'
     const [error, setError] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
+    const [detailRecord, setDetailRecord] = useState<DeletedRecord | null>(null);
 
     useEffect(() => {
         fetchRecords();
@@ -284,9 +286,13 @@ export default function RecycleBin() {
                                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${getTypeStyle(record.table_name)}`}>
                                                 {getTypeName(record.table_name)}
                                             </span>
-                                            <span className="font-semibold text-zinc-100 max-w-[200px] truncate" title={getRecordName(record)}>
+                                            <button
+                                                onClick={() => setDetailRecord(record)}
+                                                className="font-semibold text-zinc-100 hover:text-[#8CC63F] max-w-[200px] truncate text-left transition"
+                                                title={getRecordName(record)}
+                                            >
                                                 {getRecordName(record)}
-                                            </span>
+                                            </button>
                                         </td>
                                         <td className="px-6 py-3.5 text-xs text-zinc-400 max-w-[300px] truncate" title={getRecordDetail(record)}>
                                             {getRecordDetail(record)}
@@ -299,6 +305,13 @@ export default function RecycleBin() {
                                         </td>
                                         <td className="px-6 py-3.5 text-right">
                                             <div className="flex items-center justify-end gap-1.5">
+                                                <button
+                                                    onClick={() => setDetailRecord(record)}
+                                                    className="p-2 bg-zinc-700/30 text-zinc-300 hover:bg-zinc-700 hover:text-white rounded-lg transition"
+                                                    title="Ver Detalle"
+                                                >
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                </button>
                                                 <button
                                                     onClick={() => handleRestore(record)}
                                                     disabled={isActionLoading !== null}
@@ -325,6 +338,10 @@ export default function RecycleBin() {
                     </table>
                 </div>
             </div>
+
+            {detailRecord && (
+                <RecycleBinDetailModal record={detailRecord} onClose={() => setDetailRecord(null)} />
+            )}
         </div>
     );
 }

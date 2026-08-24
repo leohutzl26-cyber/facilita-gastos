@@ -310,23 +310,27 @@ export default function ExportModal({ receipts, categories, projects, workerName
         doc.text('ANEXO: Comprobantes Fotográficos', 14, 20);
 
         let currentY = 30;
-        const PAGE_HEIGHT = 297;
-        const MARGIN_BOTTOM = 15;
         const MARGIN_X = 14;
         const COL_GAP = 10;
+        const COLS_PER_PAGE = 2;
+        const ROWS_PER_PAGE = 2; // 2x2 = 4 fotos por página
         const COL_WIDTH = (210 - (MARGIN_X * 2) - COL_GAP) / 2;
-        const MAX_IMG_HEIGHT = 115;
+        const MAX_IMG_HEIGHT = 95; // calibrado para que 2 filas siempre quepan en la página
 
         let colIndex = 0;
+        let rowsOnPage = 0;
         let rowMaxHeight = 0;
 
         for (let i = 0; i < receiptsWithImages.length; i++) {
             const r = receiptsWithImages[i];
             const base64Img = images[i];
 
-            if (colIndex === 0 && (currentY + MAX_IMG_HEIGHT + 20 > PAGE_HEIGHT - MARGIN_BOTTOM)) {
+            // Salto de página cada 4 fotos (2 filas x 2 columnas), no según
+            // el espacio restante — así siempre son exactamente 4 por hoja.
+            if (colIndex === 0 && rowsOnPage === ROWS_PER_PAGE) {
                 doc.addPage();
                 currentY = 20;
+                rowsOnPage = 0;
             }
 
             let drawWidth = 0;
@@ -375,10 +379,11 @@ export default function ExportModal({ receipts, categories, projects, workerName
             if (currentItemHeight > rowMaxHeight) rowMaxHeight = currentItemHeight;
 
             colIndex++;
-            if (colIndex > 1) {
+            if (colIndex >= COLS_PER_PAGE) {
                 colIndex = 0;
                 currentY += rowMaxHeight + 10;
                 rowMaxHeight = 0;
+                rowsOnPage++;
             }
         }
 

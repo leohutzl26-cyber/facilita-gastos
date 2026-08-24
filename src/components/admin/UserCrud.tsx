@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle, ShieldAlert, ShieldCheck, Search } from 'lucide-react';
+import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle, ShieldAlert, ShieldCheck, Search, Users } from 'lucide-react';
 
 type Worker = {
     id: string;
@@ -168,8 +168,50 @@ export default function UserCrud() {
         w.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const totalWorkers = workers.length;
+    const activeWorkers = workers.filter(w => !w.is_suspended).length;
+    const adminWorkers = workers.filter(w => w.role === 'admin').length;
+
     return (
         <div>
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Colaboradores</p>
+                        <p className="text-2xl font-black text-white">{totalWorkers}</p>
+                        <p className="text-[10px] text-zinc-500">Total registrados</p>
+                    </div>
+                    <div className="p-3 bg-[#8CC63F]/10 rounded-xl text-[#8CC63F] shrink-0">
+                        <Users className="w-6 h-6" />
+                    </div>
+                </div>
+
+                <div className="bg-[#1C2D54]/40 border border-emerald-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Activos</p>
+                        <p className="text-2xl font-black text-emerald-400">{activeWorkers}</p>
+                        <p className="text-[10px] text-zinc-500">
+                            {totalWorkers - activeWorkers > 0 ? `${totalWorkers - activeWorkers} suspendido(s)` : 'Sin suspendidos'}
+                        </p>
+                    </div>
+                    <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400 shrink-0">
+                        <PlayCircle className="w-6 h-6" />
+                    </div>
+                </div>
+
+                <div className="bg-[#1C2D54]/40 border border-blue-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Administradores</p>
+                        <p className="text-2xl font-black text-blue-400">{adminWorkers}</p>
+                        <p className="text-[10px] text-zinc-500">Con acceso al panel admin</p>
+                    </div>
+                    <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400 shrink-0">
+                        <ShieldCheck className="w-6 h-6" />
+                    </div>
+                </div>
+            </div>
+
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <p className="text-zinc-400 text-sm">Administra las cuentas de tus colaboradores.</p>

@@ -1,11 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, FileSpreadsheet, FileText, Image as ImageIcon, Eye, Plus, RotateCcw, ArrowUp, ArrowDown, ArrowUpDown, Landmark } from 'lucide-react';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircle, Download, Trash2, Eye, Plus, RotateCcw, ArrowUp, ArrowDown, ArrowUpDown, Landmark } from 'lucide-react';
 import ReceiptDetailModal from './ReceiptDetailModal';
 import AdminReceiptCreateModal from './AdminReceiptCreateModal';
+import ExportModal from './ExportModal';
 import { getReceiptBalance } from '@/utils/payments';
 
 export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean }) {
@@ -16,9 +14,9 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
     const [searchTerm, setSearchTerm] = useState('');
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
-    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     // Sorting States
     const [sortField, setSortField] = useState<string>('date');
@@ -161,307 +159,6 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
         }
     };
 
-    const handleExportExcel = () => {
-        if (filteredReceipts.length === 0) return;
-
-        // Custom Header mapping for Excel
-        const dataForExcel = filteredReceipts.map(r => ({
-            'Fecha': r.date,
-            'Comercio': r.merchant,
-            'RUT Proveedor': r.merchant_rut || '-',
-            'Tipo Documento': r.document_type || 'Boleta',
-            'N° Documento': r.document_number || '-',
-            'Proyecto': r.projects?.name || 'Gasto Genérico',
-            'Categoría': r.category,
-            'Monto ($)': Number(r.amount),
-            'Estado': r.status || 'Pendiente',
-            'Colaborador (Nombre)': getWorkerName(r.worker_email),
-            'Motivo Rechazo': r.rejection_reason || ''
-        }));
-
-        // 1. Convert specific JSON structure to a worksheet
-        const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
-
-        // 2. Create a new workbook and append the worksheet
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte_Gastos");
-
-        // 3. Trigger native browser download of the Excel File
-        const fileName = `Reporte_Gastos_Facilita_${new Date().toISOString().split('T')[0]}.xlsx`;
-        XLSX.writeFile(workbook, fileName);
-    };
-
-    const fetchImageAsBase64 = async (url: string): Promise<string | null> => {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) return null;
-            const blob = await response.blob();
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.readAsDataURL(blob);
-            });
-        } catch (e) {
-            console.error("Error fetching image:", e);
-            return null;
-        }
-    };
-
-    const loadPdfJs = (): Promise<any> => {
-        return new Promise((resolve, reject) => {
-            if ((window as any).pdfjsLib) {
-                resolve((window as any).pdfjsLib);
-                return;
-            }
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
-            script.onload = () => {
-                const pdfjsLib = (window as any).pdfjsLib;
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-                resolve(pdfjsLib);
-            };
-            script.onerror = (e) => reject(new Error("Error al cargar PDF.js de CDN"));
-            document.head.appendChild(script);
-        });
-    };
-
-    const convertPdfToImageBase64 = async (pdfUrl: string): Promise<string | null> => {
-        try {
-            const pdfjsLib = await loadPdfJs();
-            const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            const pdf = await loadingTask.promise;
-            const page = await pdf.getPage(1);
-            
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            if (!context) return null;
-            
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-            };
-            await page.render(renderContext).promise;
-            return canvas.toDataURL('image/jpeg', 0.85);
-        } catch (err) {
-            console.error("Error converting PDF to image:", err);
-            return null;
-        }
-    };
-
-    const handleExportPDF = () => {
-        if (filteredReceipts.length === 0) return;
-
-        const doc = new jsPDF();
-        
-        // Header
-        doc.setFontSize(18);
-        doc.setTextColor(28, 45, 84); // #1C2D54
-        doc.text('Facilita Capacitación - Reporte de Gastos', 14, 22);
-        
-        doc.setFontSize(11);
-        doc.setTextColor(100);
-        const dateStr = new Date().toLocaleDateString('es-CL');
-        doc.text(`Fecha de emisión: ${dateStr}`, 14, 30);
-        doc.text(`Total de registros: ${filteredReceipts.length}`, 14, 36);
-
-        const totalAmount = filteredReceipts.reduce((sum, r) => sum + Number(r.amount), 0);
-        doc.setFontSize(12);
-        // #8CC63F (140, 198, 63)
-        doc.setTextColor(140, 198, 63); 
-        doc.text(`Suma Total: $${totalAmount.toLocaleString()}`, 14, 44);
-
-        // Table
-        const tableColumn = ["Fecha", "Comercio", "RUT Proveedor", "Documento", "Proyecto", "Categoría", "Colaborador", "Monto", "Estado"];
-        const tableRows = filteredReceipts.map(r => [
-            r.date,
-            r.merchant,
-            r.merchant_rut || '-',
-            r.document_number ? `${r.document_type} N°${r.document_number}` : (r.document_type || 'Boleta'),
-            (r.projects?.name || 'Gasto Genérico').substring(0, 15),
-            r.category,
-            getWorkerName(r.worker_email),
-            `$${Number(r.amount).toLocaleString()}`,
-            r.status || 'Pendiente'
-        ]);
-
-        autoTable(doc, {
-            startY: 50,
-            head: [tableColumn],
-            body: tableRows,
-            theme: 'striped',
-            headStyles: { fillColor: [28, 45, 84] },
-            styles: { fontSize: 8, cellPadding: 2 }
-        });
-
-        doc.save(`Reporte_Gastos_Facilita_${new Date().toISOString().split('T')[0]}.pdf`);
-    };
-
-    const handleExportPDFWithPhotos = async () => {
-        if (filteredReceipts.length === 0) return;
-        setIsGeneratingPDF(true);
-
-        try {
-            const doc = new jsPDF();
-            
-            // --- INICIO DE LA TABLA ESTÁNDAR ---
-            doc.setFontSize(18);
-            doc.setTextColor(28, 45, 84); // #1C2D54
-            doc.text('Facilita Capacitación - Reporte de Gastos con Anexos', 14, 22);
-            
-            doc.setFontSize(11);
-            doc.setTextColor(100);
-            const dateStr = new Date().toLocaleDateString('es-CL');
-            doc.text(`Fecha de emisión: ${dateStr}`, 14, 30);
-            doc.text(`Total de registros: ${filteredReceipts.length}`, 14, 36);
-
-            const totalAmount = filteredReceipts.reduce((sum, r) => sum + Number(r.amount), 0);
-            doc.setFontSize(12);
-            // #8CC63F (140, 198, 63)
-            doc.setTextColor(140, 198, 63); 
-            doc.text(`Suma Total: $${totalAmount.toLocaleString()}`, 14, 44);
-
-            const tableColumn = ["Fecha", "Comercio", "RUT", "Documento", "Categoría", "Colaborador", "Monto", "Estado"];
-            const tableRows = filteredReceipts.map(r => [
-                r.date,
-                r.merchant,
-                r.merchant_rut || '-',
-                r.document_number ? `${r.document_type} N°${r.document_number}` : (r.document_type || 'Boleta'),
-                r.category,
-                getWorkerName(r.worker_email),
-                `$${Number(r.amount).toLocaleString()}`,
-                r.status || 'Pendiente'
-            ]);
-
-            autoTable(doc, {
-                startY: 50,
-                head: [tableColumn],
-                body: tableRows,
-                theme: 'striped',
-                headStyles: { fillColor: [28, 45, 84] },
-                styles: { fontSize: 8, cellPadding: 2 }
-            });
-
-            // --- INICIO DE ANEXOS DE FOTOS ---
-            const receiptsWithImages = filteredReceipts.filter(r => r.image_url && r.image_url.startsWith('http'));
-
-            if (receiptsWithImages.length > 0) {
-                doc.addPage();
-                doc.setFontSize(16);
-                doc.setTextColor(28, 45, 84);
-                doc.text('ANEXO: Comprobantes Fotográficos', 14, 20);
-                
-                let currentY = 30;
-                const PAGE_HEIGHT = 297;
-                const MARGIN_BOTTOM = 15;
-                const MARGIN_X = 14;
-                const COL_GAP = 10;
-                const COL_WIDTH = (210 - (MARGIN_X * 2) - COL_GAP) / 2; // Anchura aprox 86mm por columna
-                const MAX_IMG_HEIGHT = 115; // Límite de alto para alojar 2 filas per página cómodamente
-                
-                let colIndex = 0;
-                let rowMaxHeight = 0;
-
-                for (let i = 0; i < receiptsWithImages.length; i++) {
-                    const r = receiptsWithImages[i];
-                    
-                    // Si estamos empezando una fila (colIndex === 0), comprobamos si hay espacio vertical
-                    // Asumimos un máximo espacio que podría ocupar la fila (MAX_IMG_HEIGHT + textos = ~135)
-                    if (colIndex === 0 && (currentY + MAX_IMG_HEIGHT + 20 > PAGE_HEIGHT - MARGIN_BOTTOM)) {
-                        doc.addPage();
-                        currentY = 20; // reset
-                    }
-
-                    let base64Img: string | null = null;
-                    let imgProps: any = null;
-                    
-                    try {
-                        const isPdf = r.image_url.toLowerCase().split('?')[0].endsWith('.pdf');
-                        if (isPdf) {
-                            base64Img = await convertPdfToImageBase64(r.image_url);
-                        } else {
-                            base64Img = await fetchImageAsBase64(r.image_url);
-                        }
-                        
-                        if (base64Img) {
-                            imgProps = doc.getImageProperties(base64Img);
-                        }
-                    } catch (e) {
-                         console.error("Error al cargar la imagen/PDF", e);
-                    }
-                    
-                    let drawWidth = 0;
-                    let drawHeight = 0;
-
-                    if (imgProps) {
-                        const imgRatio = imgProps.width / imgProps.height;
-                        drawWidth = COL_WIDTH;
-                        drawHeight = drawWidth / imgRatio;
-
-                        if (drawHeight > MAX_IMG_HEIGHT) {
-                            drawHeight = MAX_IMG_HEIGHT;
-                            drawWidth = drawHeight * imgRatio;
-                        }
-                    }
-
-                    // Posición X para la columna actual
-                    const xStart = MARGIN_X + (colIndex * (COL_WIDTH + COL_GAP));
-
-                    // Dibujar textos, reduciendo la fuente a 9 para el formato de grilla
-                    doc.setFontSize(9);
-                    doc.setTextColor(0);
-                    
-                    // Truncar textos largos si hace falta
-                    const shortMerchant = r.merchant.length > 20 ? r.merchant.substring(0, 18) + '...' : r.merchant;
-                    const workerName = getWorkerName(r.worker_email);
-                    const shortWorker = workerName.length > 20 ? workerName.substring(0, 18) + '...' : workerName;
-
-                    doc.text(`Comercio: ${shortMerchant}`, xStart, currentY);
-                    doc.text(`Fecha: ${r.date} | Monto: $${Number(r.amount).toLocaleString()}`, xStart, currentY + 4);
-                    doc.text(`Resp: ${shortWorker}`, xStart, currentY + 8);
-                    
-                    let currentItemHeight = 12; // Altura base de los textos
-
-                    // Dibujar imagen
-                    if (base64Img && imgProps) {
-                        const xOffset = xStart + (COL_WIDTH - drawWidth) / 2; // centrar en la columna
-                        doc.addImage(base64Img, imgProps.fileType, xOffset, currentY + 11, drawWidth, drawHeight);
-                        currentItemHeight += drawHeight + 5;
-                    } else {
-                        doc.setTextColor(255, 0, 0);
-                        doc.text('(Error al cargar foto)', xStart, currentY + 14);
-                        currentItemHeight += 10;
-                    }
-
-                    // Registrar cuál fue el elemento más alto de esta fila
-                    if (currentItemHeight > rowMaxHeight) {
-                        rowMaxHeight = currentItemHeight;
-                    }
-
-                    // Pasar a la siguiente columna
-                    colIndex++;
-                    
-                    // Si ya llenamos las 2 columnas, bajamos de fila
-                    if (colIndex > 1) {
-                        colIndex = 0;
-                        currentY += rowMaxHeight + 10; // Espaciado entre filas de 10mm
-                        rowMaxHeight = 0; // reset
-                    }
-                }
-            }
-
-            doc.save(`Reporte_Anexos_Facilita_${new Date().toISOString().split('T')[0]}.pdf`);
-        } catch (error) {
-            console.error("Error generando PDF con fotos:", error);
-            alert("Hubo un error al generar el PDF con fotos.");
-        } finally {
-            setIsGeneratingPDF(false);
-        }
-    };
-
     const handleDelete = async (id: string) => {
         if (!confirm('¿Estás seguro de ELIMINAR permanentemente este recibo? Esta acción no se puede deshacer y borrará el registro de la base de datos.')) return;
 
@@ -588,28 +285,11 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
                             </button>
                         )}
                         <button
-                            onClick={handleExportPDF}
-                            disabled={filteredReceipts.length === 0 || isGeneratingPDF}
-                            className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                            onClick={() => setIsExportModalOpen(true)}
+                            className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-3 py-2 rounded-xl text-sm font-medium transition whitespace-nowrap"
                         >
-                            <FileText className="w-4 h-4" />
-                            PDF
-                        </button>
-                        <button
-                            onClick={handleExportPDFWithPhotos}
-                            disabled={filteredReceipts.length === 0 || isGeneratingPDF}
-                            className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                        >
-                            {isGeneratingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                            {isGeneratingPDF ? "Generando..." : "PDF + Fotos"}
-                        </button>
-                        <button
-                            onClick={handleExportExcel}
-                            disabled={filteredReceipts.length === 0 || isGeneratingPDF}
-                            className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-3 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                        >
-                            <FileSpreadsheet className="w-4 h-4" />
-                            Excel
+                            <Download className="w-4 h-4" />
+                            Exportar
                         </button>
                     </div>
                 </div>
@@ -1062,6 +742,24 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
                     }}
                     categories={categories}
                     projects={uniqueProjects}
+                />
+            )}
+            {isExportModalOpen && (
+                <ExportModal
+                    receipts={receipts}
+                    categories={uniqueCategories}
+                    projects={uniqueProjects}
+                    workerNames={uniqueWorkerNames}
+                    getWorkerName={getWorkerName}
+                    initialFilters={{
+                        startDate: filterStartDate,
+                        endDate: filterEndDate,
+                        category: filterCategory,
+                        project: filterProject,
+                        worker: filterWorker,
+                        status: filterStatus
+                    }}
+                    onClose={() => setIsExportModalOpen(false)}
                 />
             )}
         </div>

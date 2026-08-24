@@ -10,7 +10,7 @@ interface Project {
     active: boolean;
 }
 
-export default function ProjectCrud() {
+export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }) {
     const [projects, setProjects] = useState<Project[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
@@ -169,49 +169,51 @@ export default function ProjectCrud() {
             </div>
 
             {/* Crear / Editar Form */}
-            <form onSubmit={handleSubmit} className="mb-6 space-y-3 bg-black/20 p-4 rounded-xl border border-white/5">
-                <div>
-                    <input
-                        required
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Nombre del Proyecto o Cliente"
-                        className="w-full bg-black/40 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#8CC63F]/50"
-                    />
-                </div>
-                <div>
-                    <input
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Descripción u orden de compra (Opcional)"
-                        className="w-full bg-black/40 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#8CC63F]/50"
-                    />
-                </div>
-                <div className="flex gap-2">
-                    {editingProject && (
-                        <button
-                            type="button"
-                            onClick={handleCancelEdit}
-                            className="w-1/3 bg-zinc-600 hover:bg-zinc-700 text-white py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"
-                        >
-                            <X className="w-4 h-4" /> Cancelar
-                        </button>
-                    )}
-                    <button
-                        type="submit"
-                        disabled={isSubmitting || !name}
-                        className={`${editingProject ? 'w-2/3 bg-amber-500 hover:bg-amber-600 text-[#121D38]' : 'w-full bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38]'} py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 disabled:opacity-50`}
-                    >
-                        {isSubmitting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : editingProject ? (
-                            <><Edit2 className="w-4 h-4" /> Guardar</>
-                        ) : (
-                            <><Plus className="w-4 h-4" /> Agregar Proyecto</>
+            {!readOnly && (
+                <form onSubmit={handleSubmit} className="mb-6 space-y-3 bg-black/20 p-4 rounded-xl border border-white/5">
+                    <div>
+                        <input
+                            required
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Nombre del Proyecto o Cliente"
+                            className="w-full bg-black/40 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#8CC63F]/50"
+                        />
+                    </div>
+                    <div>
+                        <input
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Descripción u orden de compra (Opcional)"
+                            className="w-full bg-black/40 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#8CC63F]/50"
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        {editingProject && (
+                            <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="w-1/3 bg-zinc-600 hover:bg-zinc-700 text-white py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-1"
+                            >
+                                <X className="w-4 h-4" /> Cancelar
+                            </button>
                         )}
-                    </button>
-                </div>
-            </form>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting || !name}
+                            className={`${editingProject ? 'w-2/3 bg-amber-500 hover:bg-amber-600 text-[#121D38]' : 'w-full bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38]'} py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 disabled:opacity-50`}
+                        >
+                            {isSubmitting ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : editingProject ? (
+                                <><Edit2 className="w-4 h-4" /> Guardar</>
+                            ) : (
+                                <><Plus className="w-4 h-4" /> Agregar Proyecto</>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            )}
 
             {/* Buscador */}
             <div className="relative mb-4">
@@ -249,36 +251,38 @@ export default function ProjectCrud() {
                                     <p className="text-xs text-zinc-500 truncate">{project.description}</p>
                                 )}
                             </div>
-                            <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
-                                <button
-                                    onClick={() => handleToggleActive(project)}
-                                    disabled={togglingId === project.id}
-                                    className={`p-1.5 rounded-md transition ${project.active !== false ? 'text-zinc-500 hover:text-orange-400 hover:bg-[#121D38]/40' : 'text-zinc-500 hover:text-green-400 hover:bg-[#121D38]/40'}`}
-                                    title={project.active !== false ? "Cerrar proyecto" : "Activar proyecto"}
-                                >
-                                    {togglingId === project.id ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : project.active !== false ? (
-                                        <PauseCircle className="w-4 h-4" />
-                                    ) : (
-                                        <PlayCircle className="w-4 h-4" />
-                                    )}
-                                </button>
-                                <button
-                                    onClick={() => handleStartEdit(project)}
-                                    className="p-1.5 text-zinc-500 hover:text-amber-400 rounded-md hover:bg-amber-400/10"
-                                    title="Editar proyecto"
-                                >
-                                    <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(project.id, project.name)}
-                                    className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-red-400/10"
-                                    title="Eliminar proyecto"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {!readOnly && (
+                                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+                                    <button
+                                        onClick={() => handleToggleActive(project)}
+                                        disabled={togglingId === project.id}
+                                        className={`p-1.5 rounded-md transition ${project.active !== false ? 'text-zinc-500 hover:text-orange-400 hover:bg-[#121D38]/40' : 'text-zinc-500 hover:text-green-400 hover:bg-[#121D38]/40'}`}
+                                        title={project.active !== false ? "Cerrar proyecto" : "Activar proyecto"}
+                                    >
+                                        {togglingId === project.id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : project.active !== false ? (
+                                            <PauseCircle className="w-4 h-4" />
+                                        ) : (
+                                            <PlayCircle className="w-4 h-4" />
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => handleStartEdit(project)}
+                                        className="p-1.5 text-zinc-500 hover:text-amber-400 rounded-md hover:bg-amber-400/10"
+                                        title="Editar proyecto"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(project.id, project.name)}
+                                        className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-red-400/10"
+                                        title="Eliminar proyecto"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))
                 )}

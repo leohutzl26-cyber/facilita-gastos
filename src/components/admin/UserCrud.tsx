@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle, ShieldAlert, ShieldCheck, Search, Users } from 'lucide-react';
+import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle, ShieldCheck, Search, Users, Glasses } from 'lucide-react';
 
 type Worker = {
     id: string;
@@ -10,7 +10,13 @@ type Worker = {
     role?: string;
 };
 
-export default function UserCrud() {
+const ROLE_OPTIONS = [
+    { value: 'colaborador', label: 'Colaborador' },
+    { value: 'revisor', label: 'Revisor' },
+    { value: 'admin', label: 'Administrador' },
+];
+
+export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isAdding, setIsAdding] = useState(false);
@@ -138,14 +144,16 @@ export default function UserCrud() {
         }
     };
 
-    const handleToggleRole = async (id: string, name: string, currentRole?: string) => {
-        const action = currentRole === 'admin' ? 'quitar los permisos de Administrador a' : 'promover a Administrador a';
-        if (!confirm(`¿Estás seguro de que deseas ${action} ${name}?`)) return;
+    const handleSetRole = async (id: string, name: string, newRole: string) => {
+        const label = ROLE_OPTIONS.find(r => r.value === newRole)?.label || newRole;
+        if (!confirm(`¿Cambiar el rol de ${name} a "${label}"?`)) return;
 
         setIsTogglingRole(id);
         try {
-            const res = await fetch(`/api/admin/workers/${id}/toggle-role`, {
+            const res = await fetch(`/api/admin/workers/${id}/set-role`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole })
             });
             const data = await res.json();
 
@@ -171,11 +179,12 @@ export default function UserCrud() {
     const totalWorkers = workers.length;
     const activeWorkers = workers.filter(w => !w.is_suspended).length;
     const adminWorkers = workers.filter(w => w.role === 'admin').length;
+    const revisorWorkers = workers.filter(w => w.role === 'revisor').length;
 
     return (
         <div>
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Colaboradores</p>
@@ -210,6 +219,17 @@ export default function UserCrud() {
                         <ShieldCheck className="w-6 h-6" />
                     </div>
                 </div>
+
+                <div className="bg-[#1C2D54]/40 border border-purple-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Revisores</p>
+                        <p className="text-2xl font-black text-purple-400">{revisorWorkers}</p>
+                        <p className="text-[10px] text-zinc-500">Solo lectura e informes</p>
+                    </div>
+                    <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400 shrink-0">
+                        <Glasses className="w-6 h-6" />
+                    </div>
+                </div>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -227,16 +247,18 @@ export default function UserCrud() {
                             className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
                         />
                     </div>
-                    <button
-                        onClick={() => setIsAdding(!isAdding)}
-                        className="bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition whitespace-nowrap"
-                    >
-                        {isAdding ? 'Cancelar' : <><Plus className="w-4 h-4" /> Nuevo Colaborador</>}
-                    </button>
+                    {!readOnly && (
+                        <button
+                            onClick={() => setIsAdding(!isAdding)}
+                            className="bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition whitespace-nowrap"
+                        >
+                            {isAdding ? 'Cancelar' : <><Plus className="w-4 h-4" /> Nuevo Colaborador</>}
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {isAdding && (
+            {!readOnly && isAdding && (
                 <form onSubmit={handleCreate} className="bg-black/20 p-4 rounded-xl mb-6 border border-white/5 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -281,46 +303,52 @@ export default function UserCrud() {
                                                 <ShieldCheck className="w-3 h-3" /> Admin
                                             </span>
                                         )}
+                                        {worker.role === 'revisor' && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1">
+                                                <Glasses className="w-3 h-3" /> Revisor
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={() => handleToggleStatus(worker.id, worker.name)}
-                                    disabled={isToggling === worker.id}
-                                    title={worker.is_suspended ? "Reactivar acceso" : "Suspender acceso"}
-                                    className={`p-2 rounded-lg transition disabled:opacity-50 ${worker.is_suspended
-                                        ? 'text-green-500 hover:text-green-400 hover:bg-green-500/10'
-                                        : 'text-orange-500 hover:text-orange-400 hover:bg-orange-500/10'
-                                        }`}
-                                >
-                                    {isToggling === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> :
-                                        worker.is_suspended ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
-                                </button>
-                                <button
-                                    onClick={() => handleToggleRole(worker.id, worker.name, worker.role)}
-                                    disabled={isTogglingRole === worker.id}
-                                    title={worker.role === 'admin' ? "Quitar privilegios de Administrador" : "Hacer Administrador"}
-                                    className={`p-2 rounded-lg transition disabled:opacity-50 ${worker.role === 'admin'
-                                        ? 'text-blue-500 hover:text-blue-400 hover:bg-blue-500/10'
-                                        : 'text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10'
-                                    }`}
-                                >
-                                    {isTogglingRole === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> :
-                                        worker.role === 'admin' ? <ShieldAlert className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                                </button>
-                                <button
-                                    onClick={() => handleResetPassword(worker.id, worker.name)}
-                                    disabled={isResetting === worker.id}
-                                    title="Forzar reinicio de contraseña"
-                                    className="p-2 text-yellow-500 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition disabled:opacity-50"
-                                >
-                                    {isResetting === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-                                </button>
-                                <button onClick={() => handleDelete(worker.id, worker.name)} className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition" title="Eliminar Trabajador">
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {readOnly ? null : (
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <select
+                                        value={worker.role || 'colaborador'}
+                                        onChange={(e) => handleSetRole(worker.id, worker.name, e.target.value)}
+                                        disabled={isTogglingRole === worker.id}
+                                        title="Cambiar rol"
+                                        className="bg-[#1C2D54] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-[#8CC63F] disabled:opacity-50"
+                                    >
+                                        {ROLE_OPTIONS.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={() => handleToggleStatus(worker.id, worker.name)}
+                                        disabled={isToggling === worker.id}
+                                        title={worker.is_suspended ? "Reactivar acceso" : "Suspender acceso"}
+                                        className={`p-2 rounded-lg transition disabled:opacity-50 ${worker.is_suspended
+                                            ? 'text-green-500 hover:text-green-400 hover:bg-green-500/10'
+                                            : 'text-orange-500 hover:text-orange-400 hover:bg-orange-500/10'
+                                            }`}
+                                    >
+                                        {isToggling === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                                            worker.is_suspended ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
+                                    </button>
+                                    <button
+                                        onClick={() => handleResetPassword(worker.id, worker.name)}
+                                        disabled={isResetting === worker.id}
+                                        title="Forzar reinicio de contraseña"
+                                        className="p-2 text-yellow-500 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition disabled:opacity-50"
+                                    >
+                                        {isResetting === worker.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                                    </button>
+                                    <button onClick={() => handleDelete(worker.id, worker.name)} className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition" title="Eliminar Trabajador">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))}
                     {filteredWorkers.length === 0 && (

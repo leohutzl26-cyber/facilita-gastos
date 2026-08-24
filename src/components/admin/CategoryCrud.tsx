@@ -9,7 +9,7 @@ type Category = {
     max_amount_alert?: number | null;
 };
 
-export default function CategoryCrud() {
+export default function CategoryCrud({ readOnly = false }: { readOnly?: boolean }) {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isAdding, setIsAdding] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -132,16 +132,18 @@ export default function CategoryCrud() {
                     <Settings className="w-5 h-5 text-[#8CC63F]" />
                     <h2 className="text-xl font-semibold text-zinc-100">Categorías y Alertas</h2>
                 </div>
-                <button
-                    onClick={() => setIsAdding(!isAdding)}
-                    className="p-2 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-xl transition"
-                    title="Añadir Categoría"
-                >
-                    {isAdding ? <Settings className="w-4 h-4 transition-transform rotate-90" /> : <Plus className="w-4 h-4" />}
-                </button>
+                {!readOnly && (
+                    <button
+                        onClick={() => setIsAdding(!isAdding)}
+                        className="p-2 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-xl transition"
+                        title="Añadir Categoría"
+                    >
+                        {isAdding ? <Settings className="w-4 h-4 transition-transform rotate-90" /> : <Plus className="w-4 h-4" />}
+                    </button>
+                )}
             </div>
 
-            {isAdding && (
+            {!readOnly && isAdding && (
                 <form onSubmit={handleCreate} className="bg-black/20 p-4 rounded-xl mb-4 border border-white/5 space-y-3">
                     <div>
                         <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider block">Nombre Categoría</label>
@@ -173,7 +175,7 @@ export default function CategoryCrud() {
                 ) : (
                     categories.map(cat => (
                         <div key={cat.id} className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 transition group">
-                            {editingId === cat.id ? (
+                            {!readOnly && editingId === cat.id ? (
                                 <form onSubmit={(e) => handleEditSubmit(e, cat)} className="flex-1 flex gap-2 items-center">
                                     <span className="font-medium text-sm text-zinc-200 w-1/3 truncate">{cat.name}</span>
                                     <div className="flex-1 flex items-center gap-1">
@@ -206,21 +208,23 @@ export default function CategoryCrud() {
                                             <span className="text-[10px] text-zinc-500 mt-0.5">Sin tope de alerta</span>
                                         )}
                                     </div>
-                                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
-                                        <button 
-                                            onClick={() => {
-                                                setEditingId(cat.id);
-                                                setEditMaxAmount(cat.max_amount_alert ? cat.max_amount_alert.toString() : '');
-                                            }} 
-                                            className="p-1.5 text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition" 
-                                            title="Editar Tope"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={() => handleDelete(cat.id, cat.name)} className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-md transition" title="Eliminar">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                    {!readOnly && (
+                                        <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
+                                            <button
+                                                onClick={() => {
+                                                    setEditingId(cat.id);
+                                                    setEditMaxAmount(cat.max_amount_alert ? cat.max_amount_alert.toString() : '');
+                                                }}
+                                                className="p-1.5 text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition"
+                                                title="Editar Tope"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleDelete(cat.id, cat.name)} className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-md transition" title="Eliminar">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    )}
                                 </>
                             )}
                         </div>

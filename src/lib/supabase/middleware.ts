@@ -63,8 +63,10 @@ export async function updateSession(request: NextRequest) {
             }
         }
 
+        const canViewAdminPanel = role === 'admin' || role === 'revisor';
+
         if (path.startsWith('/admin') && path !== '/admin/login') {
-            if (role !== 'admin') {
+            if (!canViewAdminPanel) {
                 // Workers trying to access admin
                 const url = request.nextUrl.clone();
                 url.pathname = '/worker/capture';
@@ -75,7 +77,7 @@ export async function updateSession(request: NextRequest) {
         // Prevent logged in users from seeing login pages
         if (path === '/admin/login' || path === '/worker/login' || path === '/') {
             const url = request.nextUrl.clone();
-            url.pathname = role === 'admin' ? '/admin/dashboard' : '/worker/capture';
+            url.pathname = canViewAdminPanel ? '/admin/dashboard' : '/worker/capture';
             return NextResponse.redirect(url);
         }
     }

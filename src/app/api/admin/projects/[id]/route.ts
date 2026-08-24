@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { isAdmin } from '@/utils/roles';
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !isAdmin(user)) {
+        return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
     }
 
     try {
@@ -50,8 +51,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !isAdmin(user)) {
+        return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
     }
 
     try {

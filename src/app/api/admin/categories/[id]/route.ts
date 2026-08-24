@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { isAdmin } from '@/utils/roles';
 
 export async function PUT(
     request: Request,
@@ -7,7 +8,7 @@ export async function PUT(
 ) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !isAdmin(user)) return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
 
     try {
         // Next.js 15 requires awaiting params
@@ -43,7 +44,7 @@ export async function DELETE(
 ) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !isAdmin(user)) return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
 
     try {
         const params = await context.params;

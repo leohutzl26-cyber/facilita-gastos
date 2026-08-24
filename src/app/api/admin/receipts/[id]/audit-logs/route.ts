@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { canViewAdminPanel } from '@/utils/roles';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -16,7 +17,7 @@ export async function GET(
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user || user.user_metadata?.role !== 'admin') {
+    if (!user || !canViewAdminPanel(user)) {
         return NextResponse.json({ error: 'Unauthorized: Admin access required.' }, { status: 401 });
     }
 

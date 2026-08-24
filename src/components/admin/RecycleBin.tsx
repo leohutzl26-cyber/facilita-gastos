@@ -12,7 +12,7 @@ type DeletedRecord = {
     deleted_by: string;
 };
 
-export default function RecycleBin() {
+export default function RecycleBin({ readOnly = false }: { readOnly?: boolean }) {
     const [records, setRecords] = useState<DeletedRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState<string | null>(null); // record ID or 'vaciar'
@@ -225,7 +225,7 @@ export default function RecycleBin() {
                     >
                         <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                     </button>
-                    {records.length > 0 && (
+                    {!readOnly && records.length > 0 && (
                         <button
                             onClick={handleEmptyBin}
                             disabled={isLoading || isActionLoading !== null}
@@ -312,23 +312,27 @@ export default function RecycleBin() {
                                                 >
                                                     <Eye className="w-3.5 h-3.5" />
                                                 </button>
-                                                <button
-                                                    onClick={() => handleRestore(record)}
-                                                    disabled={isActionLoading !== null}
-                                                    className="p-2 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-lg transition disabled:opacity-50 flex items-center gap-1 text-xs font-semibold"
-                                                    title="Restaurar Elemento"
-                                                >
-                                                    {isActionLoading === record.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
-                                                    Restaurar
-                                                </button>
-                                                <button
-                                                    onClick={() => handlePurge(record)}
-                                                    disabled={isActionLoading !== null}
-                                                    className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition disabled:opacity-50"
-                                                    title="Eliminar Definitivamente (Purgar)"
-                                                >
-                                                    <Trash className="w-3.5 h-3.5" />
-                                                </button>
+                                                {!readOnly && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleRestore(record)}
+                                                            disabled={isActionLoading !== null}
+                                                            className="p-2 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-lg transition disabled:opacity-50 flex items-center gap-1 text-xs font-semibold"
+                                                            title="Restaurar Elemento"
+                                                        >
+                                                            {isActionLoading === record.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                                                            Restaurar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handlePurge(record)}
+                                                            disabled={isActionLoading !== null}
+                                                            className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition disabled:opacity-50"
+                                                            title="Eliminar Definitivamente (Purgar)"
+                                                        >
+                                                            <Trash className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

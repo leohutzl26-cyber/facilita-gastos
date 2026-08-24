@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { isAdmin } from '@/utils/roles';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -17,8 +18,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    if (!user || !isAdmin(user)) {
+        return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
     }
 
     try {

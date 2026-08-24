@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { isAdmin } from '@/utils/roles';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -17,8 +18,8 @@ export async function DELETE(
     const { data: { user } } = await supabaseSession.auth.getUser();
 
     // Requisito: Sólo un Admin logueado puede eliminar trabajadores
-    if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !isAdmin(user)) {
+        return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
     }
 
     try {

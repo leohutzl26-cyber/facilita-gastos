@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { canViewAdminPanel, isAdmin } from '@/utils/roles';
 
 export async function GET() {
     const supabase = await createClient();
 
-    // Check if user is admin
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // Assuming simple auth for now; matching other admin routes pattern.
+    if (!user || !canViewAdminPanel(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
         const { data: categories, error } = await supabase
@@ -25,7 +24,7 @@ export async function GET() {
 export async function POST(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !isAdmin(user)) return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
 
     try {
         const body = await request.json();

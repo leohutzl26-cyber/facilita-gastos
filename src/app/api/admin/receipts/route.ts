@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { parseCLPAmount } from '@/utils/currency';
+import { canViewAdminPanel, isAdmin } from '@/utils/roles';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -14,13 +15,12 @@ export async function GET() {
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user) {
+    if (!user || !canViewAdminPanel(user)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-        // En un esquema real, validaríamos que el 'user' es ADMIN.
-        // Aquí extraemos todos los recibos ordenados por fecha descendente
+        // Extraemos todos los recibos ordenados por fecha descendente
         const { data: receipts, error } = await supabaseSession
             .from('receipts')
             .select('*, projects(id, name), payment_receipts(id, amount_applied, payments(id, file_url, file_type, amount, paid_at, source, created_at))')
@@ -41,8 +41,8 @@ export async function POST(request: Request) {
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    if (!user || !isAdmin(user)) {
+        return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
     }
 
     try {

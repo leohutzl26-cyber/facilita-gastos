@@ -8,7 +8,7 @@ import ReceiptDetailModal from './ReceiptDetailModal';
 import AdminReceiptCreateModal from './AdminReceiptCreateModal';
 import { getReceiptBalance } from '@/utils/payments';
 
-export default function AdminReceipts() {
+export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean }) {
     const [receipts, setReceipts] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [workers, setWorkers] = useState<any[]>([]);
@@ -578,13 +578,15 @@ export default function AdminReceipts() {
                         />
                     </div>
                     <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                        <button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="flex items-center gap-2 bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] px-3 py-2 rounded-xl text-sm font-bold transition whitespace-nowrap"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Registrar Gasto
-                        </button>
+                        {!readOnly && (
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="flex items-center gap-2 bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] px-3 py-2 rounded-xl text-sm font-bold transition whitespace-nowrap"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Registrar Gasto
+                            </button>
+                        )}
                         <button
                             onClick={handleExportPDF}
                             disabled={filteredReceipts.length === 0 || isGeneratingPDF}
@@ -903,7 +905,7 @@ export default function AdminReceipts() {
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </button>
-                                                {(receipt.status === 'Pendiente' || !receipt.status) && (
+                                                {!readOnly && (receipt.status === 'Pendiente' || !receipt.status) && (
                                                     <>
                                                         <button
                                                             onClick={() => handleStatusUpdate(receipt.id, 'Aprobado por Supervisor')}
@@ -921,7 +923,7 @@ export default function AdminReceipts() {
                                                         </button>
                                                     </>
                                                 )}
-                                                {receipt.status === 'Aprobado por Supervisor' && (
+                                                {!readOnly && receipt.status === 'Aprobado por Supervisor' && (
                                                     <button
                                                         onClick={() => handleStatusUpdate(receipt.id, 'Reembolsado')}
                                                         className="p-1.5 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-md transition"
@@ -930,7 +932,7 @@ export default function AdminReceipts() {
                                                         <CreditCard className="w-4 h-4" />
                                                     </button>
                                                 )}
-                                                {receipt.status && receipt.status !== 'Pendiente' && (
+                                                {!readOnly && receipt.status && receipt.status !== 'Pendiente' && (
                                                     <button
                                                         onClick={() => handleRevertStatus(receipt.id)}
                                                         className="p-1.5 bg-zinc-700/30 text-zinc-300 hover:bg-zinc-700 hover:text-white rounded-md transition"
@@ -939,13 +941,15 @@ export default function AdminReceipts() {
                                                         <RotateCcw className="w-4 h-4" />
                                                     </button>
                                                 )}
-                                                <button
-                                                    onClick={() => handleDelete(receipt.id)}
-                                                    className="p-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-md transition ml-2"
-                                                    title="Eliminar Recibo Permanentemente"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                {!readOnly && (
+                                                    <button
+                                                        onClick={() => handleDelete(receipt.id)}
+                                                        className="p-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-md transition ml-2"
+                                                        title="Eliminar Recibo Permanentemente"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -1032,6 +1036,7 @@ export default function AdminReceipts() {
             {selectedReceipt && (
                 <ReceiptDetailModal
                     receipt={selectedReceipt}
+                    readOnly={readOnly}
                     onClose={() => setSelectedReceipt(null)}
                     onUpdate={(updated) => {
                         // Merge para no perder relaciones anidadas (projects, payment_receipts)

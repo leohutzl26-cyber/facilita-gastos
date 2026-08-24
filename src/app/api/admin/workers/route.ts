@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { canViewAdminPanel, isAdmin } from '@/utils/roles';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -13,7 +14,7 @@ export async function GET() {
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user) {
+    if (!user || !canViewAdminPanel(user)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -46,8 +47,8 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabaseSession.auth.getUser();
 
     // Requisito: Sólo un Admin logueado puede crear trabajadores
-    if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !isAdmin(user)) {
+        return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
     }
 
     try {

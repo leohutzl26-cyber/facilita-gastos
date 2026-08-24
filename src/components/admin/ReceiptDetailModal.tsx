@@ -18,6 +18,7 @@ const PAYMENT_SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2
 
 type ReceiptDetailModalProps = {
     receipt: any;
+    readOnly?: boolean;
     onClose: () => void;
     onUpdate: (updatedReceipt: any) => void;
     onDelete: (id: string) => void;
@@ -28,6 +29,7 @@ type ReceiptDetailModalProps = {
 
 export default function ReceiptDetailModal({
     receipt,
+    readOnly = false,
     onClose,
     onUpdate,
     onDelete,
@@ -926,29 +928,32 @@ export default function ReceiptDetailModal({
                                     <div ref={commentsEndRef} />
                                 </div>
 
-                                {/* Form Add Comment */}
-                                <form onSubmit={handleCommentSubmit} className="mt-3 flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={newComment}
-                                        onChange={(e) => setNewComment(e.target.value)}
-                                        placeholder="Escribe un comentario..."
-                                        disabled={isCommenting}
-                                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#8CC63F] outline-none"
-                                    />
-                                    <button 
-                                        type="submit"
-                                        disabled={isCommenting || !newComment.trim()}
-                                        className="p-2 bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] rounded-xl transition disabled:opacity-50"
-                                    >
-                                        {isCommenting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                    </button>
-                                </form>
+                                {/* Form Add Comment (no disponible en modo revisor) */}
+                                {!readOnly && (
+                                    <form onSubmit={handleCommentSubmit} className="mt-3 flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newComment}
+                                            onChange={(e) => setNewComment(e.target.value)}
+                                            placeholder="Escribe un comentario..."
+                                            disabled={isCommenting}
+                                            className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                        />
+                                        <button
+                                            type="submit"
+                                            disabled={isCommenting || !newComment.trim()}
+                                            className="p-2 bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] rounded-xl transition disabled:opacity-50"
+                                        >
+                                            {isCommenting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                        </button>
+                                    </form>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Bottom Sticky Action Buttons */}
+                    {/* Bottom Sticky Action Buttons (no disponibles en modo revisor) */}
+                    {!readOnly && (
                     <div className="p-6 bg-black/20 border-t border-white/5 flex flex-wrap gap-2 items-center justify-between mt-auto">
                         <div className="flex gap-2">
                             {/* Editar */}
@@ -1024,6 +1029,7 @@ export default function ReceiptDetailModal({
                             )}
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
 

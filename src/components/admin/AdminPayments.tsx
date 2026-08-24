@@ -27,7 +27,7 @@ const SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
     whatsapp: { label: 'WhatsApp', icon: Share2 },
 };
 
-export default function AdminPayments() {
+export default function AdminPayments({ readOnly = false }: { readOnly?: boolean }) {
     const [payments, setPayments] = useState<any[]>([]);
     const [receipts, setReceipts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -134,9 +134,10 @@ export default function AdminPayments() {
         setSuggestionApplied(false);
 
         // Los comprobantes ya asociados se abren en modo lectura: no hay
-        // nada que sugerir ni que seleccionar.
+        // nada que sugerir ni que seleccionar. Un revisor tampoco puede
+        // disparar la sugerencia IA (el servidor la rechaza igual).
         const target = payments.find(p => p.id === paymentId);
-        if (target?.status !== 'pendiente') return;
+        if (target?.status !== 'pendiente' || readOnly) return;
 
         setIsSuggesting(true);
         try {
@@ -292,17 +293,19 @@ export default function AdminPayments() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-end">
-                <button
-                    onClick={() => setIsUploadOpen(prev => !prev)}
-                    className="flex items-center gap-2 bg-[#1C2D54]/60 hover:bg-[#1C2D54] border border-[#8CC63F]/20 text-sm text-zinc-200 px-4 py-2 rounded-xl transition"
-                >
-                    <Plus className="w-4 h-4 text-[#8CC63F]" />
-                    Subir comprobante manualmente
-                </button>
-            </div>
+            {!readOnly && (
+                <div className="flex justify-end">
+                    <button
+                        onClick={() => setIsUploadOpen(prev => !prev)}
+                        className="flex items-center gap-2 bg-[#1C2D54]/60 hover:bg-[#1C2D54] border border-[#8CC63F]/20 text-sm text-zinc-200 px-4 py-2 rounded-xl transition"
+                    >
+                        <Plus className="w-4 h-4 text-[#8CC63F]" />
+                        Subir comprobante manualmente
+                    </button>
+                </div>
+            )}
 
-            {isUploadOpen && (
+            {!readOnly && isUploadOpen && (
                 <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-5 space-y-4 animate-in fade-in duration-200">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-semibold text-white">Nuevo comprobante manual</h3>
@@ -416,14 +419,16 @@ export default function AdminPayments() {
                                                 Pendiente
                                             </span>
                                         )}
-                                        <button
-                                            onClick={e => { e.stopPropagation(); handleDeletePayment(payment.id); }}
-                                            disabled={isDeletingPayment}
-                                            className="text-zinc-500 hover:text-red-400 transition disabled:opacity-40 shrink-0"
-                                            title="Eliminar comprobante (cargado por error)"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
+                                        {!readOnly && (
+                                            <button
+                                                onClick={e => { e.stopPropagation(); handleDeletePayment(payment.id); }}
+                                                disabled={isDeletingPayment}
+                                                className="text-zinc-500 hover:text-red-400 transition disabled:opacity-40 shrink-0"
+                                                title="Eliminar comprobante (cargado por error)"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                                 <p className="text-sm font-medium text-white truncate">
@@ -527,16 +532,18 @@ export default function AdminPayments() {
                                                     <span className="text-xs text-zinc-300 whitespace-nowrap font-medium">
                                                         ${applied.toLocaleString('es-CL')}
                                                     </span>
-                                                    <button
-                                                        onClick={() => handleUnassignReceipt(activePayment.id, receipt.id)}
-                                                        disabled={unassigningReceiptId === receipt.id}
-                                                        className="text-zinc-500 hover:text-red-400 transition disabled:opacity-40 shrink-0"
-                                                        title="Quitar esta boleta del comprobante (mal asignada)"
-                                                    >
-                                                        {unassigningReceiptId === receipt.id
-                                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                            : <Link2Off className="w-3.5 h-3.5" />}
-                                                    </button>
+                                                    {!readOnly && (
+                                                        <button
+                                                            onClick={() => handleUnassignReceipt(activePayment.id, receipt.id)}
+                                                            disabled={unassigningReceiptId === receipt.id}
+                                                            className="text-zinc-500 hover:text-red-400 transition disabled:opacity-40 shrink-0"
+                                                            title="Quitar esta boleta del comprobante (mal asignada)"
+                                                        >
+                                                            {unassigningReceiptId === receipt.id
+                                                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                                : <Link2Off className="w-3.5 h-3.5" />}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             );
                                         })}
@@ -556,6 +563,10 @@ export default function AdminPayments() {
                             )}
                             {error && <p className="text-xs text-red-400">{error}</p>}
                         </div>
+                    ) : readOnly ? (
+                        <p className="text-xs text-zinc-500 py-4 text-center">
+                            Este comprobante aún no ha sido asociado a ninguna boleta.
+                        </p>
                     ) : (
                     <>
                     <div className="relative">

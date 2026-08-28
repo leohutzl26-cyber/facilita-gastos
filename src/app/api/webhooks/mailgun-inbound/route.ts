@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { enhanceComprobanteImage } from '@/utils/imageEnhance';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -44,13 +45,15 @@ export async function POST(request: Request) {
             const file = formData.get(`attachment-${i}`) as File | null;
             if (!file) continue;
 
-            const mimeType = file.type || 'application/octet-stream';
-            if (!mimeType.startsWith('image/') && mimeType !== 'application/pdf') continue;
+            const originalMimeType = file.type || 'application/octet-stream';
+            if (!originalMimeType.startsWith('image/') && originalMimeType !== 'application/pdf') continue;
+
+            const originalBuffer = Buffer.from(await file.arrayBuffer());
+            const { buffer, mimeType } = await enhanceComprobanteImage(originalBuffer, originalMimeType);
 
             const fileExt = mimeType.split('/')[1] || 'bin';
             const fileType = mimeType === 'application/pdf' ? 'pdf' : 'image';
             const fileName = `email/${Date.now()}_${i}.${fileExt}`;
-            const buffer = Buffer.from(await file.arrayBuffer());
 
             const { error: uploadError } = await adminDb.storage
                 .from('payment-proofs')

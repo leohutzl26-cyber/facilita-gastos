@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { enhanceComprobanteImage } from '@/utils/imageEnhance';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -25,12 +26,17 @@ export async function POST(request: Request) {
             return NextResponse.redirect(new URL('/admin/dashboard?share_error=archivo_vacio', request.url), 303);
         }
 
-        const mimeType = file.type || 'application/octet-stream';
+        const originalMimeType = file.type || 'application/octet-stream';
+        const originalBuffer = Buffer.from(await file.arrayBuffer());
+
+        // Las fotos compartidas desde el celular suelen llegar comprimidas
+        // por la app de origen; las mejoramos un poco (nitidez, contraste,
+        // tamaño mínimo) sin dejar que el archivo crezca demasiado.
+        const { buffer, mimeType } = await enhanceComprobanteImage(originalBuffer, originalMimeType);
+
         const fileExt = mimeType.split('/')[1] || 'bin';
         const fileType = mimeType === 'application/pdf' ? 'pdf' : 'image';
         const fileName = `${user.id}/${Date.now()}_comprobante.${fileExt}`;
-
-        const buffer = Buffer.from(await file.arrayBuffer());
 
         const { error: uploadError } = await supabaseSession.storage
             .from('payment-proofs')

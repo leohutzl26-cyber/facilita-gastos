@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { canViewAdminPanel, isAdmin } from '@/utils/roles';
+import { enhanceComprobanteImage } from '@/utils/imageEnhance';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -63,9 +64,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Formato de archivo inválido' }, { status: 400 });
         }
 
-        const mimeType = matches[1] || 'application/octet-stream';
+        const originalMimeType = matches[1] || 'application/octet-stream';
         const base64Data = matches[2];
-        const buffer = Buffer.from(base64Data, 'base64');
+        const originalBuffer = Buffer.from(base64Data, 'base64');
+        const { buffer, mimeType } = await enhanceComprobanteImage(originalBuffer, originalMimeType);
+
         const fileExt = mimeType.split('/')[1] || 'bin';
         const fileType = mimeType === 'application/pdf' ? 'pdf' : 'image';
         const fileName = `${user.id}/${Date.now()}_manual.${fileExt}`;

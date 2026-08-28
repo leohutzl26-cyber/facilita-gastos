@@ -8,6 +8,7 @@ import {
     Landmark, Share2, Mail, Upload, ExternalLink, FileText
 } from 'lucide-react';
 import { getReceiptBalance } from '@/utils/payments';
+import ReimburseWarningModal from './ReimburseWarningModal';
 
 const PAYMENT_SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
     share_target: { label: 'Compartido desde el celular', icon: Share2 },
@@ -22,6 +23,7 @@ type ReceiptDetailModalProps = {
     onClose: () => void;
     onUpdate: (updatedReceipt: any) => void;
     onDelete: (id: string) => void;
+    onRequestRefresh?: () => void | Promise<void>;
     categories: any[];
     projects: any[];
     workers: any[];
@@ -33,6 +35,7 @@ export default function ReceiptDetailModal({
     onClose,
     onUpdate,
     onDelete,
+    onRequestRefresh,
     categories,
     projects,
     workers
@@ -44,6 +47,7 @@ export default function ReceiptDetailModal({
     const [isSaving, setIsSaving] = useState(false);
     const [isCommenting, setIsCommenting] = useState(false);
     const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
+    const [showReimburseWarning, setShowReimburseWarning] = useState(false);
 
     // Image Manipulation States
     const [zoom, setZoom] = useState(1);
@@ -1002,8 +1006,8 @@ export default function ReceiptDetailModal({
 
                             {/* Reembolso */}
                             {receipt.status === 'Aprobado por Supervisor' && (
-                                <button 
-                                    onClick={() => handleStatusChange('Reembolsado')}
+                                <button
+                                    onClick={() => balance.isFullyPaid ? handleStatusChange('Reembolsado') : setShowReimburseWarning(true)}
                                     disabled={isActionLoading !== null}
                                     className="flex items-center gap-1.5 bg-[#8CC63F] hover:bg-[#3EAE49] text-[#121D38] px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50 animate-pulse"
                                 >
@@ -1067,6 +1071,21 @@ export default function ReceiptDetailModal({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showReimburseWarning && (
+                <ReimburseWarningModal
+                    receipt={receipt}
+                    onClose={() => setShowReimburseWarning(false)}
+                    onConfirmWithoutProof={async () => {
+                        await handleStatusChange('Reembolsado');
+                        setShowReimburseWarning(false);
+                    }}
+                    onAssociated={async () => {
+                        await onRequestRefresh?.();
+                        setShowReimburseWarning(false);
+                    }}
+                />
             )}
         </div>
     );

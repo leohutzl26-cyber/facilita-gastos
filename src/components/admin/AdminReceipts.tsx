@@ -4,6 +4,7 @@ import { Receipt, Search, ExternalLink, CheckCircle, CreditCard, Loader2, XCircl
 import ReceiptDetailModal from './ReceiptDetailModal';
 import AdminReceiptCreateModal from './AdminReceiptCreateModal';
 import ExportModal from './ExportModal';
+import ReimburseWarningModal from './ReimburseWarningModal';
 import { getReceiptBalance } from '@/utils/payments';
 
 export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean }) {
@@ -17,6 +18,7 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
     const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [reimburseWarningReceipt, setReimburseWarningReceipt] = useState<any | null>(null);
 
     // Sorting States
     const [sortField, setSortField] = useState<string>('date');
@@ -47,6 +49,24 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, filterCategory, filterProject, filterWorker, filterDocumentType, filterStatus, filterStartDate, filterEndDate]);
+
+    // Reutilizable: re-trae solo los recibos (con sus relaciones de pago) sin
+    // tocar categorías/colaboradores, para refrescar después de asociar un
+    // comprobante desde la advertencia de "reembolsar sin comprobante". Si el
+    // modal de detalle está abierto, también lo sincroniza para que no quede
+    // mostrando datos viejos.
+    const fetchReceipts = async () => {
+        try {
+            const res = await fetch('/api/admin/receipts');
+            const data = await res.json();
+            if (res.ok && data.receipts) {
+                setReceipts(data.receipts);
+                setSelectedReceipt((prev: any) => prev ? (data.receipts.find((r: any) => r.id === prev.id) || null) : prev);
+            }
+        } catch (err) {
+            console.error("Error fetching receipts", err);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -108,6 +128,18 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
             }
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    // Un gasto solo debería quedar Reembolsado si tiene un comprobante que lo
+    // respalde. Si no lo tiene (o el abono no cubre el total), interceptamos
+    // el click y mostramos la advertencia en vez de marcarlo directo.
+    const handleReembolsarClick = (receipt: any) => {
+        const balance = getReceiptBalance(receipt);
+        if (balance.isFullyPaid) {
+            handleStatusUpdate(receipt.id, 'Reembolsado');
+        } else {
+            setReimburseWarningReceipt(receipt);
         }
     };
 
@@ -605,7 +637,7 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
                                                 )}
                                                 {!readOnly && receipt.status === 'Aprobado por Supervisor' && (
                                                     <button
-                                                        onClick={() => handleStatusUpdate(receipt.id, 'Reembolsado')}
+                                                        onClick={() => handleReembolsarClick(receipt)}
                                                         className="p-1.5 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-md transition"
                                                         title="Marcar como Reembolsado/Pagado"
                                                     >
@@ -728,6 +760,7 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
                         setReceipts(prev => prev.filter(r => r.id !== id));
                         setSelectedReceipt(null);
                     }}
+                    onRequestRefresh={fetchReceipts}
                     categories={categories}
                     projects={uniqueProjects}
                     workers={workers}
@@ -760,6 +793,20 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
                         status: filterStatus
                     }}
                     onClose={() => setIsExportModalOpen(false)}
+                />
+            )}
+            {reimburseWarningReceipt && (
+                <ReimburseWarningModal
+                    receipt={reimburseWarningReceipt}
+                    onClose={() => setReimburseWarningReceipt(null)}
+                    onConfirmWithoutProof={async () => {
+                        await handleStatusUpdate(reimburseWarningReceipt.id, 'Reembolsado');
+                        setReimburseWarningReceipt(null);
+                    }}
+                    onAssociated={async () => {
+                        await fetchReceipts();
+                        setReimburseWarningReceipt(null);
+                    }}
                 />
             )}
         </div>

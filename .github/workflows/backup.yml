@@ -20,8 +20,17 @@ jobs:
 
       - name: Instalar herramientas (pg_dump, rclone)
         run: |
+          # El pg_dump de los repos de Ubuntu es v16, pero Supabase corre
+          # Postgres 17 y pg_dump se niega a respaldar un servidor más nuevo
+          # que él mismo. Se agrega el repo oficial de PostgreSQL para
+          # instalar la versión 17 y evitar ese error.
           sudo apt-get update
-          sudo apt-get install -y postgresql-client zip
+          sudo apt-get install -y curl ca-certificates zip gnupg
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
           curl https://rclone.org/install.sh | sudo bash
 
       - name: Definir fecha del respaldo
@@ -30,7 +39,11 @@ jobs:
 
       - name: Respaldar base de datos
         run: |
-          pg_dump "${{ secrets.SUPABASE_DB_URL }}" --no-owner --no-privileges \
+          # pipefail es clave acá: sin esto, si pg_dump falla dentro de la
+          # tubería pero gzip igual "tiene éxito" comprimiendo un vacío, el
+          # paso completo se reporta como exitoso con un respaldo inútil.
+          set -o pipefail
+          /usr/lib/postgresql/17/bin/pg_dump "${{ secrets.SUPABASE_DB_URL }}" --no-owner --no-privileges \
             | gzip > "db_${{ steps.vars.outputs.date }}.sql.gz"
 
       - name: Descargar archivos de Storage

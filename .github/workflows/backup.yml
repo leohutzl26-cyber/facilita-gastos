@@ -1,0 +1,66 @@
+name: Respaldo a Google Drive
+
+# Corre cada 3 días aproximadamente (días 1,4,7,10,13,16,19,22,25,28,31 del
+# mes, 07:00 UTC). No es exactamente cada 72 horas por los cortes de mes,
+# pero para un respaldo esa diferencia no importa.
+on:
+  schedule:
+    - cron: '0 7 */3 * *'
+  workflow_dispatch: {} # permite ejecutarlo manualmente desde la pestaña Actions para probar
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar herramientas (pg_dump, rclone)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client zip
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Definir fecha del respaldo
+        id: vars
+        run: echo "date=$(date -u +'%Y-%m-%d_%H%M')" >> "$GITHUB_OUTPUT"
+
+      - name: Respaldar base de datos
+        run: |
+          pg_dump "${{ secrets.SUPABASE_DB_URL }}" --no-owner --no-privileges \
+            | gzip > "db_${{ steps.vars.outputs.date }}.sql.gz"
+
+      - name: Descargar archivos de Storage
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npm install --no-save @supabase/supabase-js
+          node scripts/backup-storage.js "storage_${{ steps.vars.outputs.date }}"
+
+      - name: Comprimir archivos de Storage
+        run: zip -rq "storage_${{ steps.vars.outputs.date }}.zip" "storage_${{ steps.vars.outputs.date }}"
+
+      - name: Configurar rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          printf '%s' "${{ secrets.RCLONE_CONFIG }}" > ~/.config/rclone/rclone.conf
+
+      - name: Subir a Google Drive
+        run: |
+          rclone copy "db_${{ steps.vars.outputs.date }}.sql.gz" "gdrive:FacilitaGastos-Backups/"
+          rclone copy "storage_${{ steps.vars.outputs.date }}.zip" "gdrive:FacilitaGastos-Backups/"
+
+      - name: Borrar respaldos antiguos (conservar los últimos 6)
+        run: |
+          for prefix in db_ storage_; do
+            rclone lsf "gdrive:FacilitaGastos-Backups/" --files-only \
+              | grep "^${prefix}" | sort -r | tail -n +7 \
+              | while read -r old; do
+                  echo "Borrando respaldo antiguo: $old"
+                  rclone deletefile "gdrive:FacilitaGastos-Backups/$old"
+                done
+          done

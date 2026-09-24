@@ -63,7 +63,7 @@ export async function updateSession(request: NextRequest) {
             }
         }
 
-        const canViewAdminPanel = role === 'admin' || role === 'revisor';
+        const canViewAdminPanel = role === 'admin' || role === 'aprobador' || role === 'pagador' || role === 'visor';
 
         if (path.startsWith('/admin') && path !== '/admin/login') {
             if (!canViewAdminPanel) {

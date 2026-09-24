@@ -12,7 +12,9 @@ const getAdminSupabase = () => {
 
 const ROLE_LABELS: Record<AppRole, string> = {
     admin: 'Administrador',
-    revisor: 'Revisor',
+    aprobador: 'Aprobador',
+    pagador: 'Pagador',
+    visor: 'Visor',
     colaborador: 'Colaborador'
 };
 

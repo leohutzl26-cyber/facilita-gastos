@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { parseCLPAmount } from '@/utils/currency';
-import { isAdmin } from '@/utils/roles';
+import { canManagePayments } from '@/utils/roles';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -21,8 +21,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user || !isAdmin(user)) {
-        return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
+    if (!user || !canManagePayments(user)) {
+        return NextResponse.json({ error: 'No autorizado: se requiere rol de pagador o administrador.' }, { status: 401 });
     }
 
     try {

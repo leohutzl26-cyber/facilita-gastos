@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { canViewAdminPanel, isAdmin } from '@/utils/roles';
+import { canViewAdminPanel, canManagePayments } from '@/utils/roles';
 import { enhanceComprobanteImage } from '@/utils/imageEnhance';
 
 const getAdminSupabase = () => {
@@ -47,8 +47,8 @@ export async function POST(request: Request) {
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user || !isAdmin(user)) {
-        return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
+    if (!user || !canManagePayments(user)) {
+        return NextResponse.json({ error: 'No autorizado: se requiere rol de pagador o administrador.' }, { status: 401 });
     }
 
     try {

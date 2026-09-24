@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { isAdmin } from '@/utils/roles';
+import { canApprove, canManagePayments, isAdmin } from '@/utils/roles';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -14,8 +14,8 @@ export async function PATCH(request: Request) {
     const supabaseSession = await createClient();
     const { data: { user } } = await supabaseSession.auth.getUser();
 
-    if (!user || !isAdmin(user)) {
-        return NextResponse.json({ error: 'No autorizado: se requiere rol de administrador.' }, { status: 401 });
+    if (!user) {
+        return NextResponse.json({ error: 'No autorizado.' }, { status: 401 });
     }
 
     try {
@@ -23,6 +23,17 @@ export async function PATCH(request: Request) {
 
         if (!id || !status) {
             return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
+        }
+
+        // Marcar como reembolsado/pagado es una acción financiera: la puede
+        // hacer un pagador (o admin), pero no un aprobador. El resto de las
+        // transiciones (aprobar/rechazar/revertir) requieren canApprove.
+        const authorized = status === 'Reembolsado'
+            ? isAdmin(user) || canManagePayments(user)
+            : canApprove(user);
+
+        if (!authorized) {
+            return NextResponse.json({ error: 'No autorizado para realizar este cambio de estado.' }, { status: 401 });
         }
 
         const updateData: any = { status };

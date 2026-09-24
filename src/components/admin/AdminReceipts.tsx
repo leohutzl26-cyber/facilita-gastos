@@ -7,7 +7,7 @@ import ExportModal from './ExportModal';
 import ReimburseWarningModal from './ReimburseWarningModal';
 import { getReceiptBalance } from '@/utils/payments';
 
-export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean }) {
+export default function AdminReceipts({ readOnly = false, canApprove = false, canManagePayments = false }: { readOnly?: boolean; canApprove?: boolean; canManagePayments?: boolean }) {
     const [receipts, setReceipts] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [workers, setWorkers] = useState<any[]>([]);
@@ -617,7 +617,7 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </button>
-                                                {!readOnly && (receipt.status === 'Pendiente' || !receipt.status) && (
+                                                {canApprove && (receipt.status === 'Pendiente' || !receipt.status) && (
                                                     <>
                                                         <button
                                                             onClick={() => handleStatusUpdate(receipt.id, 'Aprobado por Supervisor')}
@@ -635,7 +635,7 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
                                                         </button>
                                                     </>
                                                 )}
-                                                {!readOnly && receipt.status === 'Aprobado por Supervisor' && (
+                                                {(!readOnly || canManagePayments) && receipt.status === 'Aprobado por Supervisor' && (
                                                     <button
                                                         onClick={() => handleReembolsarClick(receipt)}
                                                         className="p-1.5 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-md transition"
@@ -644,7 +644,7 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
                                                         <CreditCard className="w-4 h-4" />
                                                     </button>
                                                 )}
-                                                {!readOnly && receipt.status && receipt.status !== 'Pendiente' && (
+                                                {canApprove && receipt.status && receipt.status !== 'Pendiente' && (
                                                     <button
                                                         onClick={() => handleRevertStatus(receipt.id)}
                                                         className="p-1.5 bg-zinc-700/30 text-zinc-300 hover:bg-zinc-700 hover:text-white rounded-md transition"
@@ -749,6 +749,8 @@ export default function AdminReceipts({ readOnly = false }: { readOnly?: boolean
                 <ReceiptDetailModal
                     receipt={selectedReceipt}
                     readOnly={readOnly}
+                    canApprove={canApprove}
+                    canManagePayments={canManagePayments}
                     onClose={() => setSelectedReceipt(null)}
                     onUpdate={(updated) => {
                         // Merge para no perder relaciones anidadas (projects, payment_receipts)

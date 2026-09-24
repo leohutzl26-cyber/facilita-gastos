@@ -134,8 +134,8 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
         setSuggestionApplied(false);
 
         // Los comprobantes ya asociados se abren en modo lectura: no hay
-        // nada que sugerir ni que seleccionar. Un revisor tampoco puede
-        // disparar la sugerencia IA (el servidor la rechaza igual).
+        // nada que sugerir ni que seleccionar. Un visor o aprobador tampoco
+        // puede disparar la sugerencia IA (el servidor la rechaza igual).
         const target = payments.find(p => p.id === paymentId);
         if (target?.status !== 'pendiente' || readOnly) return;
 

@@ -20,6 +20,8 @@ const PAYMENT_SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2
 type ReceiptDetailModalProps = {
     receipt: any;
     readOnly?: boolean;
+    canApprove?: boolean;
+    canManagePayments?: boolean;
     onClose: () => void;
     onUpdate: (updatedReceipt: any) => void;
     onDelete: (id: string) => void;
@@ -32,6 +34,8 @@ type ReceiptDetailModalProps = {
 export default function ReceiptDetailModal({
     receipt,
     readOnly = false,
+    canApprove = false,
+    canManagePayments = false,
     onClose,
     onUpdate,
     onDelete,
@@ -40,6 +44,9 @@ export default function ReceiptDetailModal({
     projects,
     workers
 }: ReceiptDetailModalProps) {
+    // Admin: puede editar/eliminar el recibo. readOnly=false solo ocurre
+    // para admin (aprobador, pagador y visor son todos readOnly=true).
+    const isAdminUser = canApprove && !readOnly;
     // UI States
     const [isEditing, setIsEditing] = useState(false);
     const [isLoadingLogs, setIsLoadingLogs] = useState(true);
@@ -932,8 +939,8 @@ export default function ReceiptDetailModal({
                                     <div ref={commentsEndRef} />
                                 </div>
 
-                                {/* Form Add Comment (no disponible en modo revisor) */}
-                                {!readOnly && (
+                                {/* Form Add Comment (requiere poder aprobar: admin o aprobador) */}
+                                {canApprove && (
                                     <form onSubmit={handleCommentSubmit} className="mt-3 flex gap-2">
                                         <input
                                             type="text"
@@ -956,13 +963,13 @@ export default function ReceiptDetailModal({
                         </div>
                     </div>
 
-                    {/* Bottom Sticky Action Buttons (no disponibles en modo revisor) */}
-                    {!readOnly && (
+                    {/* Bottom Sticky Action Buttons (no disponibles en modo visor) */}
+                    {(canApprove || (canManagePayments && receipt.status === 'Aprobado por Supervisor')) && (
                     <div className="p-6 bg-black/20 border-t border-white/5 flex flex-wrap gap-2 items-center justify-between mt-auto">
                         <div className="flex gap-2">
-                            {/* Editar */}
-                            {!isEditing && (
-                                <button 
+                            {/* Editar / Eliminar: solo admin */}
+                            {isAdminUser && !isEditing && (
+                                <button
                                     onClick={() => setIsEditing(true)}
                                     className="flex items-center gap-1.5 border border-white/10 hover:bg-white/5 text-zinc-300 hover:text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition"
                                 >
@@ -970,21 +977,22 @@ export default function ReceiptDetailModal({
                                 </button>
                             )}
 
-                            {/* Eliminar */}
-                            <button 
-                                onClick={handleDeleteClick}
-                                className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 px-4 py-2.5 rounded-xl text-xs font-semibold transition"
-                            >
-                                <Trash2 className="w-4 h-4" /> Eliminar
-                            </button>
+                            {isAdminUser && (
+                                <button
+                                    onClick={handleDeleteClick}
+                                    className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 px-4 py-2.5 rounded-xl text-xs font-semibold transition"
+                                >
+                                    <Trash2 className="w-4 h-4" /> Eliminar
+                                </button>
+                            )}
                         </div>
 
                         {/* Status Transitions */}
                         <div className="flex gap-2">
-                            {/* Aprobación */}
-                            {(receipt.status === 'Pendiente' || !receipt.status) && (
+                            {/* Aprobación / Rechazo: admin o aprobador */}
+                            {canApprove && (receipt.status === 'Pendiente' || !receipt.status) && (
                                 <>
-                                    <button 
+                                    <button
                                         onClick={() => handleStatusChange('Aprobado por Supervisor')}
                                         disabled={isActionLoading !== null}
                                         className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
@@ -992,8 +1000,8 @@ export default function ReceiptDetailModal({
                                         {isActionLoading === 'Aprobado por Supervisor' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                                         Aprobar
                                     </button>
-                                    
-                                    <button 
+
+                                    <button
                                         onClick={() => setIsRejecting(true)}
                                         disabled={isActionLoading !== null}
                                         className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
@@ -1004,8 +1012,8 @@ export default function ReceiptDetailModal({
                                 </>
                             )}
 
-                            {/* Reembolso */}
-                            {receipt.status === 'Aprobado por Supervisor' && (
+                            {/* Reembolso: acción financiera, admin o pagador */}
+                            {(isAdminUser || canManagePayments) && receipt.status === 'Aprobado por Supervisor' && (
                                 <button
                                     onClick={() => balance.isFullyPaid ? handleStatusChange('Reembolsado') : setShowReimburseWarning(true)}
                                     disabled={isActionLoading !== null}
@@ -1016,9 +1024,9 @@ export default function ReceiptDetailModal({
                                 </button>
                             )}
 
-                            {/* Revertir */}
-                            {receipt.status && receipt.status !== 'Pendiente' && (
-                                <button 
+                            {/* Revertir: admin o aprobador */}
+                            {canApprove && receipt.status && receipt.status !== 'Pendiente' && (
+                                <button
                                     onClick={() => {
                                         if (window.confirm('¿Estás seguro de revertir el estado de este recibo a Pendiente?')) {
                                             handleStatusChange('Pendiente');

@@ -1,5 +1,5 @@
 'use client';
-import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, ReceiptText, AlertTriangle, Eye, EyeOff, Folder, Landmark, Glasses } from 'lucide-react';
+import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, ReceiptText, AlertTriangle, Eye, EyeOff, Folder, Landmark, Glasses, UserCheck } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useState, useEffect, Suspense } from 'react';
@@ -19,8 +19,10 @@ function AdminDashboardInner() {
     const initialTab = searchParams.get('tab') || 'dashboard';
     const [activeTab, setActiveTab] = useState(initialTab);
     const [showDangerZone, setShowDangerZone] = useState(false);
-    const [role, setRole] = useState<'admin' | 'revisor' | 'colaborador' | null>(null);
-    const readOnly = role === 'revisor';
+    const [role, setRole] = useState<'admin' | 'aprobador' | 'pagador' | 'visor' | 'colaborador' | null>(null);
+    const readOnly = role === 'aprobador' || role === 'pagador' || role === 'visor';
+    const canApprove = role === 'admin' || role === 'aprobador';
+    const canManagePayments = role === 'admin' || role === 'pagador';
 
     useEffect(() => {
         const supabase = createClient();
@@ -54,10 +56,22 @@ function AdminDashboardInner() {
                             <ShieldUser className="w-5 h-5" />
                         </div>
                         <span className="font-semibold text-zinc-200">Panel de Administración</span>
-                        {readOnly && (
+                        {role === 'visor' && (
                             <span className="flex items-center gap-1.5 bg-blue-500/15 text-blue-400 border border-blue-500/30 text-[11px] font-medium px-2.5 py-1 rounded-full">
                                 <Glasses className="w-3 h-3" />
-                                Modo Revisor · Solo lectura
+                                Modo Visor · Solo lectura
+                            </span>
+                        )}
+                        {role === 'aprobador' && (
+                            <span className="flex items-center gap-1.5 bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[11px] font-medium px-2.5 py-1 rounded-full">
+                                <UserCheck className="w-3 h-3" />
+                                Modo Aprobador · Aprobar y comentar
+                            </span>
+                        )}
+                        {role === 'pagador' && (
+                            <span className="flex items-center gap-1.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-medium px-2.5 py-1 rounded-full">
+                                <Landmark className="w-3 h-3" />
+                                Modo Pagador · Pagos y reembolsos
                             </span>
                         )}
                     </div>
@@ -106,7 +120,7 @@ function AdminDashboardInner() {
                             <Landmark className="w-5 h-5 text-[#8CC63F]" />
                             <h2 className="text-xl font-semibold">Comprobantes de Pago</h2>
                         </div>
-                        <AdminPayments readOnly={readOnly} />
+                        <AdminPayments readOnly={!canManagePayments} />
                     </div>
                 )}
 
@@ -153,14 +167,14 @@ function AdminDashboardInner() {
                             <h2 className="text-xl font-semibold">Reporte General de Gastos</h2>
                         </div>
                         <div>
-                            <AdminReceipts readOnly={readOnly} />
+                            <AdminReceipts readOnly={readOnly} canApprove={canApprove} canManagePayments={canManagePayments} />
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'advanced' && (
                     <div className="space-y-8 animate-in fade-in duration-300">
-                        {/* Panel Colapsable de Zona de Peligro (no disponible en modo revisor) */}
+                        {/* Panel Colapsable de Zona de Peligro (solo admin) */}
                         {!readOnly && (
                             <div className="bg-[#1C2D54]/20 border border-red-500/10 rounded-2xl p-6 shadow-xl space-y-4">
                                 <div className="flex items-center justify-between">

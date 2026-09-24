@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle, ShieldCheck, Search, Users, Glasses } from 'lucide-react';
+import { Plus, Trash2, Edit2, Mail, Lock, UserCheck, KeyRound, Loader2, PlayCircle, PauseCircle, ShieldCheck, Search, Users, Glasses, Landmark } from 'lucide-react';
 
 type Worker = {
     id: string;
@@ -12,7 +12,9 @@ type Worker = {
 
 const ROLE_OPTIONS = [
     { value: 'colaborador', label: 'Colaborador' },
-    { value: 'revisor', label: 'Revisor' },
+    { value: 'visor', label: 'Visor' },
+    { value: 'aprobador', label: 'Aprobador' },
+    { value: 'pagador', label: 'Pagador' },
     { value: 'admin', label: 'Administrador' },
 ];
 
@@ -179,12 +181,14 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
     const totalWorkers = workers.length;
     const activeWorkers = workers.filter(w => !w.is_suspended).length;
     const adminWorkers = workers.filter(w => w.role === 'admin').length;
-    const revisorWorkers = workers.filter(w => w.role === 'revisor').length;
+    const aprobadorWorkers = workers.filter(w => w.role === 'aprobador').length;
+    const pagadorWorkers = workers.filter(w => w.role === 'pagador').length;
+    const visorWorkers = workers.filter(w => w.role === 'visor').length;
 
     return (
         <div>
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                 <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Colaboradores</p>
@@ -220,10 +224,32 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
                     </div>
                 </div>
 
+                <div className="bg-[#1C2D54]/40 border border-amber-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Aprobadores</p>
+                        <p className="text-2xl font-black text-amber-400">{aprobadorWorkers}</p>
+                        <p className="text-[10px] text-zinc-500">Aprueban y comentan gastos</p>
+                    </div>
+                    <div className="p-3 bg-amber-500/10 rounded-xl text-amber-400 shrink-0">
+                        <UserCheck className="w-6 h-6" />
+                    </div>
+                </div>
+
+                <div className="bg-[#1C2D54]/40 border border-cyan-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Pagadores</p>
+                        <p className="text-2xl font-black text-cyan-400">{pagadorWorkers}</p>
+                        <p className="text-[10px] text-zinc-500">Gestionan pagos y reembolsos</p>
+                    </div>
+                    <div className="p-3 bg-cyan-500/10 rounded-xl text-cyan-400 shrink-0">
+                        <Landmark className="w-6 h-6" />
+                    </div>
+                </div>
+
                 <div className="bg-[#1C2D54]/40 border border-purple-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Revisores</p>
-                        <p className="text-2xl font-black text-purple-400">{revisorWorkers}</p>
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Visores</p>
+                        <p className="text-2xl font-black text-purple-400">{visorWorkers}</p>
                         <p className="text-[10px] text-zinc-500">Solo lectura e informes</p>
                     </div>
                     <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400 shrink-0">
@@ -303,9 +329,19 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
                                                 <ShieldCheck className="w-3 h-3" /> Admin
                                             </span>
                                         )}
-                                        {worker.role === 'revisor' && (
+                                        {worker.role === 'aprobador' && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                                                <UserCheck className="w-3 h-3" /> Aprobador
+                                            </span>
+                                        )}
+                                        {worker.role === 'pagador' && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center gap-1">
+                                                <Landmark className="w-3 h-3" /> Pagador
+                                            </span>
+                                        )}
+                                        {worker.role === 'visor' && (
                                             <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1">
-                                                <Glasses className="w-3 h-3" /> Revisor
+                                                <Glasses className="w-3 h-3" /> Visor
                                             </span>
                                         )}
                                     </div>

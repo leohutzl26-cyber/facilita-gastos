@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import { ThemeSync } from "@/components/ThemeToggle";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -33,8 +34,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="dark">
-      <body className={`${outfit.className} bg-[#121D38] text-zinc-50 antialiased min-h-screen selection:bg-[#8CC63F]/30`}>
+    <html lang="es" data-theme="dark" suppressHydrationWarning>
+      <head>
+        {/* Aplica el tema guardado antes de pintar para que no parpadee. Por defecto: oscuro. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('fg-theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body className={`${outfit.className} bg-app text-zinc-50 antialiased min-h-screen selection:bg-[#8CC63F]/30`}>
+        <ThemeSync />
         {children}
         <script
           dangerouslySetInnerHTML={{

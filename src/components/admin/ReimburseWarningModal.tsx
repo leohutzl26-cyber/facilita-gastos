@@ -61,7 +61,7 @@ export default function ReimburseWarningModal({ receipt, onClose, onConfirmWitho
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[70] flex items-center justify-center p-4" onClick={onClose}>
             <div
-                className="bg-[#121D38] border border-amber-500/20 rounded-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
+                className="bg-app border border-amber-500/20 rounded-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
@@ -87,10 +87,10 @@ export default function ReimburseWarningModal({ receipt, onClose, onConfirmWitho
                         <p className="text-xs font-semibold text-zinc-300 mb-2">Comprobantes pendientes disponibles</p>
                         {isLoading ? (
                             <div className="flex items-center justify-center py-8">
-                                <Loader2 className="w-5 h-5 animate-spin text-[#8CC63F]" />
+                                <Loader2 className="w-5 h-5 animate-spin text-brand" />
                             </div>
                         ) : pendingPayments.length === 0 ? (
-                            <p className="text-xs text-zinc-500 py-4 text-center bg-[#1C2D54]/30 rounded-xl">
+                            <p className="text-xs text-zinc-500 py-4 text-center bg-card-30 rounded-xl">
                                 No hay comprobantes pendientes por asignar. Puedes subir uno nuevo desde la pestaña Comprobantes.
                             </p>
                         ) : (
@@ -106,7 +106,7 @@ export default function ReimburseWarningModal({ receipt, onClose, onConfirmWitho
                                             disabled={associatingId !== null}
                                             className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition disabled:opacity-50 ${isMatch
                                                 ? 'bg-[#8CC63F]/10 border border-[#8CC63F]/30 hover:bg-[#8CC63F]/15'
-                                                : 'bg-[#1C2D54]/50 border border-white/5 hover:bg-[#1C2D54]'
+                                                : 'bg-card-50 border border-white/5 hover:bg-surface'
                                                 }`}
                                         >
                                             <div className="w-9 h-9 shrink-0 rounded-lg overflow-hidden bg-zinc-950/40 flex items-center justify-center">
@@ -120,14 +120,14 @@ export default function ReimburseWarningModal({ receipt, onClose, onConfirmWitho
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-xs font-semibold text-white flex items-center gap-1.5">
                                                     {payment.amount ? `$${Number(payment.amount).toLocaleString('es-CL')}` : 'Monto no informado'}
-                                                    {isMatch && <CheckCircle2 className="w-3.5 h-3.5 text-[#8CC63F]" />}
+                                                    {isMatch && <CheckCircle2 className="w-3.5 h-3.5 text-brand" />}
                                                 </p>
                                                 <p className="text-[10px] text-zinc-500 flex items-center gap-1">
                                                     <SourceIcon className="w-3 h-3" />
                                                     {source.label} · {new Date(payment.created_at).toLocaleDateString('es-CL')}
                                                 </p>
                                             </div>
-                                            {associatingId === payment.id && <Loader2 className="w-4 h-4 animate-spin text-[#8CC63F] shrink-0" />}
+                                            {associatingId === payment.id && <Loader2 className="w-4 h-4 animate-spin text-brand shrink-0" />}
                                         </button>
                                     );
                                 })}
@@ -138,7 +138,7 @@ export default function ReimburseWarningModal({ receipt, onClose, onConfirmWitho
                     {error && <p className="text-xs text-red-400">{error}</p>}
                 </div>
 
-                <div className="p-6 bg-black/20 border-t border-white/5 shrink-0 flex gap-2">
+                <div className="p-6 bg-inset-20 border-t border-white/5 shrink-0 flex gap-2">
                     <button
                         onClick={onClose}
                         disabled={isConfirming || associatingId !== null}

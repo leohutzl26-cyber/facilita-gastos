@@ -157,7 +157,7 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
     const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
 
     return (
-        <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl flex flex-col h-full">
+        <div className="bg-card-40 border border-line rounded-2xl p-6 shadow-xl flex flex-col h-full">
             <div className="flex items-center justify-end mb-4">
                 <button
                     onClick={fetchProjects}
@@ -170,14 +170,14 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
 
             {/* Crear / Editar Form */}
             {!readOnly && (
-                <form onSubmit={handleSubmit} className="mb-6 space-y-3 bg-black/20 p-4 rounded-xl border border-white/5">
+                <form onSubmit={handleSubmit} className="mb-6 space-y-3 bg-inset-20 p-4 rounded-xl border border-white/5">
                     <div>
                         <input
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Nombre del Proyecto o Cliente"
-                            className="w-full bg-black/40 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#8CC63F]/50"
+                            className="w-full bg-inset-40 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#8CC63F]/50"
                         />
                     </div>
                     <div>
@@ -185,7 +185,7 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Descripción u orden de compra (Opcional)"
-                            className="w-full bg-black/40 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#8CC63F]/50"
+                            className="w-full bg-inset-40 border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#8CC63F]/50"
                         />
                     </div>
                     <div className="flex gap-2">
@@ -223,7 +223,7 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
                     placeholder="Buscar proyecto..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
+                    className="w-full bg-surface border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
                 />
             </div>
 
@@ -239,7 +239,7 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
                     </div>
                 ) : (
                     paginatedProjects.map(project => (
-                        <div key={project.id} className="bg-black/30 border border-white/5 rounded-lg p-3 flex items-center justify-between group hover:border-white/10 transition">
+                        <div key={project.id} className="bg-inset-30 border border-white/5 rounded-lg p-3 flex items-center justify-between group hover:border-white/10 transition">
                             <div className="flex-1 min-w-0 pr-2">
                                 <div className="flex items-center gap-2">
                                     <p className="font-medium text-sm text-zinc-200 truncate">{project.name}</p>
@@ -256,7 +256,7 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
                                     <button
                                         onClick={() => handleToggleActive(project)}
                                         disabled={togglingId === project.id}
-                                        className={`p-1.5 rounded-md transition ${project.active !== false ? 'text-zinc-500 hover:text-orange-400 hover:bg-[#121D38]/40' : 'text-zinc-500 hover:text-green-400 hover:bg-[#121D38]/40'}`}
+                                        className={`p-1.5 rounded-md transition ${project.active !== false ? 'text-zinc-500 hover:text-orange-400 hover:bg-app/40' : 'text-zinc-500 hover:text-green-400 hover:bg-app/40'}`}
                                         title={project.active !== false ? "Cerrar proyecto" : "Activar proyecto"}
                                     >
                                         {togglingId === project.id ? (
@@ -290,7 +290,7 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
 
             {/* Pagination Controls */}
             {filteredProjects.length > 0 && (
-                <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-white/5 bg-black/10 p-4 rounded-xl select-none">
+                <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-white/5 bg-inset-10 p-4 rounded-xl select-none">
                     <div className="flex items-center gap-2 text-xs text-zinc-400">
                         <span>Mostrar</span>
                         <select
@@ -299,7 +299,7 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
                                 setItemsPerPage(Number(e.target.value));
                                 setCurrentPage(1);
                             }}
-                            className="bg-[#1C2D54] border border-white/10 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         >
                             <option value={50}>50</option>
                             <option value={100}>100</option>
@@ -314,7 +314,7 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
                                 type="button"
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className="px-3 py-1 bg-[#1C2D54] border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="px-3 py-1 bg-surface border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 Anterior
                             </button>
@@ -325,7 +325,7 @@ export default function ProjectCrud({ readOnly = false }: { readOnly?: boolean }
                                 type="button"
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
-                                className="px-3 py-1 bg-[#1C2D54] border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="px-3 py-1 bg-surface border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 Siguiente
                             </button>

@@ -200,18 +200,18 @@ export default function AdminReceiptCreateModal({
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-            <div className="bg-[#121D38] border border-white/10 rounded-[2.5rem] w-full max-w-4xl h-[90vh] md:h-[80vh] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
+            <div className="bg-app border border-white/10 rounded-[2.5rem] w-full max-w-4xl h-[90vh] md:h-[80vh] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
                 
                 {/* Close Button */}
                 <button 
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 rounded-full border border-white/10 text-zinc-400 hover:text-white transition-all hover:scale-105"
+                    className="force-dark absolute top-4 right-4 z-50 p-2 bg-black/60 hover:bg-black/80 rounded-full border border-white/10 text-zinc-400 hover:text-white transition-all hover:scale-105"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
                 {/* Left Side: Receipt Image Preview & Upload Dropzone */}
-                <div className="w-full md:w-1/2 bg-black/40 border-r border-white/5 flex flex-col relative h-[35vh] md:h-full justify-center items-center">
+                <div className="w-full md:w-1/2 bg-inset-40 border-r border-white/5 flex flex-col relative h-[35vh] md:h-full justify-center items-center">
                     {!image ? (
                         <div
                             onClick={() => fileInputRef.current?.click()}
@@ -224,7 +224,7 @@ export default function AdminReceiptCreateModal({
                                 accept="image/*,application/pdf"
                                 className="hidden"
                             />
-                            <div className="p-4 bg-white/5 rounded-full text-zinc-400 group-hover:text-[#8CC63F] group-hover:bg-[#8CC63F]/20 transition-all">
+                            <div className="p-4 bg-white/5 rounded-full text-zinc-400 group-hover:text-brand group-hover:bg-[#8CC63F]/20 transition-all">
                                 <UploadCloud className="w-10 h-10" />
                             </div>
                             <div>
@@ -233,7 +233,7 @@ export default function AdminReceiptCreateModal({
                             </div>
                         </div>
                     ) : (
-                        <div className="w-full h-full relative flex items-center justify-center bg-black/20 p-4">
+                        <div className="w-full h-full relative flex items-center justify-center bg-inset-20 p-4">
                             {image === 'PDF_DOCUMENT_PLACEHOLDER' ? (
                                 <div className="flex flex-col items-center justify-center text-zinc-400">
                                     <Sparkles className="w-12 h-12 mb-3 text-red-400 animate-pulse" />
@@ -252,15 +252,15 @@ export default function AdminReceiptCreateModal({
                     )}
 
                     {isProcessing && (
-                        <div className="absolute inset-0 bg-[#121D38]/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-10">
-                            <Loader2 className="w-10 h-10 text-[#8CC63F] animate-spin mb-4" />
+                        <div className="absolute inset-0 bg-app/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-10">
+                            <Loader2 className="w-10 h-10 text-brand animate-spin mb-4" />
                             <p className="text-sm font-semibold text-zinc-200">{progressStatus}</p>
                         </div>
                     )}
                 </div>
 
                 {/* Right Side: Colaborador selector & Form */}
-                <div className="w-full md:w-1/2 flex flex-col h-[55vh] md:h-full overflow-y-auto bg-[#1C2D54]/10">
+                <div className="w-full md:w-1/2 flex flex-col h-[55vh] md:h-full overflow-y-auto bg-card-10">
                     <div className="p-6 border-b border-white/5">
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
                             Registrar Nuevo Gasto <Sparkles className="w-5 h-5 text-yellow-400" />
@@ -279,7 +279,7 @@ export default function AdminReceiptCreateModal({
                         )}
 
                         {successMsg && (
-                            <div className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-[#8CC63F] text-xs flex items-center gap-2 animate-in fade-in">
+                            <div className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-brand text-xs flex items-center gap-2 animate-in fade-in">
                                 <CheckCircle className="w-4 h-4 flex-shrink-0" />
                                 <span>{successMsg}</span>
                             </div>
@@ -295,7 +295,7 @@ export default function AdminReceiptCreateModal({
                                                 required
                                                 value={results.merchant}
                                                 onChange={e => setResults({ ...results, merchant: e.target.value })}
-                                                className="w-full bg-black/30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                className="w-full bg-inset-30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             />
                                         </div>
                                         <div className="col-span-2 sm:col-span-1">
@@ -304,7 +304,7 @@ export default function AdminReceiptCreateModal({
                                                 value={results.merchant_rut}
                                                 onChange={e => setResults({ ...results, merchant_rut: e.target.value })}
                                                 placeholder="Ej: 76.123.456-K"
-                                                className="w-full bg-black/30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                className="w-full bg-inset-30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             />
                                         </div>
                                     </div>
@@ -317,7 +317,7 @@ export default function AdminReceiptCreateModal({
                                                 required
                                                 value={results.date}
                                                 onChange={e => setResults({ ...results, date: e.target.value })}
-                                                className="w-full bg-black/30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                className="w-full bg-inset-30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             />
                                         </div>
                                         <div>
@@ -328,7 +328,7 @@ export default function AdminReceiptCreateModal({
                                                     required
                                                     value={results.amount}
                                                     onChange={e => setResults({ ...results, amount: e.target.value })}
-                                                    className="w-full bg-black/30 border border-white/10 text-white rounded-xl pl-6 pr-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                    className="w-full bg-inset-30 border border-white/10 text-white rounded-xl pl-6 pr-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                                 />
                                             </div>
                                         </div>
@@ -341,10 +341,10 @@ export default function AdminReceiptCreateModal({
                                                 required
                                                 value={results.category}
                                                 onChange={e => setResults({ ...results, category: e.target.value })}
-                                                className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             >
                                                 {categories.map(cat => (
-                                                    <option key={cat.id} value={cat.name} className="bg-[#121D38] text-white">{cat.name}</option>
+                                                    <option key={cat.id} value={cat.name} className="bg-app text-white">{cat.name}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -354,13 +354,13 @@ export default function AdminReceiptCreateModal({
                                                 required
                                                 value={results.document_type}
                                                 onChange={e => setResults({ ...results, document_type: e.target.value })}
-                                                className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             >
-                                                <option value="boleta" className="bg-[#121D38] text-white">Boleta</option>
-                                                <option value="factura" className="bg-[#121D38] text-white">Factura</option>
-                                                <option value="boleta de honorarios" className="bg-[#121D38] text-white">Boleta de Honorarios</option>
-                                                <option value="comprobante de pago" className="bg-[#121D38] text-white">Comprobante de Pago</option>
-                                                <option value="otro" className="bg-[#121D38] text-white">Otro</option>
+                                                <option value="boleta" className="bg-app text-white">Boleta</option>
+                                                <option value="factura" className="bg-app text-white">Factura</option>
+                                                <option value="boleta de honorarios" className="bg-app text-white">Boleta de Honorarios</option>
+                                                <option value="comprobante de pago" className="bg-app text-white">Comprobante de Pago</option>
+                                                <option value="otro" className="bg-app text-white">Otro</option>
                                             </select>
                                         </div>
                                     </div>
@@ -372,7 +372,7 @@ export default function AdminReceiptCreateModal({
                                                 value={results.document_number}
                                                 onChange={e => setResults({ ...results, document_number: e.target.value })}
                                                 placeholder="Ej: 1459"
-                                                className="w-full bg-black/30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                className="w-full bg-inset-30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             />
                                         </div>
                                         <div className="col-span-2 sm:col-span-1">
@@ -381,7 +381,7 @@ export default function AdminReceiptCreateModal({
                                                 value={results.location}
                                                 onChange={e => setResults({ ...results, location: e.target.value })}
                                                 placeholder="Ej: Coordenadas o Dirección"
-                                                className="w-full bg-black/30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                                className="w-full bg-inset-30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             />
                                         </div>
                                     </div>
@@ -391,11 +391,11 @@ export default function AdminReceiptCreateModal({
                                         <select
                                             value={results.project_id}
                                             onChange={e => setResults({ ...results, project_id: e.target.value })}
-                                            className="w-full bg-[#121D38] border border-white/10 text-zinc-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-app border border-white/10 text-zinc-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         >
-                                            <option value="" className="bg-[#121D38] text-white">Gasto Genérico</option>
+                                            <option value="" className="bg-app text-white">Gasto Genérico</option>
                                             {projects.map(proj => (
-                                                <option key={proj.id} value={proj.id} className="bg-[#121D38] text-white">{proj.name}</option>
+                                                <option key={proj.id} value={proj.id} className="bg-app text-white">{proj.name}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -418,7 +418,7 @@ export default function AdminReceiptCreateModal({
                                     </div>
                                 </form>
                             ) : (
-                                <div className="mt-8 flex flex-col items-center justify-center p-6 border border-dashed border-white/5 bg-black/10 rounded-2xl">
+                                <div className="mt-8 flex flex-col items-center justify-center p-6 border border-dashed border-white/5 bg-inset-10 rounded-2xl">
                                     <Camera className="w-8 h-8 text-zinc-600 mb-2" />
                                     <p className="text-xs text-zinc-500 text-center">
                                         Sube un comprobante de imagen o PDF a la izquierda para cargar los datos automáticamente.
@@ -437,7 +437,7 @@ export default function AdminReceiptCreateModal({
                                             project_id: '',
                                             location: ''
                                         })}
-                                        className="text-xs font-bold text-[#8CC63F] hover:text-[#3EAE49] transition"
+                                        className="text-xs font-bold text-brand hover:text-brand-strong transition"
                                     >
                                         Rellenar datos a mano
                                     </button>

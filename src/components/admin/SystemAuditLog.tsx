@@ -55,10 +55,10 @@ export default function SystemAuditLog() {
     };
 
     return (
-        <div className="mt-8 bg-[#1C2D54]/30 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div className="mt-8 bg-card-30 border border-line rounded-2xl p-6 shadow-xl relative overflow-hidden">
             <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-[#8CC63F]/10 rounded-lg">
-                    <ShieldAlert className="w-5 h-5 text-[#8CC63F]" />
+                    <ShieldAlert className="w-5 h-5 text-brand" />
                 </div>
                 <h2 className="text-xl font-bold text-zinc-100">Log de Auditoría del Sistema</h2>
             </div>
@@ -75,14 +75,14 @@ export default function SystemAuditLog() {
                     placeholder="Buscar por usuario, acción o detalle..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-[#121D38] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
+                    className="w-full bg-app border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
                 />
             </div>
 
-            <div className="bg-[#121D38] border border-white/5 rounded-xl overflow-hidden">
+            <div className="bg-app border border-white/5 rounded-xl overflow-hidden">
                 <div className="overflow-y-auto max-h-[500px]">
                     <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="bg-[#1C2D54] border-b border-white/5 text-zinc-400 sticky top-0 z-10 shadow-sm">
+                        <thead className="bg-surface border-b border-white/5 text-zinc-400 sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th className="px-6 py-4 font-medium"><div className="flex items-center gap-2"><Clock className="w-4 h-4"/> Fecha y Hora</div></th>
                                 <th className="px-6 py-4 font-medium"><div className="flex items-center gap-2"><User className="w-4 h-4"/> Usuario</div></th>
@@ -94,7 +94,7 @@ export default function SystemAuditLog() {
                             {isLoading ? (
                                 <tr>
                                     <td colSpan={4} className="px-6 py-12 text-center text-zinc-500">
-                                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#8CC63F]" />
+                                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-brand" />
                                         Cargando logs...
                                     </td>
                                 </tr>
@@ -128,7 +128,7 @@ export default function SystemAuditLog() {
                                                 <span className={`px-2 py-1 rounded text-[11px] font-bold ${
                                                     danger 
                                                     ? 'bg-red-500/20 text-red-400 border border-red-500/20' 
-                                                    : 'bg-[#8CC63F]/10 text-[#8CC63F] border border-[#8CC63F]/20'
+                                                    : 'bg-[#8CC63F]/10 text-brand border border-line-strong'
                                                 }`}>
                                                     {log.action}
                                                 </span>
@@ -145,7 +145,7 @@ export default function SystemAuditLog() {
                 </div>
                 {/* Pagination Controls */}
                 {!isLoading && !debugError && logs.length > 0 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-white/5 text-sm text-zinc-400 bg-[#1C2D54]/20">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-white/5 text-sm text-zinc-400 bg-card-20">
                         <div>
                             Mostrando <span className="font-semibold text-zinc-200">{((page - 1) * limit) + 1}</span> a{' '}
                             <span className="font-semibold text-zinc-200">

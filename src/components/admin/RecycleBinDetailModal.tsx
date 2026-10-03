@@ -17,7 +17,7 @@ export default function RecycleBinDetailModal({ record, onClose }: { record: Del
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={onClose}>
             <div
-                className="bg-[#121D38] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
+                className="bg-app border border-white/10 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
@@ -108,7 +108,7 @@ export default function RecycleBinDetailModal({ record, onClose }: { record: Del
 
 function Field({ icon: Icon, label, value }: { icon: any; label: string; value?: string | number | null }) {
     return (
-        <div className="bg-[#1C2D54]/40 border border-white/5 rounded-xl px-3 py-2.5">
+        <div className="bg-card-40 border border-white/5 rounded-xl px-3 py-2.5">
             <p className="text-[10px] text-zinc-500 flex items-center gap-1 uppercase tracking-wide">
                 <Icon className="w-3 h-3" />
                 {label}

@@ -126,16 +126,16 @@ export default function CategoryCrud({ readOnly = false }: { readOnly?: boolean 
     };
 
     return (
-        <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl h-full flex flex-col">
+        <div className="bg-card-40 border border-line rounded-2xl p-6 shadow-xl h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-[#8CC63F]" />
+                    <Settings className="w-5 h-5 text-brand" />
                     <h2 className="text-xl font-semibold text-zinc-100">Categorías y Alertas</h2>
                 </div>
                 {!readOnly && (
                     <button
                         onClick={() => setIsAdding(!isAdding)}
-                        className="p-2 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-xl transition"
+                        className="p-2 bg-[#8CC63F]/10 text-brand hover:bg-[#8CC63F] hover:text-[#121D38] rounded-xl transition"
                         title="Añadir Categoría"
                     >
                         {isAdding ? <Settings className="w-4 h-4 transition-transform rotate-90" /> : <Plus className="w-4 h-4" />}
@@ -144,16 +144,16 @@ export default function CategoryCrud({ readOnly = false }: { readOnly?: boolean 
             </div>
 
             {!readOnly && isAdding && (
-                <form onSubmit={handleCreate} className="bg-black/20 p-4 rounded-xl mb-4 border border-white/5 space-y-3">
+                <form onSubmit={handleCreate} className="bg-inset-20 p-4 rounded-xl mb-4 border border-white/5 space-y-3">
                     <div>
                         <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider block">Nombre Categoría</label>
-                        <input required value={newName} onChange={e => setNewName(e.target.value)} type="text" className="w-full bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none text-white" placeholder="Ej. Combustible" />
+                        <input required value={newName} onChange={e => setNewName(e.target.value)} type="text" className="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none text-white" placeholder="Ej. Combustible" />
                     </div>
                     <div>
                         <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider block">Tope Máximo Alerta ($)</label>
                         <div className="flex items-center gap-2">
                             <span className="text-zinc-500">$</span>
-                            <input value={newMaxAmount} onChange={e => setNewMaxAmount(e.target.value)} type="number" min="0" className="w-full bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none text-white" placeholder="Ej. 15000 (Opcional)" />
+                            <input value={newMaxAmount} onChange={e => setNewMaxAmount(e.target.value)} type="number" min="0" className="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none text-white" placeholder="Ej. 15000 (Opcional)" />
                         </div>
                         <p className="text-[10px] text-zinc-500 mt-1">Si el recibo supera este valor, generará una alerta de supervisor al revisar.</p>
                     </div>
@@ -185,7 +185,7 @@ export default function CategoryCrud({ readOnly = false }: { readOnly?: boolean 
                                             type="number"
                                             value={editMaxAmount}
                                             onChange={e => setEditMaxAmount(e.target.value)}
-                                            className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-white"
+                                            className="w-full bg-inset-40 border border-white/10 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-white"
                                             placeholder="Límite"
                                         />
                                     </div>

@@ -3,6 +3,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function WorkerCapture() {
     const router = useRouter();
@@ -326,14 +327,15 @@ export default function WorkerCapture() {
     };
 
     return (
-        <div className="min-h-screen bg-[#121D38] text-zinc-50 font-sans pb-20">
-            <nav className="border-b border-[#8CC63F]/10 bg-[#1C2D54]/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="min-h-screen bg-app text-zinc-50 font-sans pb-20">
+            <nav className="border-b border-line bg-card-50 backdrop-blur-xl sticky top-0 z-50">
                 <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Receipt className="w-5 h-5 text-[#8CC63F]" />
+                        <Receipt className="w-5 h-5 text-brand" />
                         <span className="font-semibold text-zinc-200">Mis Gastos</span>
                     </div>
                     <div className="flex items-center gap-1">
+                        <ThemeToggle showLabel={false} className="p-2" />
                         <button onClick={() => router.push('/worker/history')} className="p-2 text-zinc-400 hover:text-white flex items-center gap-1">
                             <History className="w-5 h-5" />
                         </button>
@@ -354,7 +356,7 @@ export default function WorkerCapture() {
 
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="border-2 border-dashed border-[#8CC63F]/20 hover:border-[#8CC63F]/50 bg-[#1C2D54]/40 hover:bg-[#8CC63F]/5 rounded-[2rem] p-12 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all group hover:scale-[1.02]"
+                            className="border-2 border-dashed border-line-strong hover:border-[#8CC63F]/50 bg-card-40 hover:bg-[#8CC63F]/5 rounded-[2rem] p-12 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all group hover:scale-[1.02]"
                         >
                             <input
                                 type="file"
@@ -363,7 +365,7 @@ export default function WorkerCapture() {
                                 accept="image/*,application/pdf"
                                 className="hidden"
                             />
-                            <div className="p-4 bg-white/5 rounded-full text-zinc-400 group-hover:text-[#8CC63F] group-hover:bg-[#8CC63F]/20 transition-all">
+                            <div className="p-4 bg-white/5 rounded-full text-zinc-400 group-hover:text-brand group-hover:bg-[#8CC63F]/20 transition-all">
                                 <Camera className="w-10 h-10" />
                             </div>
                             <div className="text-center">
@@ -374,7 +376,7 @@ export default function WorkerCapture() {
                     </div>
                 ) : (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="relative aspect-video sm:aspect-square md:aspect-video bg-black/50 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                        <div className="relative aspect-video sm:aspect-square md:aspect-video bg-inset-40 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
                             {image === 'PDF_DOCUMENT_PLACEHOLDER' ? (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400">
                                     <Receipt className="w-16 h-16 mb-4 opacity-50" />
@@ -385,13 +387,13 @@ export default function WorkerCapture() {
                             )}
 
                             {isProcessing && (
-                                <div className="absolute inset-0 bg-[#121D38]/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
-                                    <Loader2 className="w-10 h-10 text-[#8CC63F] animate-spin mb-4" />
+                                <div className="absolute inset-0 bg-app/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+                                    <Loader2 className="w-10 h-10 text-brand animate-spin mb-4" />
                                 </div>
                             )}
 
                             {isSuccess && (
-                                <div className="absolute inset-0 bg-green-500/90 backdrop-blur-md flex flex-col items-center justify-center text-white">
+                                <div className="absolute inset-0 bg-green-500/90 backdrop-blur-md flex flex-col items-center justify-center text-on-accent">
                                     <CheckCircle2 className="w-16 h-16 mb-4 animate-bounce" />
                                     <h3 className="text-2xl font-bold">¡Gasto Registrado!</h3>
                                     <p className="opacity-90 mt-2">Enviado al sistema central</p>
@@ -400,8 +402,8 @@ export default function WorkerCapture() {
                         </div>
 
                         {results && !isProcessing && !isSuccess && (
-                            <form onSubmit={handleSubmit} className="bg-[#1C2D54]/80 border border-[#8CC63F]/20 rounded-3xl p-6 space-y-5 shadow-xl">
-                                <div className="flex items-center gap-2 text-[#8CC63F] mb-2">
+                            <form onSubmit={handleSubmit} className="bg-surface/80 border border-line-strong rounded-3xl p-6 space-y-5 shadow-xl">
+                                <div className="flex items-center gap-2 text-brand mb-2">
                                     <UploadCloud className="w-5 h-5" />
                                     <h3 className="font-medium">Confirmar Datos Extraídos</h3>
                                 </div>
@@ -414,7 +416,7 @@ export default function WorkerCapture() {
                                                 required
                                                 value={results.merchant}
                                                 onChange={e => setResults({ ...results, merchant: e.target.value })}
-                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
+                                                className="w-full bg-inset-40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
                                             />
                                         </div>
                                         <div>
@@ -423,7 +425,7 @@ export default function WorkerCapture() {
                                                 value={results.merchant_rut}
                                                 onChange={e => setResults({ ...results, merchant_rut: e.target.value })}
                                                 placeholder="Ej: 76.123.456-K"
-                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
+                                                className="w-full bg-inset-40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
                                             />
                                         </div>
                                     </div>
@@ -435,7 +437,7 @@ export default function WorkerCapture() {
                                                 required
                                                 value={results.date}
                                                 onChange={e => setResults({ ...results, date: e.target.value })}
-                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
+                                                className="w-full bg-inset-40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
                                             />
                                         </div>
                                         <div>
@@ -446,7 +448,7 @@ export default function WorkerCapture() {
                                                     required
                                                     value={results.amount}
                                                     onChange={e => setResults({ ...results, amount: e.target.value })}
-                                                    className="w-full bg-black/40 border border-white/10 text-white rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
+                                                    className="w-full bg-inset-40 border border-white/10 text-white rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
                                                 />
                                             </div>
                                         </div>
@@ -456,7 +458,7 @@ export default function WorkerCapture() {
                                                 required
                                                 value={results.category}
                                                 onChange={e => setResults({ ...results, category: e.target.value })}
-                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
+                                                className="w-full bg-inset-40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
                                             >
                                                 {categories.map(cat => (
                                                     <option key={cat.id} value={cat.name}>{cat.name}</option>
@@ -469,7 +471,7 @@ export default function WorkerCapture() {
                                                 required
                                                 value={results.document_type || 'boleta'}
                                                 onChange={e => setResults({ ...results, document_type: e.target.value })}
-                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
+                                                className="w-full bg-inset-40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
                                             >
                                                 <option value="boleta">Boleta</option>
                                                 <option value="factura">Factura</option>
@@ -484,7 +486,7 @@ export default function WorkerCapture() {
                                                 value={results.document_number || ''}
                                                 onChange={e => setResults({ ...results, document_number: e.target.value })}
                                                 placeholder="Ej: 1459"
-                                                className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
+                                                className="w-full bg-inset-40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
                                             />
                                         </div>
                                         <div className="col-span-2">
@@ -492,7 +494,7 @@ export default function WorkerCapture() {
                                             <select
                                                 value={results.project_id}
                                                 onChange={e => setResults({ ...results, project_id: e.target.value })}
-                                                className="w-full bg-black/40 border border-white/10 text-zinc-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
+                                                className="w-full bg-inset-40 border border-white/10 text-zinc-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
                                             >
                                                 <option value="">-- Ninguno (Gasto Genérico) --</option>
                                                 {projects.map(proj => (

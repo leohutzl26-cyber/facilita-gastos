@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Camera, Search, Filter, History, MapPin, Receipt, ArrowLeft, Trash2, Eye, Edit, Save, X, ZoomIn, ZoomOut, RotateCw, RotateCcw, AlertCircle, Loader2, Calendar, User, Tag, FolderOpen, Printer, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function WorkerHistory() {
     const router = useRouter();
@@ -95,29 +96,30 @@ export default function WorkerHistory() {
     };
 
     return (
-        <div className="min-h-screen bg-[#121D38] text-zinc-50 font-sans pb-20">
-            <nav className="border-b border-[#8CC63F]/10 bg-[#1C2D54]/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="min-h-screen bg-app text-zinc-50 font-sans pb-20">
+            <nav className="border-b border-line bg-card-50 backdrop-blur-xl sticky top-0 z-50">
                 <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
                     <button onClick={() => router.push('/worker/capture')} className="flex items-center gap-2 text-zinc-400 hover:text-white transition">
                         <ArrowLeft className="w-5 h-5" />
                         <span className="font-medium text-sm hidden sm:inline">Volver a Escanear</span>
                     </button>
                     <div className="flex items-center gap-2">
-                        <History className="w-5 h-5 text-[#8CC63F]" />
+                        <History className="w-5 h-5 text-brand" />
                         <span className="font-semibold text-zinc-200">Historial de Gastos</span>
+                        <ThemeToggle showLabel={false} className="ml-2 p-1" />
                     </div>
                 </div>
             </nav>
 
             <main className="max-w-xl mx-auto px-4 pt-6 space-y-6">
                 {!isLoading && history.length > 0 && (
-                    <div className="bg-gradient-to-br from-[#1C2D54] to-[#121D38] border border-[#8CC63F]/20 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-surface to-app border border-line-strong rounded-3xl p-6 shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#8CC63F]/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
                         <h2 className="text-sm font-medium text-zinc-400 mb-4">Resumen de Gastos</h2>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <p className="text-xs text-zinc-500 mb-1">Total Reembolsado</p>
-                                <p className="text-2xl font-bold text-[#8CC63F]">${stats.totalReembolsado.toLocaleString('es-CL')}</p>
+                                <p className="text-2xl font-bold text-brand">${stats.totalReembolsado.toLocaleString('es-CL')}</p>
                             </div>
                             <div>
                                 <p className="text-xs text-zinc-500 mb-1">Total Aprobado</p>
@@ -144,9 +146,9 @@ export default function WorkerHistory() {
 
                 {/* Filters and Search block */}
                 {!isLoading && history.length > 0 && (
-                    <div className="bg-[#1C2D54]/30 border border-white/5 rounded-2xl p-4 space-y-3">
+                    <div className="bg-card-30 border border-white/5 rounded-2xl p-4 space-y-3">
                         <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-                            <Filter className="w-4 h-4 text-[#8CC63F]" />
+                            <Filter className="w-4 h-4 text-brand" />
                             <span>Filtros de Búsqueda</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -155,7 +157,7 @@ export default function WorkerHistory() {
                                 <select
                                     value={filterProject}
                                     onChange={e => setFilterProject(e.target.value)}
-                                    className="w-full bg-[#1C2D54] border border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                                    className="w-full bg-surface border border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                                 >
                                     <option value="">Todos los proyectos</option>
                                     {projects.map(p => (
@@ -168,7 +170,7 @@ export default function WorkerHistory() {
                                 <select
                                     value={filterStatus}
                                     onChange={e => setFilterStatus(e.target.value)}
-                                    className="w-full bg-[#1C2D54] border border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                                    className="w-full bg-surface border border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                                 >
                                     <option value="">Todos los estados</option>
                                     <option value="pendiente">Pendientes</option>
@@ -184,7 +186,7 @@ export default function WorkerHistory() {
                                     placeholder="Ej: Copec, Combustible..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full bg-[#1C2D54] border border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                                    className="w-full bg-surface border border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                                 />
                             </div>
                         </div>
@@ -215,16 +217,16 @@ export default function WorkerHistory() {
                             <div 
                                 key={record.id} 
                                 onClick={() => setSelectedReceipt(record)}
-                                className="bg-[#1C2D54]/50 border border-white/5 rounded-2xl p-4 flex items-start gap-4 hover:border-[#8CC63F]/30 hover:bg-[#1C2D54]/75 transition-all cursor-pointer shadow-md"
+                                className="bg-card-50 border border-white/5 rounded-2xl p-4 flex items-start gap-4 hover:border-[#8CC63F]/30 hover:bg-surface/75 transition-all cursor-pointer shadow-md"
                             >
-                                <div className="w-12 h-12 rounded-xl bg-[#8CC63F]/20 text-[#8CC63F] flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                                <div className="w-12 h-12 rounded-xl bg-[#8CC63F]/20 text-brand flex items-center justify-center flex-shrink-0 font-bold text-lg">
                                     {record.merchant.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2 mb-1">
                                         <h4 className="font-semibold text-zinc-100 truncate">{record.merchant}</h4>
                                         <div className="text-right">
-                                            <span className="font-bold text-[#8CC63F] flex-shrink-0 text-sm sm:text-base">${record.amount}</span>
+                                            <span className="font-bold text-brand flex-shrink-0 text-sm sm:text-base">${record.amount}</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
@@ -243,7 +245,7 @@ export default function WorkerHistory() {
                                                 record.status === 'Pendiente' || record.status === 'Por Visar' || !record.status ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
                                                 record.status === 'Aprobado por Supervisor' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
                                                 record.status === 'Rechazado' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                                'bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/30'
+                                                'bg-[#8CC63F]/20 text-brand border border-[#8CC63F]/30'
                                             }`}>
                                                 {record.status === 'Aprobado por Supervisor' ? 'Aprobado' : (record.status || 'Pendiente')}
                                             </span>
@@ -451,20 +453,20 @@ function WorkerReceiptDetailModal({
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-            <div className="bg-[#121D38] border border-white/10 rounded-[2rem] w-full max-w-5xl h-[90vh] md:h-[80vh] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
+            <div className="bg-app border border-white/10 rounded-[2rem] w-full max-w-5xl h-[90vh] md:h-[80vh] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
                 
                 {/* Close Button */}
                 <button 
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 rounded-full border border-white/10 text-zinc-400 hover:text-white transition-all hover:scale-105"
+                    className="force-dark absolute top-4 right-4 z-50 p-2 bg-black/60 hover:bg-black/80 rounded-full border border-white/10 text-zinc-400 hover:text-white transition-all hover:scale-105"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
                 {/* Left Side: Viewer */}
-                <div className="w-full md:w-1/2 bg-black/30 border-r border-white/5 flex flex-col relative h-[35vh] md:h-full">
+                <div className="w-full md:w-1/2 bg-inset-30 border-r border-white/5 flex flex-col relative h-[35vh] md:h-full">
                     {!isPdf && receipt.image_url && (
-                        <div className="absolute top-4 left-4 z-10 flex gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
+                        <div className="force-dark absolute top-4 left-4 z-10 flex gap-1.5 bg-black/75 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
                             <button 
                                 onClick={() => setZoom(prev => Math.min(prev + 0.25, 2.5))} 
                                 type="button"
@@ -494,7 +496,7 @@ function WorkerReceiptDetailModal({
                                     onClick={() => { setZoom(1); setRotate(0); }} 
                                     type="button"
                                     title="Restablecer"
-                                    className="p-1.5 hover:bg-white/10 rounded-full text-[#8CC63F]"
+                                    className="p-1.5 hover:bg-white/10 rounded-full text-brand"
                                 >
                                     <RotateCcw className="w-3.5 h-3.5" />
                                 </button>
@@ -544,18 +546,18 @@ function WorkerReceiptDetailModal({
                 </div>
 
                 {/* Right Side: Form / Details */}
-                <div className="w-full md:w-1/2 flex flex-col h-[55vh] md:h-full overflow-y-auto bg-[#1C2D54]/10">
+                <div className="w-full md:w-1/2 flex flex-col h-[55vh] md:h-full overflow-y-auto bg-card-10">
                     <div className="p-6 border-b border-white/5">
                         <div className="flex justify-between items-center">
                             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
                                 receipt.status === 'Pendiente' || receipt.status === 'Por Visar' || !receipt.status ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
                                 receipt.status === 'Aprobado por Supervisor' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                 receipt.status === 'Rechazado' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                'bg-green-500/10 text-[#8CC63F] border-green-500/20'
+                                'bg-green-500/10 text-brand border-green-500/20'
                             }`}>
                                 {receipt.status === 'Aprobado por Supervisor' ? 'Aprobado' : (receipt.status || 'Pendiente')}
                             </span>
-                            <span className="text-[22px] font-black text-[#8CC63F]">${Number(receipt.amount).toLocaleString('es-CL')}</span>
+                            <span className="text-[22px] font-black text-brand">${Number(receipt.amount).toLocaleString('es-CL')}</span>
                         </div>
                         <h1 className="text-xl font-bold text-white mt-3 leading-tight">{receipt.merchant}</h1>
                     </div>
@@ -568,7 +570,7 @@ function WorkerReceiptDetailModal({
                             </div>
                         )}
                         {success && (
-                            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-[#8CC63F] text-xs flex items-center gap-2">
+                            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-brand text-xs flex items-center gap-2">
                                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                                 <span>{success}</span>
                             </div>
@@ -584,7 +586,7 @@ function WorkerReceiptDetailModal({
                                             name="merchant"
                                             value={formData.merchant}
                                             onChange={handleInputChange}
-                                            className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         />
                                     </div>
                                     <div>
@@ -594,7 +596,7 @@ function WorkerReceiptDetailModal({
                                             value={formData.merchant_rut}
                                             onChange={handleInputChange}
                                             placeholder="Ej: 76.123.456-K"
-                                            className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         />
                                     </div>
                                 </div>
@@ -608,7 +610,7 @@ function WorkerReceiptDetailModal({
                                             name="date"
                                             value={formData.date}
                                             onChange={handleInputChange}
-                                            className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         />
                                     </div>
                                     <div>
@@ -618,7 +620,7 @@ function WorkerReceiptDetailModal({
                                             name="amount"
                                             value={formData.amount}
                                             onChange={handleInputChange}
-                                            className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         />
                                     </div>
                                 </div>
@@ -631,10 +633,10 @@ function WorkerReceiptDetailModal({
                                             name="category"
                                             value={formData.category}
                                             onChange={handleInputChange}
-                                            className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         >
                                             {categories.map(c => (
-                                                <option key={c.id} value={c.name} className="bg-[#121D38] text-white">{c.name}</option>
+                                                <option key={c.id} value={c.name} className="bg-app text-white">{c.name}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -644,13 +646,13 @@ function WorkerReceiptDetailModal({
                                             name="document_type"
                                             value={formData.document_type}
                                             onChange={handleInputChange}
-                                            className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         >
-                                            <option value="boleta" className="bg-[#121D38] text-white">Boleta</option>
-                                            <option value="factura" className="bg-[#121D38] text-white">Factura</option>
-                                            <option value="boleta de honorarios" className="bg-[#121D38] text-white">Boleta de Honorarios</option>
-                                            <option value="comprobante de pago" className="bg-[#121D38] text-white">Comprobante de Pago</option>
-                                            <option value="otro" className="bg-[#121D38] text-white">Otro</option>
+                                            <option value="boleta" className="bg-app text-white">Boleta</option>
+                                            <option value="factura" className="bg-app text-white">Factura</option>
+                                            <option value="boleta de honorarios" className="bg-app text-white">Boleta de Honorarios</option>
+                                            <option value="comprobante de pago" className="bg-app text-white">Comprobante de Pago</option>
+                                            <option value="otro" className="bg-app text-white">Otro</option>
                                         </select>
                                     </div>
                                 </div>
@@ -662,7 +664,7 @@ function WorkerReceiptDetailModal({
                                             name="document_number"
                                             value={formData.document_number}
                                             onChange={handleInputChange}
-                                            className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         />
                                     </div>
                                     <div>
@@ -671,7 +673,7 @@ function WorkerReceiptDetailModal({
                                             name="location"
                                             value={formData.location}
                                             onChange={handleInputChange}
-                                            className="w-full bg-[#121D38] border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         />
                                     </div>
                                 </div>
@@ -682,11 +684,11 @@ function WorkerReceiptDetailModal({
                                         name="project_id"
                                         value={formData.project_id}
                                         onChange={handleInputChange}
-                                        className="w-full bg-[#121D38] border border-white/10 text-zinc-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                        className="w-full bg-app border border-white/10 text-zinc-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                     >
-                                        <option value="" className="bg-[#121D38] text-white">Gasto Genérico</option>
+                                        <option value="" className="bg-app text-white">Gasto Genérico</option>
                                         {projects.map(p => (
-                                            <option key={p.id} value={p.id} className="bg-[#121D38] text-white">{p.name}</option>
+                                            <option key={p.id} value={p.id} className="bg-app text-white">{p.name}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -712,28 +714,28 @@ function WorkerReceiptDetailModal({
                         ) : (
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                         <Calendar className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                         <div>
                                             <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Fecha del Gasto</span>
                                             <p className="text-sm font-medium text-zinc-200">{receipt.date}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                         <Tag className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                         <div>
                                             <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">RUT Proveedor</span>
                                             <p className="text-sm font-medium text-zinc-200">{receipt.merchant_rut || 'Sin RUT'}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                         <FolderOpen className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                         <div>
                                             <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Categoría</span>
                                             <p className="text-sm font-medium text-zinc-200">{receipt.category}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                         <Tag className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                         <div>
                                             <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Documento</span>
@@ -742,7 +744,7 @@ function WorkerReceiptDetailModal({
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5 sm:col-span-2">
+                                    <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5 sm:col-span-2">
                                         <FolderOpen className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                         <div>
                                             <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Proyecto</span>
@@ -751,7 +753,7 @@ function WorkerReceiptDetailModal({
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5 sm:col-span-2">
+                                    <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5 sm:col-span-2">
                                         <MapPin className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                         <div className="min-w-0 flex-1">
                                             <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Ubicación</span>
@@ -760,7 +762,7 @@ function WorkerReceiptDetailModal({
                                                     href={receipt.location.trim().startsWith('http') ? receipt.location.trim() : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(receipt.location.trim())}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-[#8CC63F] hover:text-[#3EAE49] text-sm font-medium block truncate"
+                                                    className="text-brand hover:text-brand-strong text-sm font-medium block truncate"
                                                 >
                                                     {receipt.location}
                                                 </a>

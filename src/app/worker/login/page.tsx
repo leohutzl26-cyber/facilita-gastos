@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Receipt, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle';
 import { createClient } from '@/utils/supabase/client';
 
 export default function WorkerLogin() {
@@ -46,7 +47,9 @@ export default function WorkerLogin() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1C2D54] via-[#121D38] to-[#121D38]">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-surface via-app to-app">
+
+            <div className="absolute top-8 right-8"><ThemeToggle /></div>
 
             <Link href="/" className="absolute top-8 left-8 text-zinc-400 flex items-center gap-2 hover:text-white transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Volver
@@ -55,15 +58,15 @@ export default function WorkerLogin() {
             <div className="w-full max-w-md relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-[#8CC63F] to-[#3EAE49] rounded-[2rem] blur opacity-20 animate-pulse" />
 
-                <div className="relative bg-[#1C2D54]/50 backdrop-blur-xl border border-[#8CC63F]/10 p-8 rounded-[2rem] shadow-2xl">
+                <div className="relative bg-card-50 backdrop-blur-xl border border-line p-8 rounded-[2rem] shadow-2xl">
                     <div className="flex flex-col items-center mb-8">
-                        <div className="p-4 bg-[#8CC63F]/20 rounded-2xl text-[#8CC63F] mb-4">
+                        <div className="p-4 bg-[#8CC63F]/20 rounded-2xl text-brand mb-4">
                             <Receipt className="w-8 h-8" />
                         </div>
                         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-300">
                             Portal de Colaborador
                         </h1>
-                        <p className="text-[#8CC63F]/80 text-sm mt-2 text-center font-medium">
+                        <p className="text-brand/80 text-sm mt-2 text-center font-medium">
                             Ingresa para registrar tus gastos
                         </p>
                     </div>
@@ -82,7 +85,7 @@ export default function WorkerLogin() {
                                 required
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 transition-all"
+                                className="w-full bg-inset-20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 transition-all"
                                 placeholder="tu@empresa.com"
                             />
                         </div>
@@ -94,7 +97,7 @@ export default function WorkerLogin() {
                                 required
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 transition-all"
+                                className="w-full bg-inset-20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 transition-all"
                                 placeholder="••••••••"
                             />
                         </div>

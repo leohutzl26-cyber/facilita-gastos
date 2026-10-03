@@ -189,18 +189,18 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
         <div>
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-line rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Colaboradores</p>
                         <p className="text-2xl font-black text-white">{totalWorkers}</p>
                         <p className="text-[10px] text-zinc-500">Total registrados</p>
                     </div>
-                    <div className="p-3 bg-[#8CC63F]/10 rounded-xl text-[#8CC63F] shrink-0">
+                    <div className="p-3 bg-[#8CC63F]/10 rounded-xl text-brand shrink-0">
                         <Users className="w-6 h-6" />
                     </div>
                 </div>
 
-                <div className="bg-[#1C2D54]/40 border border-emerald-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-emerald-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Activos</p>
                         <p className="text-2xl font-black text-emerald-400">{activeWorkers}</p>
@@ -213,7 +213,7 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
                     </div>
                 </div>
 
-                <div className="bg-[#1C2D54]/40 border border-blue-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-blue-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Administradores</p>
                         <p className="text-2xl font-black text-blue-400">{adminWorkers}</p>
@@ -224,7 +224,7 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
                     </div>
                 </div>
 
-                <div className="bg-[#1C2D54]/40 border border-amber-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-amber-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Aprobadores</p>
                         <p className="text-2xl font-black text-amber-400">{aprobadorWorkers}</p>
@@ -235,7 +235,7 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
                     </div>
                 </div>
 
-                <div className="bg-[#1C2D54]/40 border border-cyan-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-cyan-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Pagadores</p>
                         <p className="text-2xl font-black text-cyan-400">{pagadorWorkers}</p>
@@ -246,7 +246,7 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
                     </div>
                 </div>
 
-                <div className="bg-[#1C2D54]/40 border border-purple-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-purple-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Visores</p>
                         <p className="text-2xl font-black text-purple-400">{visorWorkers}</p>
@@ -270,7 +270,7 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
                             placeholder="Buscar colaborador..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
+                            className="w-full bg-surface border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
                         />
                     </div>
                     {!readOnly && (
@@ -285,19 +285,19 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
             </div>
 
             {!readOnly && isAdding && (
-                <form onSubmit={handleCreate} className="bg-black/20 p-4 rounded-xl mb-6 border border-white/5 space-y-4">
+                <form onSubmit={handleCreate} className="bg-inset-20 p-4 rounded-xl mb-6 border border-white/5 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="text-xs text-zinc-400 block mb-1">Nombre Completo</label>
-                            <input required value={newName} onChange={e => setNewName(e.target.value)} type="text" className="w-full bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none" placeholder="Ej. Ana Silva" />
+                            <input required value={newName} onChange={e => setNewName(e.target.value)} type="text" className="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none" placeholder="Ej. Ana Silva" />
                         </div>
                         <div>
                             <label className="text-xs text-zinc-400 block mb-1">Correo Electrónico</label>
-                            <input required value={newEmail} onChange={e => setNewEmail(e.target.value)} type="email" className="w-full bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none" placeholder="ana@empresa.com" />
+                            <input required value={newEmail} onChange={e => setNewEmail(e.target.value)} type="email" className="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#8CC63F] outline-none" placeholder="ana@empresa.com" />
                         </div>
                     </div>
                     {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
-                    <button disabled={isLoading} type="submit" className="w-full bg-white text-black hover:bg-zinc-200 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50">
+                    <button disabled={isLoading} type="submit" className="w-full bg-inverse text-on-inverse hover:bg-inverse/85 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50">
                         {isLoading ? 'Creando...' : 'Crear Colaborador (Clave será 123456)'}
                     </button>
                 </form>
@@ -312,7 +312,7 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
                     {filteredWorkers.map(worker => (
                         <div key={worker.id} className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900 transition group">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[#8CC63F]/20 text-[#8CC63F] flex items-center justify-center font-bold">
+                                <div className="w-10 h-10 rounded-full bg-[#8CC63F]/20 text-brand flex items-center justify-center font-bold">
                                     {worker.name.charAt(0)}
                                 </div>
                                 <div>
@@ -354,7 +354,7 @@ export default function UserCrud({ readOnly = false }: { readOnly?: boolean }) {
                                         onChange={(e) => handleSetRole(worker.id, worker.name, e.target.value)}
                                         disabled={isTogglingRole === worker.id}
                                         title="Cambiar rol"
-                                        className="bg-[#1C2D54] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-[#8CC63F] disabled:opacity-50"
+                                        className="bg-surface border border-white/10 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-[#8CC63F] disabled:opacity-50"
                                     >
                                         {ROLE_OPTIONS.map(opt => (
                                             <option key={opt.value} value={opt.value}>{opt.label}</option>

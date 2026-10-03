@@ -160,7 +160,7 @@ export default function RecycleBin({ readOnly = false }: { readOnly?: boolean })
             case 'categories':
                 return 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20';
             case 'workers':
-                return 'bg-[#8CC63F]/10 text-[#8CC63F] border border-[#8CC63F]/20';
+                return 'bg-[#8CC63F]/10 text-brand border border-line-strong';
             default:
                 return 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20';
         }
@@ -201,12 +201,12 @@ export default function RecycleBin({ readOnly = false }: { readOnly?: boolean })
     };
 
     return (
-        <div className="bg-[#1C2D54]/30 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div className="bg-card-30 border border-line rounded-2xl p-6 shadow-xl relative overflow-hidden">
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-[#8CC63F]/10 rounded-lg">
-                        <Trash2 className="w-5 h-5 text-[#8CC63F]" />
+                        <Trash2 className="w-5 h-5 text-brand" />
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-zinc-100 font-sans">Papelera de Reciclaje</h2>
@@ -220,7 +220,7 @@ export default function RecycleBin({ readOnly = false }: { readOnly?: boolean })
                     <button
                         onClick={fetchRecords}
                         disabled={isLoading || isActionLoading !== null}
-                        className="p-2 bg-[#1C2D54] border border-white/5 rounded-xl text-zinc-400 hover:text-white transition disabled:opacity-50"
+                        className="p-2 bg-surface border border-white/5 rounded-xl text-zinc-400 hover:text-white transition disabled:opacity-50"
                         title="Actualizar"
                     >
                         <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -246,17 +246,17 @@ export default function RecycleBin({ readOnly = false }: { readOnly?: boolean })
                 </div>
             )}
             {successMsg && (
-                <div className="mb-4 p-3 bg-[#8CC63F]/15 border border-[#8CC63F]/30 rounded-xl text-[#8CC63F] text-xs flex items-center gap-2">
+                <div className="mb-4 p-3 bg-[#8CC63F]/15 border border-[#8CC63F]/30 rounded-xl text-brand text-xs flex items-center gap-2">
                     <RotateCcw className="w-4 h-4 flex-shrink-0" />
                     <span>{successMsg}</span>
                 </div>
             )}
 
             {/* Content Table */}
-            <div className="bg-[#121D38] border border-white/5 rounded-xl overflow-hidden">
+            <div className="bg-app border border-white/5 rounded-xl overflow-hidden">
                 <div className="overflow-x-auto max-h-[400px]">
                     <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="bg-[#1C2D54] border-b border-white/5 text-zinc-400 sticky top-0 z-10">
+                        <thead className="bg-surface border-b border-white/5 text-zinc-400 sticky top-0 z-10">
                             <tr>
                                 <th className="px-6 py-3.5 font-medium">Elemento / Tipo</th>
                                 <th className="px-6 py-3.5 font-medium">Detalles</th>
@@ -269,7 +269,7 @@ export default function RecycleBin({ readOnly = false }: { readOnly?: boolean })
                             {isLoading ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-zinc-500">
-                                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#8CC63F]" />
+                                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-brand" />
                                         Cargando papelera de reciclaje...
                                     </td>
                                 </tr>
@@ -288,7 +288,7 @@ export default function RecycleBin({ readOnly = false }: { readOnly?: boolean })
                                             </span>
                                             <button
                                                 onClick={() => setDetailRecord(record)}
-                                                className="font-semibold text-zinc-100 hover:text-[#8CC63F] max-w-[200px] truncate text-left transition"
+                                                className="font-semibold text-zinc-100 hover:text-brand max-w-[200px] truncate text-left transition"
                                                 title={getRecordName(record)}
                                             >
                                                 {getRecordName(record)}
@@ -317,7 +317,7 @@ export default function RecycleBin({ readOnly = false }: { readOnly?: boolean })
                                                         <button
                                                             onClick={() => handleRestore(record)}
                                                             disabled={isActionLoading !== null}
-                                                            className="p-2 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-lg transition disabled:opacity-50 flex items-center gap-1 text-xs font-semibold"
+                                                            className="p-2 bg-[#8CC63F]/10 text-brand hover:bg-[#8CC63F] hover:text-[#121D38] rounded-lg transition disabled:opacity-50 flex items-center gap-1 text-xs font-semibold"
                                                             title="Restaurar Elemento"
                                                         >
                                                             {isActionLoading === record.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
@@ -326,7 +326,7 @@ export default function RecycleBin({ readOnly = false }: { readOnly?: boolean })
                                                         <button
                                                             onClick={() => handlePurge(record)}
                                                             disabled={isActionLoading !== null}
-                                                            className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition disabled:opacity-50"
+                                                            className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-on-accent rounded-lg transition disabled:opacity-50"
                                                             title="Eliminar Definitivamente (Purgar)"
                                                         >
                                                             <Trash className="w-3.5 h-3.5" />

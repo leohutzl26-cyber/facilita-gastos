@@ -357,21 +357,21 @@ export default function ReceiptDetailModal({
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
             {/* Modal Container */}
-            <div className="bg-[#121D38] border border-white/10 rounded-[2.5rem] w-full max-w-6xl h-[90vh] md:h-[80vh] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
+            <div className="bg-app border border-white/10 rounded-[2.5rem] w-full max-w-6xl h-[90vh] md:h-[80vh] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
                 
                 {/* Close Button */}
                 <button 
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 rounded-full border border-white/10 text-zinc-400 hover:text-white transition-all hover:scale-105"
+                    className="force-dark absolute top-4 right-4 z-50 p-2 bg-black/60 hover:bg-black/80 rounded-full border border-white/10 text-zinc-400 hover:text-white transition-all hover:scale-105"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
                 {/* Left Side: Receipt Image & Viewer */}
-                <div className="w-full md:w-1/2 bg-black/40 border-r border-white/5 flex flex-col relative h-[40vh] md:h-full">
+                <div className="w-full md:w-1/2 bg-inset-40 border-r border-white/5 flex flex-col relative h-[40vh] md:h-full">
                     {/* Toolbar */}
                     {!isPdf && receipt.image_url && (
-                        <div className="absolute top-4 left-4 z-10 flex gap-1.5 bg-black/50 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
+                        <div className="force-dark absolute top-4 left-4 z-10 flex gap-1.5 bg-black/70 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-lg">
                             <button 
                                 onClick={handleZoomIn}
                                 type="button"
@@ -401,7 +401,7 @@ export default function ReceiptDetailModal({
                                     onClick={handleResetImage}
                                     type="button"
                                     title="Restablecer"
-                                    className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition text-[#8CC63F]"
+                                    className="p-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition text-brand"
                                 >
                                     <RotateCcw className="w-4 h-4" />
                                 </button>
@@ -468,7 +468,7 @@ export default function ReceiptDetailModal({
                     </div>
 
                     {/* Footer Image Indicator */}
-                    <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm border border-white/5 px-3 py-1 rounded-full text-xs text-zinc-400">
+                    <div className="force-dark absolute bottom-4 left-4 bg-black/75 backdrop-blur-sm border border-white/5 px-3 py-1 rounded-full text-xs text-zinc-400">
                         {receipt.image_url ? (isPdf ? 'Documento PDF' : 'Comprobante de Imagen') : 'Sin Imagen'}
                     </div>
                 </div>
@@ -483,7 +483,7 @@ export default function ReceiptDetailModal({
                                     receipt.status === 'Pendiente' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
                                     receipt.status === 'Aprobado por Supervisor' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                     receipt.status === 'Rechazado' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                    'bg-green-500/10 text-[#8CC63F] border-green-500/20'
+                                    'bg-green-500/10 text-brand border-green-500/20'
                                 }`}>
                                     {receipt.status || 'Pendiente'}
                                 </span>
@@ -492,7 +492,7 @@ export default function ReceiptDetailModal({
                                         name="merchant"
                                         value={formData.merchant}
                                         onChange={handleInputChange}
-                                        className="text-2xl font-bold text-white mt-3 bg-black/40 border border-white/10 rounded-xl px-3 py-1 w-full focus:outline-none focus:ring-1 focus:ring-[#8CC63F]"
+                                        className="text-2xl font-bold text-white mt-3 bg-inset-40 border border-white/10 rounded-xl px-3 py-1 w-full focus:outline-none focus:ring-1 focus:ring-[#8CC63F]"
                                         placeholder="Ej: Gasolinera Copec"
                                     />
                                 ) : (
@@ -510,7 +510,7 @@ export default function ReceiptDetailModal({
                                             type="number"
                                             value={formData.amount}
                                             onChange={handleInputChange}
-                                            className="text-2xl font-bold text-[#8CC63F] bg-black/40 border border-white/10 rounded-xl px-3 py-1 w-32 text-right focus:outline-none focus:ring-1 focus:ring-[#8CC63F]"
+                                            className="text-2xl font-bold text-brand bg-inset-40 border border-white/10 rounded-xl px-3 py-1 w-32 text-right focus:outline-none focus:ring-1 focus:ring-[#8CC63F]"
                                         />
                                     </div>
                                 ) : (
@@ -523,7 +523,7 @@ export default function ReceiptDetailModal({
                                                 </div>
                                             </div>
                                         ) : (
-                                            <span className="text-3xl font-extrabold text-[#8CC63F]">${Number(receipt.amount).toLocaleString('es-CL')}</span>
+                                            <span className="text-3xl font-extrabold text-brand">${Number(receipt.amount).toLocaleString('es-CL')}</span>
                                         )}
                                     </>
                                 )}
@@ -538,7 +538,7 @@ export default function ReceiptDetailModal({
                             </div>
                         )}
                         {successMsg && (
-                            <div className="p-3 bg-green-500/15 border border-green-500/30 rounded-2xl text-[#8CC63F] text-xs flex items-center gap-2">
+                            <div className="p-3 bg-green-500/15 border border-green-500/30 rounded-2xl text-brand text-xs flex items-center gap-2">
                                 <Check className="w-4 h-4 flex-shrink-0" />
                                 <span>{successMsg}</span>
                             </div>
@@ -549,7 +549,7 @@ export default function ReceiptDetailModal({
                     <form onSubmit={handleSaveEdit} className="p-6 border-b border-white/5 space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Fecha */}
-                            <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                 <Calendar className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Fecha del Gasto</span>
@@ -559,7 +559,7 @@ export default function ReceiptDetailModal({
                                             name="date"
                                             value={formData.date}
                                             onChange={handleInputChange}
-                                            className="bg-black/30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
+                                            className="bg-inset-30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
                                         />
                                     ) : (
                                         <p className="text-sm font-medium text-zinc-200">{receipt.date}</p>
@@ -568,7 +568,7 @@ export default function ReceiptDetailModal({
                             </div>
 
                             {/* Creador */}
-                            <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                 <User className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Colaborador</span>
@@ -579,7 +579,7 @@ export default function ReceiptDetailModal({
                             </div>
 
                             {/* RUT Comercio */}
-                            <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                 <Tag className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">RUT Proveedor</span>
@@ -588,7 +588,7 @@ export default function ReceiptDetailModal({
                                             name="merchant_rut"
                                             value={formData.merchant_rut}
                                             onChange={handleInputChange}
-                                            className="bg-black/30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
+                                            className="bg-inset-30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
                                             placeholder="12.345.678-9"
                                         />
                                     ) : (
@@ -598,7 +598,7 @@ export default function ReceiptDetailModal({
                             </div>
 
                             {/* Tipo Documento */}
-                            <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                 <Tag className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Documento</span>
@@ -608,7 +608,7 @@ export default function ReceiptDetailModal({
                                                 name="document_type"
                                                 value={formData.document_type}
                                                 onChange={handleInputChange}
-                                                className="bg-black/30 border border-white/10 rounded-lg text-[10px] text-white p-1 focus:outline-none"
+                                                className="bg-inset-30 border border-white/10 rounded-lg text-[10px] text-white p-1 focus:outline-none"
                                             >
                                                 <option value="boleta">Boleta</option>
                                                 <option value="factura">Factura</option>
@@ -620,7 +620,7 @@ export default function ReceiptDetailModal({
                                                 name="document_number"
                                                 value={formData.document_number}
                                                 onChange={handleInputChange}
-                                                className="bg-black/30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 focus:outline-none w-full"
+                                                className="bg-inset-30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 focus:outline-none w-full"
                                                 placeholder="N° Folio"
                                             />
                                         </div>
@@ -633,7 +633,7 @@ export default function ReceiptDetailModal({
                             </div>
 
                             {/* Categoría */}
-                            <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                 <FolderOpen className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Categoría</span>
@@ -642,7 +642,7 @@ export default function ReceiptDetailModal({
                                             name="category"
                                             value={formData.category}
                                             onChange={handleInputChange}
-                                            className="bg-black/30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
+                                            className="bg-inset-30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
                                         >
                                             {categories.map(cat => (
                                                 <option key={cat.id} value={cat.name}>{cat.name}</option>
@@ -655,7 +655,7 @@ export default function ReceiptDetailModal({
                             </div>
 
                             {/* Proyecto Carpeta */}
-                            <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5">
                                 <FolderOpen className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Proyecto</span>
@@ -664,7 +664,7 @@ export default function ReceiptDetailModal({
                                             name="project_id"
                                             value={formData.project_id}
                                             onChange={handleInputChange}
-                                            className="bg-black/30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
+                                            className="bg-inset-30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
                                         >
                                             <option value="">Gasto Genérico</option>
                                             {projects.map(proj => (
@@ -680,7 +680,7 @@ export default function ReceiptDetailModal({
                             </div>
 
                             {/* Ubicación Geolocalizada */}
-                            <div className="flex items-center gap-3 p-3 bg-black/20 rounded-xl border border-white/5 sm:col-span-2">
+                            <div className="flex items-center gap-3 p-3 bg-inset-20 rounded-xl border border-white/5 sm:col-span-2">
                                 <MapPin className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Ubicación Registrada</span>
@@ -689,7 +689,7 @@ export default function ReceiptDetailModal({
                                             name="location"
                                             value={formData.location}
                                             onChange={handleInputChange}
-                                            className="bg-black/30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
+                                            className="bg-inset-30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
                                             placeholder="Dirección o Coordenadas Lat, Lng"
                                         />
                                     ) : (
@@ -698,7 +698,7 @@ export default function ReceiptDetailModal({
                                                 href={receipt.location.trim().startsWith('http') ? receipt.location.trim() : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(receipt.location.trim())}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-[#8CC63F] hover:text-[#3EAE49] text-sm font-medium flex items-center gap-1 mt-0.5 truncate"
+                                                className="text-brand hover:text-brand-strong text-sm font-medium flex items-center gap-1 mt-0.5 truncate"
                                             >
                                                 {receipt.location} <Eye className="w-3.5 h-3.5 flex-shrink-0" />
                                             </a>
@@ -748,7 +748,7 @@ export default function ReceiptDetailModal({
                     {/* Comprobante(s) de Pago Asociado(s) */}
                     <div className="px-6 py-5 border-b border-white/5 space-y-3">
                         <h4 className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
-                            <Landmark className="w-4 h-4 text-[#8CC63F]" />
+                            <Landmark className="w-4 h-4 text-brand" />
                             {linkedPayments.length > 1
                                 ? `Comprobantes de Pago (${linkedPayments.length})`
                                 : 'Comprobante de Pago'}
@@ -776,7 +776,7 @@ export default function ReceiptDetailModal({
                         )}
 
                         {linkedPayments.length === 0 ? (
-                            <div className="text-xs text-zinc-500 bg-[#1C2D54]/30 border border-white/5 rounded-xl px-3 py-2.5">
+                            <div className="text-xs text-zinc-500 bg-card-30 border border-white/5 rounded-xl px-3 py-2.5">
                                 {receipt.status === 'Reembolsado'
                                     ? 'Marcado como reembolsado, pero aún no tiene un comprobante de pago asociado.'
                                     : 'Sin comprobante de pago asociado todavía.'}
@@ -787,7 +787,7 @@ export default function ReceiptDetailModal({
                                 const SourceIcon = source.icon;
                                 const isProofPdf = payment.file_type === 'pdf';
                                 return (
-                                    <div key={payment.id} className="bg-[#1C2D54]/30 border border-emerald-500/20 rounded-xl p-3 flex gap-3">
+                                    <div key={payment.id} className="bg-card-30 border border-emerald-500/20 rounded-xl p-3 flex gap-3">
                                         <a
                                             href={payment.file_url}
                                             target="_blank"
@@ -833,7 +833,7 @@ export default function ReceiptDetailModal({
                                                 href={payment.file_url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-[11px] text-[#8CC63F] hover:underline inline-flex items-center gap-1"
+                                                className="text-[11px] text-brand hover:underline inline-flex items-center gap-1"
                                             >
                                                 <ExternalLink className="w-3 h-3" />
                                                 Ver comprobante completo
@@ -846,14 +846,14 @@ export default function ReceiptDetailModal({
                     </div>
 
                     {/* Timeline (Reimbursement Logs) & Comments Tabs */}
-                    <div className="flex-1 flex flex-col bg-[#1C2D54]/20">
+                    <div className="flex-1 flex flex-col bg-card-20">
                         {/* Headers */}
                         <div className="grid grid-cols-2 border-b border-white/5 text-center text-xs">
                             <div className="py-3 font-semibold text-zinc-200 border-r border-white/5 flex items-center justify-center gap-1.5">
-                                <History className="w-4 h-4 text-[#8CC63F]" /> Historial de Reembolso
+                                <History className="w-4 h-4 text-brand" /> Historial de Reembolso
                             </div>
                             <div className="py-3 font-semibold text-zinc-200 flex items-center justify-center gap-1.5">
-                                <MessageSquare className="w-4 h-4 text-[#8CC63F]" /> Comentarios ({comments.length})
+                                <MessageSquare className="w-4 h-4 text-brand" /> Comentarios ({comments.length})
                             </div>
                         </div>
 
@@ -863,14 +863,14 @@ export default function ReceiptDetailModal({
                             <div className="p-4 border-b md:border-b-0 md:border-r border-white/5 overflow-y-auto max-h-[320px] space-y-4">
                                 {isLoadingLogs ? (
                                     <div className="text-center py-12 text-zinc-500 text-xs">
-                                        <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-[#8CC63F]" />
+                                        <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-brand" />
                                         Cargando logs...
                                     </div>
                                 ) : (
                                     <div className="relative border-l border-white/10 ml-2.5 pl-5 space-y-5 py-2">
                                         {/* Evento inicial virtual: Creación */}
                                         <div className="relative">
-                                            <div className="absolute -left-[26px] top-1.5 w-3 h-3 rounded-full bg-blue-500 border border-[#121D38]"></div>
+                                            <div className="absolute -left-[26px] top-1.5 w-3 h-3 rounded-full bg-blue-500 border border-app"></div>
                                             <span className="text-[10px] text-zinc-500 block">
                                                 {new Date(receipt.created_at || new Date()).toLocaleString('es-CL')}
                                             </span>
@@ -889,7 +889,7 @@ export default function ReceiptDetailModal({
 
                                             return (
                                                 <div key={log.id} className="relative">
-                                                    <div className={`absolute -left-[26px] top-1.5 w-3 h-3 rounded-full ${dotColor} border border-[#121D38]`}></div>
+                                                    <div className={`absolute -left-[26px] top-1.5 w-3 h-3 rounded-full ${dotColor} border border-app`}></div>
                                                     <span className="text-[10px] text-zinc-500 block">
                                                         {new Date(log.created_at).toLocaleString('es-CL')}
                                                     </span>
@@ -912,7 +912,7 @@ export default function ReceiptDetailModal({
                                 <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                                     {isLoadingComments ? (
                                         <div className="text-center py-12 text-zinc-500 text-xs">
-                                            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-[#8CC63F]" />
+                                            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-brand" />
                                             Cargando comentarios...
                                         </div>
                                     ) : comments.length === 0 ? (
@@ -921,7 +921,7 @@ export default function ReceiptDetailModal({
                                         </div>
                                     ) : (
                                         comments.map((comment) => (
-                                            <div key={comment.id} className="bg-black/35 p-3 rounded-2xl border border-white/5 space-y-1.5">
+                                            <div key={comment.id} className="bg-inset-30 p-3 rounded-2xl border border-white/5 space-y-1.5">
                                                 <div className="flex justify-between items-center text-[10px]">
                                                     <span className="font-semibold text-zinc-300">
                                                         {getWorkerName(comment.user_email)}
@@ -948,7 +948,7 @@ export default function ReceiptDetailModal({
                                             onChange={(e) => setNewComment(e.target.value)}
                                             placeholder="Escribe un comentario..."
                                             disabled={isCommenting}
-                                            className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#8CC63F] outline-none"
+                                            className="flex-1 bg-inset-40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         />
                                         <button
                                             type="submit"
@@ -965,7 +965,7 @@ export default function ReceiptDetailModal({
 
                     {/* Bottom Sticky Action Buttons (no disponibles en modo visor) */}
                     {(canApprove || (canManagePayments && receipt.status === 'Aprobado por Supervisor')) && (
-                    <div className="p-6 bg-black/20 border-t border-white/5 flex flex-wrap gap-2 items-center justify-between mt-auto">
+                    <div className="p-6 bg-inset-20 border-t border-white/5 flex flex-wrap gap-2 items-center justify-between mt-auto">
                         <div className="flex gap-2">
                             {/* Editar / Eliminar: solo admin */}
                             {isAdminUser && !isEditing && (
@@ -995,7 +995,7 @@ export default function ReceiptDetailModal({
                                     <button
                                         onClick={() => handleStatusChange('Aprobado por Supervisor')}
                                         disabled={isActionLoading !== null}
-                                        className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
+                                        className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-on-accent px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
                                     >
                                         {isActionLoading === 'Aprobado por Supervisor' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                                         Aprobar
@@ -1004,7 +1004,7 @@ export default function ReceiptDetailModal({
                                     <button
                                         onClick={() => setIsRejecting(true)}
                                         disabled={isActionLoading !== null}
-                                        className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
+                                        className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-on-accent px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
                                     >
                                         <XCircle className="w-4 h-4" />
                                         Rechazar
@@ -1048,7 +1048,7 @@ export default function ReceiptDetailModal({
             {/* Local Rejection dialog overlay */}
             {isRejecting && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#1C2D54] border border-white/10 rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in scale-in duration-200">
+                    <div className="bg-surface border border-white/10 rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in scale-in duration-200">
                         <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
                             <XCircle className="w-5 h-5 text-red-400" /> Rechazar Reembolso
                         </h3>
@@ -1058,7 +1058,7 @@ export default function ReceiptDetailModal({
                         <textarea
                             value={rejectionReason}
                             onChange={(e) => setRejectionReason(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:ring-1 focus:ring-red-500/50 min-h-[100px] mb-6 text-xs outline-none"
+                            className="w-full bg-inset-40 border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:ring-1 focus:ring-red-500/50 min-h-[100px] mb-6 text-xs outline-none"
                             placeholder="Ej: La foto no es legible o el monto ingresado no concuerda con el comprobante adjunto."
                         />
                         <div className="flex gap-3 justify-end text-xs font-semibold">
@@ -1071,7 +1071,7 @@ export default function ReceiptDetailModal({
                             <button
                                 onClick={() => handleStatusChange('Rechazado', rejectionReason)}
                                 disabled={!rejectionReason.trim() || isActionLoading !== null}
-                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition disabled:opacity-50 flex items-center gap-1.5"
+                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-on-accent rounded-xl transition disabled:opacity-50 flex items-center gap-1.5"
                             >
                                 {isActionLoading === 'Rechazado' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                 Confirmar Rechazo

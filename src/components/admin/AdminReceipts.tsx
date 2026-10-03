@@ -303,7 +303,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                             placeholder="Búsqueda rápida..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-[#1C2D54] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
+                            className="w-full bg-surface border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8CC63F] text-zinc-200"
                         />
                     </div>
                     <div className="flex gap-2 flex-wrap sm:flex-nowrap">
@@ -318,7 +318,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                         )}
                         <button
                             onClick={() => setIsExportModalOpen(true)}
-                            className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/20 px-3 py-2 rounded-xl text-sm font-medium transition whitespace-nowrap"
+                            className="flex items-center gap-2 bg-[#8CC63F]/10 hover:bg-[#8CC63F]/20 text-brand border border-line-strong px-3 py-2 rounded-xl text-sm font-medium transition whitespace-nowrap"
                         >
                             <Download className="w-4 h-4" />
                             Exportar
@@ -327,14 +327,14 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                 </div>
 
                 {/* Filters Row */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 bg-[#1C2D54]/50 p-4 rounded-xl border border-white/5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 bg-card-50 p-4 rounded-xl border border-white/5">
                     <div className="flex flex-col">
                         <label className="text-[10px] text-zinc-400 mb-1 uppercase tracking-wider">Desde (Fecha)</label>
                         <input
                             type="date"
                             value={filterStartDate}
                             onChange={(e) => setFilterStartDate(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         />
                     </div>
                     <div className="flex flex-col">
@@ -343,7 +343,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                             type="date"
                             value={filterEndDate}
                             onChange={(e) => setFilterEndDate(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         />
                     </div>
                     <div className="flex flex-col">
@@ -351,7 +351,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                         <select
                             value={filterWorker}
                             onChange={(e) => setFilterWorker(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         >
                             <option value="">Todos los colaboradores</option>
                             {uniqueWorkerNames.map(name => (
@@ -364,7 +364,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                         <select
                             value={filterProject}
                             onChange={(e) => setFilterProject(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         >
                             <option value="">Todos los proyectos</option>
                             {uniqueProjects.map(p => (
@@ -377,7 +377,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                         <select
                             value={filterCategory}
                             onChange={(e) => setFilterCategory(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         >
                             <option value="">Todas las categorías</option>
                             {uniqueCategories.map(c => (
@@ -390,7 +390,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                         <select
                             value={filterDocumentType}
                             onChange={(e) => setFilterDocumentType(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200 capitalize"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200 capitalize"
                         >
                             <option value="">Todos los tipos</option>
                             {uniqueDocTypes.map(c => (
@@ -403,7 +403,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200 capitalize"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200 capitalize"
                         >
                             <option value="">Todos los estados</option>
                             {uniqueStatuses.map(s => (
@@ -414,27 +414,27 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                 </div>
 
                 {/* Total Summary Row */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#1C2D54]/30 border border-white/5 p-4 rounded-xl">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card-30 border border-white/5 p-4 rounded-xl">
                     <div className="text-sm text-zinc-400">
                         Mostrando <span className="font-semibold text-zinc-200">{filteredReceipts.length}</span> {filteredReceipts.length === 1 ? 'comprobante' : 'comprobantes'}
                     </div>
-                    <div className="bg-[#8CC63F]/10 border border-[#8CC63F]/20 rounded-xl px-4 py-2 flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                    <div className="bg-[#8CC63F]/10 border border-line-strong rounded-xl px-4 py-2 flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
                         <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Total Filtrado:</span>
-                        <span className="text-lg font-bold text-[#8CC63F]">${totalFilteredAmount.toLocaleString('es-CL')}</span>
+                        <span className="text-lg font-bold text-brand">${totalFilteredAmount.toLocaleString('es-CL')}</span>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-[#1C2D54] border border-white/10 rounded-2xl overflow-hidden">
+            <div className="bg-surface border border-white/10 rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-[#1C2D54] border-b border-white/10 text-zinc-400 animate-in fade-in">
+                        <thead className="bg-surface border-b border-white/10 text-zinc-400 animate-in fade-in">
                             <tr>
                                 <th onClick={() => handleSort('date')} className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors">
                                     <div className="flex items-center gap-1">
                                         Fecha
                                         {sortField === 'date' ? (
-                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-brand" /> : <ArrowDown className="w-3.5 h-3.5 text-brand" />
                                         ) : (
                                             <ArrowUpDown className="w-3 h-3 opacity-30" />
                                         )}
@@ -444,7 +444,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                     <div className="flex items-center gap-1">
                                         Proyecto y Comercio
                                         {sortField === 'merchant' ? (
-                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-brand" /> : <ArrowDown className="w-3.5 h-3.5 text-brand" />
                                         ) : (
                                             <ArrowUpDown className="w-3 h-3 opacity-30" />
                                         )}
@@ -454,7 +454,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                     <div className="flex items-center gap-1">
                                         Documento
                                         {sortField === 'document' ? (
-                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-brand" /> : <ArrowDown className="w-3.5 h-3.5 text-brand" />
                                         ) : (
                                             <ArrowUpDown className="w-3 h-3 opacity-30" />
                                         )}
@@ -464,7 +464,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                     <div className="flex items-center gap-1">
                                         Categoría
                                         {sortField === 'category' ? (
-                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-brand" /> : <ArrowDown className="w-3.5 h-3.5 text-brand" />
                                         ) : (
                                             <ArrowUpDown className="w-3 h-3 opacity-30" />
                                         )}
@@ -474,7 +474,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                     <div className="flex items-center justify-center gap-1">
                                         Info. Pago
                                         {sortField === 'amount' ? (
-                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-brand" /> : <ArrowDown className="w-3.5 h-3.5 text-brand" />
                                         ) : (
                                             <ArrowUpDown className="w-3 h-3 opacity-30" />
                                         )}
@@ -484,7 +484,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                     <div className="flex items-center justify-center gap-1">
                                         Estado
                                         {sortField === 'status' ? (
-                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#8CC63F]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#8CC63F]" />
+                                            sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-brand" /> : <ArrowDown className="w-3.5 h-3.5 text-brand" />
                                         ) : (
                                             <ArrowUpDown className="w-3 h-3 opacity-30" />
                                         )}
@@ -530,7 +530,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="bg-[#8CC63F]/10 text-[#8CC63F] px-2 py-1 rounded text-xs whitespace-nowrap">
+                                            <span className="bg-[#8CC63F]/10 text-brand px-2 py-1 rounded text-xs whitespace-nowrap">
                                                 {receipt.category}
                                             </span>
                                             <div className="text-[10px] text-zinc-500 mt-1" title={receipt.worker_email}>
@@ -548,7 +548,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
 
                                             {receipt.image_url ? (
                                                 receipt.image_url.startsWith('http') ? (
-                                                    <button onClick={() => setSelectedReceipt(receipt)} className="text-[#8CC63F] hover:text-[#3EAE49] inline-flex items-center gap-1 text-xs font-semibold bg-[#8CC63F]/10 px-2 py-0.5 rounded-lg transition">
+                                                    <button onClick={() => setSelectedReceipt(receipt)} className="text-brand hover:text-brand-strong inline-flex items-center gap-1 text-xs font-semibold bg-[#8CC63F]/10 px-2 py-0.5 rounded-lg transition">
                                                         <Eye className="w-3.5 h-3.5" /> Detalle
                                                     </button>
                                                 ) : (
@@ -564,7 +564,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                             <span className={`px-2 py-1 rounded text-[11px] font-medium whitespace-nowrap ${receipt.status === 'Pendiente' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
                                                 receipt.status === 'Aprobado por Supervisor' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
                                                     receipt.status === 'Rechazado' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                                        'bg-[#8CC63F]/20 text-[#8CC63F] border border-[#8CC63F]/30'
+                                                        'bg-[#8CC63F]/20 text-brand border border-[#8CC63F]/30'
                                                 }`}>
                                                 {receipt.status || 'Pendiente'}
                                             </span>
@@ -621,14 +621,14 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                                     <>
                                                         <button
                                                             onClick={() => handleStatusUpdate(receipt.id, 'Aprobado por Supervisor')}
-                                                            className="p-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-md transition"
+                                                            className="p-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-on-accent rounded-md transition"
                                                             title="Aprobar (Supervisor)"
                                                         >
                                                             <CheckCircle className="w-4 h-4" />
                                                         </button>
                                                         <button
                                                             onClick={() => setRejectingId(receipt.id)}
-                                                            className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-md transition"
+                                                            className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-on-accent rounded-md transition"
                                                             title="Rechazar Gasto"
                                                         >
                                                             <XCircle className="w-4 h-4" />
@@ -638,7 +638,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                                 {(!readOnly || canManagePayments) && receipt.status === 'Aprobado por Supervisor' && (
                                                     <button
                                                         onClick={() => handleReembolsarClick(receipt)}
-                                                        className="p-1.5 bg-[#8CC63F]/10 text-[#8CC63F] hover:bg-[#8CC63F] hover:text-[#121D38] rounded-md transition"
+                                                        className="p-1.5 bg-[#8CC63F]/10 text-brand hover:bg-[#8CC63F] hover:text-[#121D38] rounded-md transition"
                                                         title="Marcar como Reembolsado/Pagado"
                                                     >
                                                         <CreditCard className="w-4 h-4" />
@@ -656,7 +656,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                                 {!readOnly && (
                                                     <button
                                                         onClick={() => handleDelete(receipt.id)}
-                                                        className="p-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-md transition ml-2"
+                                                        className="p-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-on-accent rounded-md transition ml-2"
                                                         title="Eliminar Recibo Permanentemente"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -672,7 +672,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-t border-white/10 bg-[#1C2D54]/20 select-none">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-t border-white/10 bg-card-20 select-none">
                     <div className="flex items-center gap-2 text-xs text-zinc-400">
                         <span>Mostrar</span>
                         <select
@@ -681,7 +681,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                                 setItemsPerPage(Number(e.target.value));
                                 setCurrentPage(1);
                             }}
-                            className="bg-[#121D38] border border-white/10 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-app border border-white/10 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         >
                             <option value={50}>50</option>
                             <option value={100}>100</option>
@@ -695,7 +695,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                             <button
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className="px-3 py-1 bg-[#121D38]/50 border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="px-3 py-1 bg-app/50 border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 Anterior
                             </button>
@@ -705,7 +705,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                             <button
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
-                                className="px-3 py-1 bg-[#121D38]/50 border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="px-3 py-1 bg-app/50 border border-white/10 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#8CC63F]/50 transition disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 Siguiente
                             </button>
@@ -716,7 +716,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
 
             {rejectingId && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#1C2D54] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                    <div className="bg-surface border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
                         <h3 className="text-xl font-semibold text-white mb-4">Rechazar Gasto</h3>
                         <p className="text-sm text-zinc-300 mb-4">
                             Por favor, indica el motivo del rechazo para que el trabajador pueda corregirlo.
@@ -724,7 +724,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                         <textarea
                             value={rejectionReason}
                             onChange={(e) => setRejectionReason(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 min-h-[100px] mb-6"
+                            className="w-full bg-inset-40 border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-red-500/50 min-h-[100px] mb-6"
                             placeholder="Ej: La foto está muy borrosa, el monto no coincide, etc."
                         />
                         <div className="flex gap-3 justify-end">
@@ -737,7 +737,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                             <button
                                 onClick={() => handleRejectSubmit()}
                                 disabled={!rejectionReason.trim()}
-                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition disabled:opacity-50"
+                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-on-accent rounded-lg transition disabled:opacity-50"
                             >
                                 Confirmar Rechazo
                             </button>

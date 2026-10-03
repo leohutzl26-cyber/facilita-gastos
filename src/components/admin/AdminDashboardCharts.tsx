@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTheme } from '@/utils/theme';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
@@ -13,6 +14,9 @@ export default function AdminDashboardCharts() {
     const [receipts, setReceipts] = useState<any[]>([]);
     const [workers, setWorkers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { theme } = useTheme();
+    const chartAxis = theme === 'light' ? '#586174' : '#a1a1aa';
+    const chartGrid = theme === 'light' ? 'rgba(21,35,63,0.08)' : 'rgba(255,255,255,0.05)';
 
     // Filter States
     const [searchTerm, setSearchTerm] = useState('');
@@ -161,8 +165,8 @@ export default function AdminDashboardCharts() {
 
     if (isLoading) {
         return (
-            <div className="h-96 flex flex-col items-center justify-center text-zinc-500 border border-white/5 rounded-2xl bg-[#1C2D54]/40 animate-pulse gap-3">
-                <Filter className="w-8 h-8 text-[#8CC63F] animate-spin" />
+            <div className="h-96 flex flex-col items-center justify-center text-zinc-500 border border-white/5 rounded-2xl bg-card-40 animate-pulse gap-3">
+                <Filter className="w-8 h-8 text-brand animate-spin" />
                 <span className="text-sm font-semibold">Cargando métricas analíticas...</span>
             </div>
         );
@@ -243,9 +247,9 @@ export default function AdminDashboardCharts() {
             const value = payload[0].value;
             const name = payload[0].name || data.month || data.name;
             return (
-                <div className="bg-[#121D38] border border-[#8CC63F] p-3 rounded-xl shadow-xl text-xs space-y-1">
+                <div className="bg-app border border-[#8CC63F] p-3 rounded-xl shadow-xl text-xs space-y-1">
                     <p className="font-bold text-white uppercase tracking-wider">{name}</p>
-                    <p className="text-[#8CC63F] font-semibold">Total: ${Number(value).toLocaleString('es-CL')}</p>
+                    <p className="text-brand font-semibold">Total: ${Number(value).toLocaleString('es-CL')}</p>
                     <p className="text-zinc-400">Cantidad: {data.count} {data.count === 1 ? 'documento' : 'documentos'}</p>
                 </div>
             );
@@ -256,16 +260,16 @@ export default function AdminDashboardCharts() {
     return (
         <div className="space-y-6">
             {/* Filters Row */}
-            <div className="bg-[#1C2D54]/50 p-4 rounded-xl border border-white/5 flex flex-col gap-4">
+            <div className="bg-card-50 p-4 rounded-xl border border-white/5 flex flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                        <Filter className="w-5 h-5 text-[#8CC63F]" />
+                        <Filter className="w-5 h-5 text-brand" />
                         <h3 className="font-semibold text-sm text-zinc-200">Filtros de Analíticas</h3>
                     </div>
                     <button
                         onClick={handleExportCSV}
                         disabled={filteredReceipts.length === 0}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[#8CC63F]/20 hover:bg-[#8CC63F]/30 border border-[#8CC63F]/30 hover:border-[#8CC63F]/50 text-[#8CC63F] text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[#8CC63F]/20 hover:bg-[#8CC63F]/30 border border-[#8CC63F]/30 hover:border-[#8CC63F]/50 text-brand text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
                         title="Exportar a Excel/CSV"
                     >
                         <Download className="w-4 h-4" />
@@ -281,7 +285,7 @@ export default function AdminDashboardCharts() {
                             placeholder="Ej: Copec..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         />
                     </div>
                     <div className="flex flex-col">
@@ -290,7 +294,7 @@ export default function AdminDashboardCharts() {
                             type="date"
                             value={filterStartDate}
                             onChange={(e) => setFilterStartDate(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         />
                     </div>
                     <div className="flex flex-col">
@@ -299,7 +303,7 @@ export default function AdminDashboardCharts() {
                             type="date"
                             value={filterEndDate}
                             onChange={(e) => setFilterEndDate(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         />
                     </div>
                     <div className="flex flex-col">
@@ -307,7 +311,7 @@ export default function AdminDashboardCharts() {
                         <select
                             value={filterWorker}
                             onChange={(e) => setFilterWorker(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         >
                             <option value="">Todos</option>
                             {uniqueWorkerNames.map(name => (
@@ -320,7 +324,7 @@ export default function AdminDashboardCharts() {
                         <select
                             value={filterProject}
                             onChange={(e) => setFilterProject(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         >
                             <option value="">Todos</option>
                             {uniqueProjects.map(p => (
@@ -333,7 +337,7 @@ export default function AdminDashboardCharts() {
                         <select
                             value={filterCategory}
                             onChange={(e) => setFilterCategory(e.target.value)}
-                            className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                            className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                         >
                             <option value="">Todas</option>
                             {uniqueCategories.map(c => (
@@ -350,7 +354,7 @@ export default function AdminDashboardCharts() {
                     onClick={() => setSelectedStatusTab('todos')}
                     className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
                         selectedStatusTab === 'todos'
-                            ? 'bg-[#8CC63F]/10 border-[#8CC63F] text-[#8CC63F]'
+                            ? 'bg-[#8CC63F]/10 border-[#8CC63F] text-brand'
                             : 'border-white/10 text-zinc-400 hover:text-white'
                     }`}
                 >
@@ -401,7 +405,7 @@ export default function AdminDashboardCharts() {
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {/* Aprobados Card */}
-                <div className="bg-[#1C2D54]/40 border border-blue-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-blue-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Monto Aprobado</p>
                         <p className="text-2xl font-black text-blue-400">${totalApproved.toLocaleString('es-CL')}</p>
@@ -413,7 +417,7 @@ export default function AdminDashboardCharts() {
                 </div>
 
                 {/* Reembolsados Card */}
-                <div className="bg-[#1C2D54]/40 border border-emerald-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-emerald-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Monto Reembolsado</p>
                         <p className="text-2xl font-black text-emerald-400">${totalReimbursed.toLocaleString('es-CL')}</p>
@@ -425,7 +429,7 @@ export default function AdminDashboardCharts() {
                 </div>
 
                 {/* Pendientes Card */}
-                <div className="bg-[#1C2D54]/40 border border-yellow-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-yellow-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Monto Pendiente</p>
                         <p className="text-2xl font-black text-yellow-400">${totalPending.toLocaleString('es-CL')}</p>
@@ -437,7 +441,7 @@ export default function AdminDashboardCharts() {
                 </div>
 
                 {/* Total Gasto Card */}
-                <div className="bg-[#1C2D54]/40 border border-zinc-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <div className="bg-card-40 border border-zinc-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Total Gasto</p>
                         <p className="text-2xl font-black text-white">${totalExpense.toLocaleString('es-CL')}</p>
@@ -449,13 +453,13 @@ export default function AdminDashboardCharts() {
                 </div>
 
                 {/* Total Docs Card */}
-                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4 col-span-2 md:col-span-1">
+                <div className="bg-card-40 border border-line rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4 col-span-2 md:col-span-1">
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Total Documentos</p>
-                        <p className="text-2xl font-black text-[#8CC63F]">{totalDocsCount}</p>
+                        <p className="text-2xl font-black text-brand">{totalDocsCount}</p>
                         <p className="text-[10px] text-zinc-500">Documentos registrados</p>
                     </div>
-                    <div className="p-3 bg-[#8CC63F]/10 rounded-xl text-[#8CC63F] shrink-0">
+                    <div className="p-3 bg-[#8CC63F]/10 rounded-xl text-brand shrink-0">
                         <FileText className="w-6 h-6" />
                     </div>
                 </div>
@@ -464,19 +468,19 @@ export default function AdminDashboardCharts() {
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Gráfico de Barras: Gastos Mensuales */}
-                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl">
+                <div className="bg-card-40 border border-line rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center gap-2 mb-6">
-                        <TrendingUp className="w-5 h-5 text-[#8CC63F]" />
+                        <TrendingUp className="w-5 h-5 text-brand" />
                         <h2 className="text-lg font-semibold text-zinc-100">Gastos Mensuales</h2>
                     </div>
                     <div className="h-[300px] w-full">
                         {monthlyData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={monthlyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                    <XAxis dataKey="month" stroke="#a1a1aa" fontSize={11} tickLine={false} />
-                                    <YAxis stroke="#a1a1aa" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value.toLocaleString()}`} />
-                                    <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
+                                    <XAxis dataKey="month" stroke={chartAxis} fontSize={11} tickLine={false} />
+                                    <YAxis stroke={chartAxis} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value.toLocaleString()}`} />
+                                    <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: chartGrid }} />
                                     <Bar dataKey="total" fill="#8CC63F" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
@@ -487,9 +491,9 @@ export default function AdminDashboardCharts() {
                 </div>
 
                 {/* Gráfico Circular: Por Categoría */}
-                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl">
+                <div className="bg-card-40 border border-line rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center gap-2 mb-6">
-                        <PieChartIcon className="w-5 h-5 text-[#3EAE49]" />
+                        <PieChartIcon className="w-5 h-5 text-brand-strong" />
                         <h2 className="text-lg font-semibold text-zinc-100">Distribución por Categoría</h2>
                     </div>
                     <div className="h-[300px] w-full">
@@ -511,7 +515,7 @@ export default function AdminDashboardCharts() {
                                         ))}
                                     </Pie>
                                     <RechartsTooltip content={<CustomTooltip />} />
-                                    <Legend wrapperStyle={{ fontSize: '10px', color: '#a1a1aa' }} />
+                                    <Legend wrapperStyle={{ fontSize: '10px', color: chartAxis }} formatter={(value) => <span style={{ color: chartAxis }}>{value}</span>} />
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (
@@ -521,7 +525,7 @@ export default function AdminDashboardCharts() {
                 </div>
 
                 {/* Gráfico Circular: Por Tipo de Documento */}
-                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl">
+                <div className="bg-card-40 border border-line rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center gap-2 mb-6">
                         <FileText className="w-5 h-5 text-[#4DAFD6]" />
                         <h2 className="text-lg font-semibold text-zinc-100">Por Documento</h2>
@@ -545,7 +549,7 @@ export default function AdminDashboardCharts() {
                                         ))}
                                     </Pie>
                                     <RechartsTooltip content={<CustomTooltip />} />
-                                    <Legend wrapperStyle={{ fontSize: '10px', color: '#a1a1aa' }} />
+                                    <Legend wrapperStyle={{ fontSize: '10px', color: chartAxis }} formatter={(value) => <span style={{ color: chartAxis }}>{value}</span>} />
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (

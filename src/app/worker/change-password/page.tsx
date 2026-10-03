@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeyRound, Loader2, ArrowRight } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function ChangePassword() {
     const [password, setPassword] = useState('');
@@ -78,25 +79,26 @@ export default function ChangePassword() {
 
     if (success) {
         return (
-            <div className="min-h-screen flex items-center justify-center p-4 bg-[#121D38]">
+            <div className="min-h-screen flex items-center justify-center p-4 bg-app">
                 <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                    <div className="w-16 h-16 bg-[#8CC63F]/20 text-[#8CC63F] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div className="w-16 h-16 bg-[#8CC63F]/20 text-brand rounded-full flex items-center justify-center mx-auto mb-6">
                         <KeyRound className="w-8 h-8" />
                     </div>
                     <h2 className="text-2xl font-bold text-white">¡Contraseña Actualizada!</h2>
                     <p className="text-zinc-400">Ingresando a tu panel de colaborador...</p>
-                    <Loader2 className="w-6 h-6 text-[#8CC63F] animate-spin mx-auto mt-4" />
+                    <Loader2 className="w-6 h-6 text-brand animate-spin mx-auto mt-4" />
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1C2D54] via-[#121D38] to-[#121D38]">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-surface via-app to-app">
+            <div className="absolute top-6 right-6"><ThemeToggle /></div>
             <div className="w-full max-w-md relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500 to-[#8CC63F] rounded-[2rem] blur opacity-20 animate-pulse" />
 
-                <div className="relative bg-[#1C2D54]/80 backdrop-blur-xl border border-yellow-500/10 p-8 rounded-[2rem] shadow-2xl">
+                <div className="relative bg-surface/80 backdrop-blur-xl border border-yellow-500/10 p-8 rounded-[2rem] shadow-2xl">
                     <div className="flex flex-col items-center mb-8">
                         <div className="p-4 bg-yellow-500/20 rounded-2xl text-yellow-500 mb-4">
                             <KeyRound className="w-8 h-8" />
@@ -123,7 +125,7 @@ export default function ChangePassword() {
                                 required
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
+                                className="w-full bg-inset-20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                                 placeholder="Escribe tu nueva clave secreta"
                             />
                         </div>
@@ -135,7 +137,7 @@ export default function ChangePassword() {
                                 required
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
+                                className="w-full bg-inset-20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                                 placeholder="Confirma tu clave secreta"
                             />
                         </div>

@@ -3,6 +3,7 @@ import { ShieldUser, LogOut, Users, FileText, LayoutDashboard, Settings, Receipt
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useState, useEffect, Suspense } from 'react';
+import ThemeToggle from '@/components/ThemeToggle';
 import UserCrud from '@/components/admin/UserCrud';
 import AdminReceipts from '@/components/admin/AdminReceipts';
 import ProjectCrud from '@/components/admin/ProjectCrud';
@@ -48,11 +49,11 @@ function AdminDashboardInner() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#121D38] text-zinc-50 font-sans">
-            <nav className="border-b border-[#8CC63F]/10 bg-[#1C2D54]/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="min-h-screen bg-app text-zinc-50 font-sans">
+            <nav className="border-b border-line bg-card-50 backdrop-blur-xl sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#8CC63F]/20 rounded-lg text-[#8CC63F]">
+                        <div className="p-2 bg-[#8CC63F]/20 rounded-lg text-brand">
                             <ShieldUser className="w-5 h-5" />
                         </div>
                         <span className="font-semibold text-zinc-200">Panel de Administración</span>
@@ -75,13 +76,16 @@ function AdminDashboardInner() {
                             </span>
                         )}
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        Cerrar Sesión
-                    </button>
+                    <div className="flex items-center gap-5">
+                        <ThemeToggle />
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Cerrar Sesión
+                        </button>
+                    </div>
                 </div>
                 {/* Tabs Header */}
                 <div className="max-w-7xl mx-auto px-6">
@@ -94,7 +98,7 @@ function AdminDashboardInner() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${isActive
-                                            ? 'border-[#8CC63F] text-[#8CC63F]'
+                                            ? 'border-[#8CC63F] text-brand'
                                             : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'
                                         }`}
                                 >
@@ -117,7 +121,7 @@ function AdminDashboardInner() {
                 {activeTab === 'comprobantes' && (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="flex items-center gap-2 mb-4">
-                            <Landmark className="w-5 h-5 text-[#8CC63F]" />
+                            <Landmark className="w-5 h-5 text-brand" />
                             <h2 className="text-xl font-semibold">Comprobantes de Pago</h2>
                         </div>
                         <AdminPayments readOnly={!canManagePayments} />
@@ -127,10 +131,10 @@ function AdminDashboardInner() {
                 {activeTab === 'workers' && (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="flex items-center gap-2 mb-4">
-                            <Users className="w-5 h-5 text-[#8CC63F]" />
+                            <Users className="w-5 h-5 text-brand" />
                             <h2 className="text-xl font-semibold">Gestión de Colaboradores</h2>
                         </div>
-                        <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl">
+                        <div className="bg-card-40 border border-line rounded-2xl p-6 shadow-xl">
                             <UserCrud readOnly={readOnly} />
                         </div>
                     </div>
@@ -139,7 +143,7 @@ function AdminDashboardInner() {
                 {activeTab === 'projects' && (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="flex items-center gap-2 mb-4">
-                            <Folder className="w-5 h-5 text-[#8CC63F]" />
+                            <Folder className="w-5 h-5 text-brand" />
                             <h2 className="text-xl font-semibold">Proyectos</h2>
                         </div>
                         <div className="min-h-[400px]">
@@ -151,7 +155,7 @@ function AdminDashboardInner() {
                 {activeTab === 'categories' && (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="flex items-center gap-2 mb-4">
-                            <Settings className="w-5 h-5 text-[#8CC63F]" />
+                            <Settings className="w-5 h-5 text-brand" />
                             <h2 className="text-xl font-semibold">Categorías y Límites</h2>
                         </div>
                         <div className="min-h-[400px]">
@@ -163,7 +167,7 @@ function AdminDashboardInner() {
                 {activeTab === 'reports' && (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="flex items-center gap-2 mb-4">
-                            <FileText className="w-5 h-5 text-[#8CC63F]" />
+                            <FileText className="w-5 h-5 text-brand" />
                             <h2 className="text-xl font-semibold">Reporte General de Gastos</h2>
                         </div>
                         <div>
@@ -176,7 +180,7 @@ function AdminDashboardInner() {
                     <div className="space-y-8 animate-in fade-in duration-300">
                         {/* Panel Colapsable de Zona de Peligro (solo admin) */}
                         {!readOnly && (
-                            <div className="bg-[#1C2D54]/20 border border-red-500/10 rounded-2xl p-6 shadow-xl space-y-4">
+                            <div className="bg-card-20 border border-red-500/10 rounded-2xl p-6 shadow-xl space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div className="space-y-1">
                                         <h3 className="text-lg font-bold text-red-400 flex items-center gap-2">

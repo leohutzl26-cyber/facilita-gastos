@@ -484,12 +484,12 @@ export default function ExportModal({ receipts, categories, projects, workerName
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={!isGenerating ? onClose : undefined}>
             <div
-                className="bg-[#121D38] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+                className="bg-app border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
                     <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                        <Download className="w-4 h-4 text-[#8CC63F]" />
+                        <Download className="w-4 h-4 text-brand" />
                         Exportar Reporte
                     </h3>
                     <button onClick={onClose} disabled={isGenerating} className="text-zinc-500 hover:text-white transition disabled:opacity-30">
@@ -501,7 +501,7 @@ export default function ExportModal({ receipts, categories, projects, workerName
                     {/* Rango de fechas */}
                     <div>
                         <label className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5 mb-2">
-                            <Calendar className="w-3.5 h-3.5 text-[#8CC63F]" />
+                            <Calendar className="w-3.5 h-3.5 text-brand" />
                             Rango de fechas
                         </label>
                         <div className="flex flex-wrap gap-1.5 mb-2">
@@ -510,8 +510,8 @@ export default function ExportModal({ receipts, categories, projects, workerName
                                     key={p.id}
                                     onClick={() => handlePreset(p.id)}
                                     className={`px-3 py-1.5 rounded-lg text-[11px] font-medium border transition ${activePreset === p.id
-                                        ? 'bg-[#8CC63F]/15 border-[#8CC63F]/40 text-[#8CC63F]'
-                                        : 'bg-[#1C2D54]/50 border-white/5 text-zinc-400 hover:text-zinc-200'
+                                        ? 'bg-[#8CC63F]/15 border-[#8CC63F]/40 text-brand'
+                                        : 'bg-card-50 border-white/5 text-zinc-400 hover:text-zinc-200'
                                         }`}
                                 >
                                     {p.label}
@@ -523,13 +523,13 @@ export default function ExportModal({ receipts, categories, projects, workerName
                                 type="date"
                                 value={startDate}
                                 onChange={e => { setStartDate(e.target.value); setActivePreset(null); }}
-                                className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                                className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                             />
                             <input
                                 type="date"
                                 value={endDate}
                                 onChange={e => { setEndDate(e.target.value); setActivePreset(null); }}
-                                className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
+                                className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200"
                             />
                         </div>
                     </div>
@@ -538,19 +538,19 @@ export default function ExportModal({ receipts, categories, projects, workerName
                     <div>
                         <label className="text-xs font-semibold text-zinc-300 block mb-2">Filtros adicionales</label>
                         <div className="grid grid-cols-2 gap-3">
-                            <select value={category} onChange={e => setCategory(e.target.value)} className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200">
+                            <select value={category} onChange={e => setCategory(e.target.value)} className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200">
                                 <option value="">Todas las categorías</option>
                                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
-                            <select value={project} onChange={e => setProject(e.target.value)} className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200">
+                            <select value={project} onChange={e => setProject(e.target.value)} className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200">
                                 <option value="">Todos los proyectos</option>
                                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
-                            <select value={worker} onChange={e => setWorker(e.target.value)} className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200">
+                            <select value={worker} onChange={e => setWorker(e.target.value)} className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200">
                                 <option value="">Todos los colaboradores</option>
                                 {workerNames.map(w => <option key={w} value={w}>{w}</option>)}
                             </select>
-                            <select value={status} onChange={e => setStatus(e.target.value)} className="bg-[#1C2D54] border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200">
+                            <select value={status} onChange={e => setStatus(e.target.value)} className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none text-zinc-200">
                                 <option value="">Todos los estados</option>
                                 <option value="Pendiente">Pendiente</option>
                                 <option value="Aprobado por Supervisor">Aprobado</option>
@@ -561,12 +561,12 @@ export default function ExportModal({ receipts, categories, projects, workerName
                     </div>
 
                     {/* Resumen en vivo */}
-                    <div className="bg-[#1C2D54]/40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between text-xs">
+                    <div className="bg-card-40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between text-xs">
                         <span className="text-zinc-300">
                             <span className="text-white font-semibold">{matchingReceipts.length}</span> gastos seleccionados
                             {withImagesCount > 0 && <span className="text-zinc-500"> · {withImagesCount} con comprobante</span>}
                         </span>
-                        <span className="text-[#8CC63F] font-semibold">${totalAmount.toLocaleString('es-CL')}</span>
+                        <span className="text-brand font-semibold">${totalAmount.toLocaleString('es-CL')}</span>
                     </div>
 
                     {/* Formato */}
@@ -582,10 +582,10 @@ export default function ExportModal({ receipts, categories, projects, workerName
                                         onClick={() => setFormat(f.id)}
                                         className={`text-left p-3 rounded-xl border transition ${isActive
                                             ? 'bg-[#8CC63F]/10 border-[#8CC63F]/40'
-                                            : 'bg-[#1C2D54]/40 border-white/5 hover:border-white/15'
+                                            : 'bg-card-40 border-white/5 hover:border-white/15'
                                             }`}
                                     >
-                                        <Icon className={`w-4 h-4 mb-1.5 ${isActive ? 'text-[#8CC63F]' : 'text-zinc-400'}`} />
+                                        <Icon className={`w-4 h-4 mb-1.5 ${isActive ? 'text-brand' : 'text-zinc-400'}`} />
                                         <p className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-zinc-300'}`}>{f.label}</p>
                                         <p className="text-[10px] text-zinc-500 mt-0.5">{f.desc}</p>
                                     </button>
@@ -605,7 +605,7 @@ export default function ExportModal({ receipts, categories, projects, workerName
                                         onClick={() => setQuality(q)}
                                         className={`p-2.5 rounded-xl border text-center transition ${quality === q
                                             ? 'bg-[#8CC63F]/10 border-[#8CC63F]/40 text-white'
-                                            : 'bg-[#1C2D54]/40 border-white/5 text-zinc-400 hover:border-white/15'
+                                            : 'bg-card-40 border-white/5 text-zinc-400 hover:border-white/15'
                                             }`}
                                     >
                                         <p className="text-xs font-semibold">{QUALITY_SETTINGS[q].label}</p>
@@ -635,12 +635,12 @@ export default function ExportModal({ receipts, categories, projects, workerName
                     {errorMsg && <p className="text-xs text-red-400">{errorMsg}</p>}
                 </div>
 
-                <div className="p-6 bg-black/20 border-t border-white/5 shrink-0">
+                <div className="p-6 bg-inset-20 border-t border-white/5 shrink-0">
                     {isGenerating ? (
                         <div className="space-y-3">
                             <div className="flex items-center justify-between text-xs text-zinc-300">
                                 <span className="flex items-center gap-2">
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8CC63F]" />
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-brand" />
                                     {progress.total > 0 ? `Procesando ${progress.done} de ${progress.total}...` : 'Generando...'}
                                 </span>
                                 <button onClick={handleCancel} className="text-zinc-400 hover:text-red-400 transition">
@@ -648,7 +648,7 @@ export default function ExportModal({ receipts, categories, projects, workerName
                                 </button>
                             </div>
                             {progress.total > 0 && (
-                                <div className="h-1.5 bg-[#1C2D54] rounded-full overflow-hidden">
+                                <div className="h-1.5 bg-surface rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-[#8CC63F] transition-all duration-200"
                                         style={{ width: `${(progress.done / progress.total) * 100}%` }}

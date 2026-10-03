@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle';
 import { CircleCheck, ArrowLeft, Share2, Mail, Upload } from 'lucide-react';
 
 const SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
@@ -27,10 +28,10 @@ export default async function ComprobanteDetailPage({ params }: { params: Promis
 
     if (!payment) {
         return (
-            <div className="min-h-screen bg-[#121D38] text-zinc-50 font-sans flex items-center justify-center p-6">
+            <div className="min-h-screen bg-app text-zinc-50 font-sans flex items-center justify-center p-6">
                 <div className="text-center space-y-4">
                     <p className="text-zinc-400">No se encontró el comprobante.</p>
-                    <Link href="/admin/dashboard" className="text-[#8CC63F] hover:underline text-sm">
+                    <Link href="/admin/dashboard" className="text-brand hover:underline text-sm">
                         Volver al panel
                     </Link>
                 </div>
@@ -43,16 +44,19 @@ export default async function ComprobanteDetailPage({ params }: { params: Promis
     const SourceIcon = source.icon;
 
     return (
-        <div className="min-h-screen bg-[#121D38] text-zinc-50 font-sans p-6">
+        <div className="min-h-screen bg-app text-zinc-50 font-sans p-6">
             <div className="max-w-xl mx-auto space-y-6">
-                <Link href="/admin/dashboard" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors">
+                <div className="flex items-center justify-between">
+                    <Link href="/admin/dashboard" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" />
                     Volver al panel
                 </Link>
+                    <ThemeToggle />
+                </div>
 
-                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-6 shadow-xl space-y-5">
+                <div className="bg-card-40 border border-line rounded-2xl p-6 shadow-xl space-y-5">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#8CC63F]/20 rounded-lg text-[#8CC63F]">
+                        <div className="p-2 bg-[#8CC63F]/20 rounded-lg text-brand">
                             <CircleCheck className="w-5 h-5" />
                         </div>
                         <div>

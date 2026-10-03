@@ -86,7 +86,7 @@ export default function DangerZone() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
                 {(['receipts', 'projects', 'workers'] as const).map((key) => (
-                    <div key={key} className="bg-black/40 border border-red-500/20 rounded-xl p-5 hover:border-red-500/50 transition-colors flex flex-col justify-between">
+                    <div key={key} className="bg-inset-40 border border-red-500/20 rounded-xl p-5 hover:border-red-500/50 transition-colors flex flex-col justify-between">
                         <div>
                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${targetDetails[key].bg} ${targetDetails[key].color}`}>
                                 {targetDetails[key].icon}
@@ -98,7 +98,7 @@ export default function DangerZone() {
                         </div>
                         <button
                             onClick={() => openConfirmModal(key)}
-                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-red-500/10 text-red-400 font-medium hover:bg-red-500 hover:text-white transition-colors border border-red-500/30 text-sm"
+                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-red-500/10 text-red-400 font-medium hover:bg-red-500 hover:text-on-accent transition-colors border border-red-500/30 text-sm"
                         >
                             <Trash2 className="w-4 h-4" /> Ejecutar Limpieza
                         </button>
@@ -108,11 +108,11 @@ export default function DangerZone() {
 
             {/* Confirmation Modal */}
             {isModalOpen && targetFeature && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#121D38]/90 backdrop-blur-md p-4">
-                    <div className="bg-[#1C2D54] border border-red-500/50 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-app/90 backdrop-blur-md p-4">
+                    <div className="bg-surface border border-red-500/50 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
                         <div className="bg-red-500 p-6 flex flex-col items-center justify-center text-center">
-                            <AlertOctagon className="w-12 h-12 text-white mb-3" />
-                            <h2 className="text-white text-xl font-bold">Autenticación de Borrado</h2>
+                            <AlertOctagon className="w-12 h-12 text-on-accent mb-3" />
+                            <h2 className="text-on-accent text-xl font-bold">Autenticación de Borrado</h2>
                         </div>
                         <div className="p-6 space-y-6">
                             <p className="text-zinc-300 text-sm text-center">
@@ -127,7 +127,7 @@ export default function DangerZone() {
                                     value={confirmText}
                                     onChange={(e) => setConfirmText(e.target.value)}
                                     placeholder="ELIMINAR"
-                                    className="w-full text-center bg-black/40 border border-red-500/30 rounded-lg py-2 text-white focus:outline-none focus:border-red-500 tracking-widest font-mono uppercase"
+                                    className="w-full text-center bg-inset-40 border border-red-500/30 rounded-lg py-2 text-white focus:outline-none focus:border-red-500 tracking-widest font-mono uppercase"
                                 />
                             </div>
 
@@ -141,7 +141,7 @@ export default function DangerZone() {
                                 <button
                                     onClick={handleClean}
                                     disabled={confirmText.trim().toUpperCase() !== 'ELIMINAR' || isLoading}
-                                    className="flex-1 py-2.5 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50 disabled:bg-zinc-600 disabled:text-zinc-400 transition flex justify-center items-center gap-2"
+                                    className="flex-1 py-2.5 rounded-lg bg-red-600 text-on-accent font-bold hover:bg-red-500 disabled:opacity-50 disabled:bg-zinc-600 disabled:text-zinc-400 transition flex justify-center items-center gap-2"
                                 >
                                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirmar'}
                                 </button>

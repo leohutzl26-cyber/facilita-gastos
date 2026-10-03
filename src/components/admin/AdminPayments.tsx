@@ -286,7 +286,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-6 h-6 animate-spin text-[#8CC63F]" />
+                <Loader2 className="w-6 h-6 animate-spin text-brand" />
             </div>
         );
     }
@@ -297,16 +297,16 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                 <div className="flex justify-end">
                     <button
                         onClick={() => setIsUploadOpen(prev => !prev)}
-                        className="flex items-center gap-2 bg-[#1C2D54]/60 hover:bg-[#1C2D54] border border-[#8CC63F]/20 text-sm text-zinc-200 px-4 py-2 rounded-xl transition"
+                        className="flex items-center gap-2 bg-surface/60 hover:bg-surface border border-line-strong text-sm text-zinc-200 px-4 py-2 rounded-xl transition"
                     >
-                        <Plus className="w-4 h-4 text-[#8CC63F]" />
+                        <Plus className="w-4 h-4 text-brand" />
                         Subir comprobante manualmente
                     </button>
                 </div>
             )}
 
             {!readOnly && isUploadOpen && (
-                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-5 space-y-4 animate-in fade-in duration-200">
+                <div className="bg-card-40 border border-line rounded-2xl p-5 space-y-4 animate-in fade-in duration-200">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-semibold text-white">Nuevo comprobante manual</h3>
                         <button onClick={resetUploadForm} className="text-zinc-500 hover:text-white transition">
@@ -319,7 +319,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                         type="file"
                         accept="image/*,application/pdf"
                         onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-                        className="block w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#8CC63F]/15 file:text-[#8CC63F] file:text-xs file:font-medium hover:file:bg-[#8CC63F]/25"
+                        className="block w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#8CC63F]/15 file:text-brand file:text-xs file:font-medium hover:file:bg-[#8CC63F]/25"
                     />
                     {uploadFile && <p className="text-xs text-zinc-500">Seleccionado: {uploadFile.name}</p>}
 
@@ -331,7 +331,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                                 value={uploadAmount}
                                 onChange={e => setUploadAmount(e.target.value)}
                                 placeholder="45000"
-                                className="w-full bg-[#0F1830] border border-white/5 rounded-xl px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#8CC63F]/40"
+                                className="w-full bg-deep border border-white/5 rounded-xl px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#8CC63F]/40"
                             />
                         </div>
                         <div>
@@ -340,7 +340,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                                 type="date"
                                 value={uploadPaidAt}
                                 onChange={e => setUploadPaidAt(e.target.value)}
-                                className="w-full bg-[#0F1830] border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#8CC63F]/40"
+                                className="w-full bg-deep border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#8CC63F]/40"
                             />
                         </div>
                     </div>
@@ -368,7 +368,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                         key={tab.id}
                         onClick={() => { setStatusFilter(tab.id); setActivePaymentId(null); }}
                         className={`px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors ${statusFilter === tab.id
-                            ? 'border-[#8CC63F] text-[#8CC63F]'
+                            ? 'border-[#8CC63F] text-brand'
                             : 'border-transparent text-zinc-400 hover:text-zinc-200'
                             }`}
                     >
@@ -378,7 +378,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
             </div>
 
             {visiblePayments.length === 0 ? (
-                <div className="bg-[#1C2D54]/40 border border-[#8CC63F]/10 rounded-2xl p-10 text-center">
+                <div className="bg-card-40 border border-line rounded-2xl p-10 text-center">
                     <Landmark className="w-8 h-8 text-zinc-500 mx-auto mb-3" />
                     <p className="text-zinc-400 text-sm">
                         {statusFilter === 'pendiente'
@@ -402,7 +402,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                                 tabIndex={0}
                                 onClick={() => openPayment(payment.id)}
                                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') openPayment(payment.id); }}
-                                className={`text-left bg-[#1C2D54]/40 border rounded-2xl p-4 transition hover:border-[#8CC63F]/40 cursor-pointer ${activePaymentId === payment.id ? 'border-[#8CC63F]' : 'border-[#8CC63F]/10'}`}
+                                className={`text-left bg-card-40 border rounded-2xl p-4 transition hover:border-[#8CC63F]/40 cursor-pointer ${activePaymentId === payment.id ? 'border-[#8CC63F]' : 'border-line'}`}
                             >
                                 <div className="flex items-start justify-between gap-2 mb-2">
                                     <div className="flex items-center gap-1.5 text-xs text-zinc-400">
@@ -440,7 +440,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                                         : new Date(payment.created_at).toLocaleString('es-CL')}
                                 </p>
                                 {linkedCount > 0 && (
-                                    <p className="text-[11px] text-[#8CC63F] mt-2">
+                                    <p className="text-[11px] text-brand mt-2">
                                         {linkedCount === 1 ? '1 boleta vinculada' : `${linkedCount} boletas vinculadas`}
                                     </p>
                                 )}
@@ -451,7 +451,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
             )}
 
             {activePayment && (
-                <div className="bg-[#0F1830] border border-[#8CC63F]/20 rounded-2xl p-5 space-y-4 animate-in fade-in duration-200">
+                <div className="bg-deep border border-line-strong rounded-2xl p-5 space-y-4 animate-in fade-in duration-200">
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex gap-4 flex-1 min-w-0">
                             <div className="w-28 h-28 shrink-0 rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40">
@@ -468,11 +468,11 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                                 <h3 className="text-sm font-semibold text-white">
                                     {isActiveAssociated ? 'Comprobante asociado' : 'Asociar comprobante a boletas'}
                                 </h3>
-                                <a href={activePayment.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#8CC63F] hover:underline">
+                                <a href={activePayment.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand hover:underline">
                                     Ver comprobante completo
                                 </a>
                                 <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1.5">
-                                    {isSuggesting && <Loader2 className="w-3 h-3 animate-spin text-[#8CC63F]" />}
+                                    {isSuggesting && <Loader2 className="w-3 h-3 animate-spin text-brand" />}
                                     {activePayment.amount
                                         ? `Monto del comprobante: $${Number(activePayment.amount).toLocaleString('es-CL')}`
                                         : isSuggesting
@@ -485,7 +485,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                                     <p className="text-[11px] text-zinc-500 mt-1">Fecha de pago: {activePayment.paid_at}</p>
                                 )}
                                 {suggestionApplied && (
-                                    <p className="text-[11px] text-[#8CC63F] flex items-center gap-1 mt-1">
+                                    <p className="text-[11px] text-brand flex items-center gap-1 mt-1">
                                         <Sparkles className="w-3 h-3" />
                                         Boleta(s) sugerida(s) automáticamente por monto — revisa antes de confirmar
                                     </p>
@@ -515,7 +515,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                                             return (
                                                 <div
                                                     key={receipt.id}
-                                                    className="flex items-center gap-3 bg-[#1C2D54]/50 rounded-xl px-3 py-2"
+                                                    className="flex items-center gap-3 bg-card-50 rounded-xl px-3 py-2"
                                                 >
                                                     {isPartial
                                                         ? <Landmark className="w-4 h-4 text-amber-400 shrink-0" />
@@ -550,7 +550,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                                     </div>
                                     <div className="flex items-center justify-end gap-2 border-t border-white/5 pt-3 text-xs">
                                         <span className="text-zinc-400">Total aplicado:</span>
-                                        <span className="text-[#8CC63F] font-medium">
+                                        <span className="text-brand font-medium">
                                             ${linkedAppliedTotal.toLocaleString('es-CL')}
                                         </span>
                                         {activePaymentAmount > 0 && activePaymentAmount !== linkedAppliedTotal && (
@@ -576,7 +576,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                             value={receiptSearch}
                             onChange={e => setReceiptSearch(e.target.value)}
                             placeholder="Buscar boleta por comercio, trabajador o monto..."
-                            className="w-full bg-[#1C2D54]/60 border border-white/5 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#8CC63F]/40"
+                            className="w-full bg-surface/60 border border-white/5 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#8CC63F]/40"
                         />
                     </div>
 
@@ -590,7 +590,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                                 return (
                                     <label
                                         key={receipt.id}
-                                        className="flex items-center gap-3 bg-[#1C2D54]/50 hover:bg-[#1C2D54] rounded-xl px-3 py-2 cursor-pointer transition"
+                                        className="flex items-center gap-3 bg-card-50 hover:bg-surface rounded-xl px-3 py-2 cursor-pointer transition"
                                     >
                                         <input
                                             type="checkbox"
@@ -623,7 +623,7 @@ export default function AdminPayments({ readOnly = false }: { readOnly?: boolean
                     <div className="flex items-center justify-between gap-4 border-t border-white/5 pt-4">
                         <div className="text-xs text-zinc-400 min-w-0">
                             <div>
-                                Saldo seleccionado: <span className="text-[#8CC63F] font-medium">${selectedTotal.toLocaleString('es-CL')}</span>
+                                Saldo seleccionado: <span className="text-brand font-medium">${selectedTotal.toLocaleString('es-CL')}</span>
                                 {activePaymentAmount > 0 ? ` · comprobante $${activePaymentAmount.toLocaleString('es-CL')}` : ''}
                             </div>
                             {leavesBalance && (

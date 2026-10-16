@@ -1,9 +1,21 @@
 'use client';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop, Sparkles } from 'lucide-react';
+import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, ChevronRight, LogOut, Receipt, History, Crop, Sparkles, WifiOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import ThemeToggle from '@/components/ThemeToggle';
+import OfflineStatus from '@/components/worker/OfflineStatus';
+import { useOfflineQueue } from '@/utils/useOfflineQueue';
+import {
+    cacheGet,
+    cacheSet,
+    forgetCurrentUser,
+    removeFromQueue,
+    requestOfflineWarmup,
+    submitReceipt,
+    type QueuedReceipt,
+    type SubmitOutcome,
+} from '@/utils/offlineQueue';
 
 export default function WorkerCapture() {
     const router = useRouter();
@@ -13,9 +25,18 @@ export default function WorkerCapture() {
     const [progress, setProgress] = useState(0);
     const [progressStatus, setProgressStatus] = useState('');
 
+    const queue = useOfflineQueue();
+
     const handleLogout = async () => {
-        const supabase = createClient();
-        await supabase.auth.signOut();
+        if (queue.pendingCount > 0 && !confirm(`Tienes ${queue.pendingCount} gasto(s) guardado(s) sin enviar. Si cierras sesión no se enviarán hasta que vuelvas a ingresar con esta cuenta. ¿Cerrar sesión de todas formas?`)) {
+            return;
+        }
+        try {
+            await createClient().auth.signOut();
+        } catch {
+            // sin conexión: igual se sale de la pantalla
+        }
+        forgetCurrentUser();
         router.push('/worker/login');
     };
 
@@ -38,14 +59,17 @@ export default function WorkerCapture() {
     // Initial load for categories
     useEffect(() => {
         const fetchCategories = async () => {
+            const cached = await cacheGet<{ id: string; name: string; color: string }[]>('categories');
+            if (cached) setCategories(cached);
             try {
                 const res = await fetch('/api/worker/categories');
                 const data = await res.json();
                 if (res.ok && data.categories) {
                     setCategories(data.categories);
+                    cacheSet('categories', data.categories);
                 }
-            } catch (err) {
-                console.error("Error fetching categories:", err);
+            } catch {
+                // sin conexión: se usan las categorías guardadas
             }
         };
 
@@ -55,19 +79,27 @@ export default function WorkerCapture() {
     // Active projects fetch
     useEffect(() => {
         const fetchProjects = async () => {
+            const cached = await cacheGet<{ id: string; name: string }[]>('projects');
+            if (cached) setProjects(cached);
             try {
                 const res = await fetch('/api/worker/projects');
                 const data = await res.json();
                 if (res.ok && data.projects) {
                     setProjects(data.projects);
+                    cacheSet('projects', data.projects);
                 }
-            } catch (err) {
-                console.error("Error fetching projects:", err);
+            } catch {
+                // sin conexión: se usan los proyectos guardados
             }
         };
 
         fetchProjects();
     }, []);
+
+    // Con conexión, deja guardadas las pantallas para poder abrir la app sin señal.
+    useEffect(() => {
+        if (queue.online) requestOfflineWarmup();
+    }, [queue.online]);
 
     // Password Security Check
     useEffect(() => {
@@ -85,49 +117,9 @@ export default function WorkerCapture() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [submitOutcome, setSubmitOutcome] = useState<SubmitOutcome | null>(null);
+    const [ocrNotice, setOcrNotice] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Offline Background Sync
-    useEffect(() => {
-        const syncOfflineData = async () => {
-            if (!navigator.onLine) return;
-            const offlineQueue = JSON.parse(localStorage.getItem('offline_receipts') || '[]');
-            if (offlineQueue.length === 0) return;
-
-            console.log("Sincronizando gastos offline...");
-            const newQueue = [];
-            let syncedCount = 0;
-
-            for (const payload of offlineQueue) {
-                try {
-                    const res = await fetch('/api/worker/receipts', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (res.ok) {
-                        syncedCount++;
-                    } else {
-                        newQueue.push(payload); // keep in queue if backend failed logic (e.g. duplicate or down)
-                    }
-                } catch (e) {
-                    newQueue.push(payload); // keep if network dropped again mid-sync
-                }
-            }
-
-            localStorage.setItem('offline_receipts', JSON.stringify(newQueue));
-            if (syncedCount > 0) {
-                alert(`¡Conexión recuperada! Se han sincronizado ${syncedCount} gastos que tenías pendientes.`);
-            }
-        };
-
-        // Escuchar cuando vuelva la conexión
-        window.addEventListener('online', syncOfflineData);
-        // Intentar al cargar
-        syncOfflineData();
-
-        return () => window.removeEventListener('online', syncOfflineData);
-    }, []);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -189,18 +181,63 @@ export default function WorkerCapture() {
         }
     };
 
+    const emptyResults = () => ({
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        merchant: '',
+        merchant_rut: '',
+        document_type: 'boleta',
+        document_number: '',
+        category: categories.length > 0 ? categories[0].name : 'Otros',
+        project_id: '',
+        location: ''
+    });
+
+    // El GPS funciona sin internet, así que se captura con o sin lectura de IA.
+    const captureLocation = () => {
+        if (!('geolocation' in navigator)) return;
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const loc = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
+                setResults(prev => prev ? { ...prev, location: loc } : null);
+            },
+            (error) => {
+                console.warn("Geolocation Error:", error.message);
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    };
+
+    const enterManually = (notice: string) => {
+        setOcrNotice(notice);
+        setResults(emptyResults());
+        captureLocation();
+    };
+
     const processImage = async (imageUrl: string) => {
         setIsProcessing(true);
         setProgress(0);
         setResults(null);
         setIsSuccess(false);
+        setOcrNotice(null);
+
+        // Sin conexión la IA no puede leer la boleta: se pasa directo al llenado manual.
+        if (!navigator.onLine) {
+            enterManually('Sin conexión: la IA no puede leer la boleta. Completa los datos a mano; el gasto se enviará solo cuando vuelva la señal.');
+            setIsProcessing(false);
+            return;
+        }
+
         setProgressStatus('IA analizando recibo...');
 
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 30000);
         try {
             const res = await fetch('/api/worker/ocr', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageBase64: imageUrl })
+                body: JSON.stringify({ imageBase64: imageUrl }),
+                signal: controller.signal
             });
 
             const data = await res.json();
@@ -239,91 +276,60 @@ export default function WorkerCapture() {
                 location: ''
             });
 
-            // Capture Geolocation
-            if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const loc = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
-                        setResults(prev => prev ? { ...prev, location: loc } : null);
-                    },
-                    (error) => {
-                        console.warn("Geolocation Error:", error.message);
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                );
-            }
-
+            captureLocation();
         } catch (error: any) {
             console.error(error);
-            alert("Atención: No hay conexión o falló el reconocimiento OCR. Por favor, rellena los datos a mano.");
-            setResults({ amount: '', date: new Date().toISOString().split('T')[0], merchant: '', merchant_rut: '', document_type: 'boleta', document_number: '', category: categories.length > 0 ? categories[0].name : '', project_id: '', location: '' });
+            enterManually('No se pudo leer la boleta con la IA (sin conexión o sin respuesta). Completa los datos a mano.');
         } finally {
+            clearTimeout(timer);
             setIsProcessing(false);
         }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!results) return;
         setIsSubmitting(true);
 
         try {
-            const payload = {
-                ...results,
-                imageBase64: imageBase64
-            };
+            // El gasto se guarda primero en el teléfono y luego se intenta enviar:
+            // si falla la señal, no se pierde y se reenvía solo.
+            const outcome: SubmitOutcome = await submitReceipt({ ...results, imageBase64 });
 
-            // Modo Offline: Guardar localmente
-            if (!navigator.onLine) {
-                const existing = JSON.parse(localStorage.getItem('offline_receipts') || '[]');
-                localStorage.setItem('offline_receipts', JSON.stringify([...existing, payload]));
-
-                setIsSuccess(true);
-                alert("Estás sin conexión a Internet. El gasto se ha guardado en tu teléfono y se enviará automáticamente cuando recuperes la señal.");
-
-                setTimeout(() => {
-                    setImage(null);
-                    setResults(null);
-                    setIsSuccess(false);
-                }, 4000);
+            if (outcome.kind === 'rejected') {
+                alert("No se pudo subir el recibo: " + outcome.message);
                 return;
             }
 
-            const res = await fetch('/api/worker/receipts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            setSubmitOutcome(outcome);
+            setIsSuccess(true);
 
-            const data = await res.json();
+            setTimeout(() => {
+                setImage(null);
+                setResults(null);
+                setOcrNotice(null);
+                setIsSuccess(false);
+            }, outcome.kind === 'sent' ? 3000 : 4500);
 
-            if (res.ok) {
-                setIsSuccess(true);
-
-                // Reset after success
-                setTimeout(() => {
-                    setImage(null);
-                    setResults(null);
-                    setIsSuccess(false);
-                }, 3000);
-            } else {
-                throw new Error(data.error || "Error al subir recibo");
-            }
-        } catch (error: any) {
-            console.error("Error submitting receipt:", error);
-            // Catch error en caso de que la red se caiga justo al hacer el fetch
-            if (error.message.includes("Failed to fetch") || !navigator.onLine) {
-                const payload = { ...results, imageBase64 };
-                const existing = JSON.parse(localStorage.getItem('offline_receipts') || '[]');
-                localStorage.setItem('offline_receipts', JSON.stringify([...existing, payload]));
-                setIsSuccess(true);
-                alert("Conexión perdida. El gasto se guardó localmente y se enviará luego.");
-                setTimeout(() => { setImage(null); setResults(null); setIsSuccess(false); }, 4000);
-            } else {
-                alert("No se pudo subir el recibo: " + error.message);
-            }
+            if (outcome.kind === 'sent') queue.syncNow();
+        } catch (error) {
+            console.error("Error saving receipt:", error);
+            alert("No se pudo guardar el gasto en tu teléfono. Revisa que tengas espacio disponible e inténtalo de nuevo.");
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // Carga un gasto guardado de vuelta en el formulario para corregirlo.
+    const editQueuedReceipt = async (item: QueuedReceipt) => {
+        const { imageBase64: savedImage, ...fields } = item.payload;
+        const isPdf = !!savedImage && savedImage.startsWith('data:application/pdf');
+        setImageBase64(savedImage);
+        setImage(savedImage ? (isPdf ? 'PDF_DOCUMENT_PLACEHOLDER' : savedImage) : 'PDF_DOCUMENT_PLACEHOLDER');
+        setResults({ ...emptyResults(), ...fields, project_id: fields.project_id ?? '' });
+        setOcrNotice(null);
+        setIsSuccess(false);
+        await removeFromQueue(item.id);
     };
 
     return (
@@ -347,6 +353,8 @@ export default function WorkerCapture() {
             </nav>
 
             <main className="max-w-xl mx-auto px-4 pt-8 space-y-8">
+                <OfflineStatus queue={queue} onEdit={editQueuedReceipt} />
+
                 {!image ? (
                     <div className="space-y-6">
                         <div className="text-center space-y-2">
@@ -395,8 +403,16 @@ export default function WorkerCapture() {
                             {isSuccess && (
                                 <div className="absolute inset-0 bg-green-500/90 backdrop-blur-md flex flex-col items-center justify-center text-on-accent">
                                     <CheckCircle2 className="w-16 h-16 mb-4 animate-bounce" />
-                                    <h3 className="text-2xl font-bold">¡Gasto Registrado!</h3>
-                                    <p className="opacity-90 mt-2">Enviado al sistema central</p>
+                                    <h3 className="text-2xl font-bold">
+                                        {submitOutcome?.kind === 'queued' ? '¡Gasto Guardado!' : '¡Gasto Registrado!'}
+                                    </h3>
+                                    <p className="opacity-90 mt-2 px-6 text-center">
+                                        {submitOutcome?.kind !== 'queued'
+                                            ? 'Enviado al sistema central'
+                                            : submitOutcome.reason === 'auth'
+                                                ? 'Quedó guardado en tu teléfono. Inicia sesión de nuevo para enviarlo.'
+                                                : 'Quedó guardado en tu teléfono y se enviará solo cuando vuelva la señal.'}
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -405,8 +421,15 @@ export default function WorkerCapture() {
                             <form onSubmit={handleSubmit} className="bg-surface/80 border border-line-strong rounded-3xl p-6 space-y-5 shadow-xl">
                                 <div className="flex items-center gap-2 text-brand mb-2">
                                     <UploadCloud className="w-5 h-5" />
-                                    <h3 className="font-medium">Confirmar Datos Extraídos</h3>
+                                    <h3 className="font-medium">{ocrNotice ? 'Completar Datos del Gasto' : 'Confirmar Datos Extraídos'}</h3>
                                 </div>
+
+                                {ocrNotice && (
+                                    <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-xl p-3 text-xs">
+                                        <WifiOff className="w-4 h-4 shrink-0 mt-0.5" />
+                                        <p>{ocrNotice}</p>
+                                    </div>
+                                )}
 
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
@@ -460,6 +483,7 @@ export default function WorkerCapture() {
                                                 onChange={e => setResults({ ...results, category: e.target.value })}
                                                 className="w-full bg-inset-40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50 appearance-none"
                                             >
+                                                {categories.length === 0 && <option value="Otros">Otros</option>}
                                                 {categories.map(cat => (
                                                     <option key={cat.id} value={cat.name}>{cat.name}</option>
                                                 ))}
@@ -508,7 +532,7 @@ export default function WorkerCapture() {
                                 <div className="flex gap-3 pt-4">
                                     <button
                                         type="button"
-                                        onClick={() => setImage(null)}
+                                        onClick={() => { setImage(null); setOcrNotice(null); }}
                                         className="flex-1 bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl font-medium transition"
                                     >
                                         Reintentar

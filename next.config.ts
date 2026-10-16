@@ -1,15 +1,9 @@
 import type { NextConfig } from "next";
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
-  register: true,
-  skipWaiting: true
-});
-
+// El service worker (public/sw.js) está escrito a mano. next-pwa se quitó: no
+// funciona con Turbopack y, bajo webpack, habría sobrescrito public/sw.js.
 const nextConfig: NextConfig = {
-  /* config options here */
   turbopack: {}
 };
 
-export default withPWA(nextConfig);
+export default nextConfig;

@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Camera, Search, Filter, History, MapPin, Receipt, ArrowLeft, Trash2, Eye, Edit, Save, X, ZoomIn, ZoomOut, RotateCw, RotateCcw, AlertCircle, Loader2, Calendar, User, Tag, FolderOpen, Printer, Download } from 'lucide-react';
+import { Camera, Search, Filter, History, MapPin, Receipt, ArrowLeft, Trash2, Eye, Edit, Save, X, ZoomIn, ZoomOut, RotateCw, RotateCcw, AlertCircle, Loader2, Calendar, User, Tag, FolderOpen, Printer, Download, WifiOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import ThemeToggle from '@/components/ThemeToggle';
+import OfflineStatus from '@/components/worker/OfflineStatus';
+import { useOfflineQueue } from '@/utils/useOfflineQueue';
+import { cacheGet, cacheSet, getCurrentUserId } from '@/utils/offlineQueue';
 
 export default function WorkerHistory() {
     const router = useRouter();
@@ -11,6 +14,8 @@ export default function WorkerHistory() {
     const [categories, setCategories] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [showingSavedCopy, setShowingSavedCopy] = useState(false);
+    const queue = useOfflineQueue();
 
     // Filter States
     const [filterStatus, setFilterStatus] = useState('');
@@ -20,9 +25,22 @@ export default function WorkerHistory() {
     // Modal States
     const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
 
-    // Initial Data Fetch
+    // Initial Data Fetch: primero la última copia guardada (sirve sin conexión) y luego la red.
     useEffect(() => {
         const fetchData = async () => {
+            const userId = await getCurrentUserId();
+            const historyKey = `history:${userId}`;
+
+            const [savedHistory, savedCategories, savedProjects] = await Promise.all([
+                cacheGet<any[]>(historyKey),
+                cacheGet<any[]>('categories'),
+                cacheGet<any[]>('projects'),
+            ]);
+            if (savedHistory) setHistory(savedHistory);
+            if (savedCategories) setCategories(savedCategories);
+            if (savedProjects) setProjects(savedProjects);
+            if (savedHistory) setIsLoading(false);
+
             try {
                 const [resHistory, resCategories, resProjects] = await Promise.all([
                     fetch('/api/worker/receipts'),
@@ -33,11 +51,22 @@ export default function WorkerHistory() {
                 const dataCategories = await resCategories.json();
                 const dataProjects = await resProjects.json();
 
-                if (resHistory.ok && dataHistory.receipts) setHistory(dataHistory.receipts);
-                if (resCategories.ok && dataCategories.categories) setCategories(dataCategories.categories);
-                if (resProjects.ok && dataProjects.projects) setProjects(dataProjects.projects);
+                if (resHistory.ok && dataHistory.receipts) {
+                    setHistory(dataHistory.receipts);
+                    cacheSet(historyKey, dataHistory.receipts);
+                    setShowingSavedCopy(false);
+                }
+                if (resCategories.ok && dataCategories.categories) {
+                    setCategories(dataCategories.categories);
+                    cacheSet('categories', dataCategories.categories);
+                }
+                if (resProjects.ok && dataProjects.projects) {
+                    setProjects(dataProjects.projects);
+                    cacheSet('projects', dataProjects.projects);
+                }
             } catch (err) {
-                console.error("Error fetching worker history data:", err);
+                // Sin conexión: se muestra la última copia guardada, si existe.
+                if (savedHistory) setShowingSavedCopy(true);
             } finally {
                 setIsLoading(false);
             }
@@ -112,6 +141,15 @@ export default function WorkerHistory() {
             </nav>
 
             <main className="max-w-xl mx-auto px-4 pt-6 space-y-6">
+                <OfflineStatus queue={queue} />
+
+                {showingSavedCopy && (
+                    <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-2xl p-4 text-xs">
+                        <WifiOff className="w-4 h-4 shrink-0 mt-0.5" />
+                        <p>Estás viendo la última copia guardada de tu historial. Los estados se actualizarán cuando vuelvas a tener conexión.</p>
+                    </div>
+                )}
+
                 {!isLoading && history.length > 0 && (
                     <div className="bg-gradient-to-br from-surface to-app border border-line-strong rounded-3xl p-6 shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#8CC63F]/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
@@ -201,8 +239,12 @@ export default function WorkerHistory() {
                 ) : history.length === 0 ? (
                     <div className="text-center py-20 bg-white/5 rounded-[2rem] border border-white/10">
                         <Receipt className="w-12 h-12 text-zinc-600 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-zinc-300 font-medium">No hay gastos recientes</h3>
-                        <p className="text-sm text-zinc-500 mt-2 max-w-[250px] mx-auto">Tus recibos escaneados aparecerán aquí para que lleves el control.</p>
+                        <h3 className="text-zinc-300 font-medium">{queue.online ? 'No hay gastos recientes' : 'Historial no disponible sin conexión'}</h3>
+                        <p className="text-sm text-zinc-500 mt-2 max-w-[250px] mx-auto">
+                            {queue.online
+                                ? 'Tus recibos escaneados aparecerán aquí para que lleves el control.'
+                                : 'Cuando vuelvas a tener señal verás aquí tus gastos. Mientras tanto puedes seguir registrando nuevos.'}
+                        </p>
                         <button onClick={() => router.push('/worker/capture')} className="mt-6 bg-[#8CC63F] text-[#121D38] px-6 py-2 rounded-xl text-sm font-bold">
                             Escanear Recibo
                         </button>

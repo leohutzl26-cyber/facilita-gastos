@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sin conexión — Facilita Gastos</title>
+<script>
+  try {
+    if (localStorage.getItem('fg-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  } catch (e) {}
+</script>
+<style>
+  :root { --bg:#121d38; --card:#1c2d54; --fg:#ededed; --muted:#a1a1aa; --brand:#8cc63f; --on-brand:#121d38; --line:rgba(255,255,255,.12); }
+  html[data-theme="light"] { --bg:#f5f7f2; --card:#ffffff; --fg:#15233f; --muted:#586174; --brand:#8cc63f; --on-brand:#15233f; --line:#e0e4dc; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+         background:var(--bg); color:var(--fg); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  main { width:100%; max-width:380px; text-align:center; background:var(--card); border:1px solid var(--line);
+         border-radius:24px; padding:32px 24px; }
+  img { width:56px; height:auto; margin-bottom:16px; }
+  h1 { font-size:22px; margin:0 0 8px; }
+  p { margin:0 0 20px; font-size:15px; line-height:1.5; color:var(--muted); }
+  .actions { display:flex; flex-direction:column; gap:10px; }
+  a, button { display:block; width:100%; padding:14px; border-radius:14px; font-size:15px; font-weight:700; text-decoration:none;
+              border:1px solid var(--line); background:transparent; color:var(--fg); font-family:inherit; cursor:pointer; }
+  .primary { background:var(--brand); color:var(--on-brand); border-color:var(--brand); }
+</style>
+</head>
+<body>
+<main>
+  <img src="/icon.png" alt="">
+  <h1>Sin conexión</h1>
+  <p>Esta pantalla necesita internet. Puedes seguir registrando gastos: se guardan en tu teléfono y se envían solos cuando vuelva la señal.</p>
+  <div class="actions">
+    <a class="primary" href="/worker/capture">Ir a registrar gastos</a>
+    <button type="button" onclick="location.reload()">Reintentar</button>
+  </div>
+</main>
+</body>
+</html>

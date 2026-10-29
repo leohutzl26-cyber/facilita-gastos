@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { parseCLPAmount } from '@/utils/currency';
+import { validateExpenseDate } from '@/utils/expenseDate';
 import { canViewAdminPanel, isAdmin } from '@/utils/roles';
 
 const getAdminSupabase = () => {
@@ -62,6 +63,11 @@ export async function POST(request: Request) {
 
         if (!merchant || !amount || !date || !category) {
             return NextResponse.json({ error: 'Datos obligatorios incompletos' }, { status: 400 });
+        }
+
+        const dateCheck = validateExpenseDate(date);
+        if (!dateCheck.ok) {
+            return NextResponse.json({ error: dateCheck.error }, { status: 400 });
         }
 
         const worker_id = user.id;

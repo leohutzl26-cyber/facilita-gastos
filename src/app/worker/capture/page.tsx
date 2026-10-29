@@ -4,6 +4,8 @@ import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, Chevron
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import ThemeToggle from '@/components/ThemeToggle';
+import DateHint, { dateBounds } from '@/components/DateHint';
+import { todayISO } from '@/utils/expenseDate';
 import OfflineStatus from '@/components/worker/OfflineStatus';
 import { useOfflineQueue } from '@/utils/useOfflineQueue';
 import {
@@ -119,6 +121,7 @@ export default function WorkerCapture() {
     const [isSuccess, setIsSuccess] = useState(false);
     const [submitOutcome, setSubmitOutcome] = useState<SubmitOutcome | null>(null);
     const [ocrNotice, setOcrNotice] = useState<string | null>(null);
+    const [dateNote, setDateNote] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,7 +186,7 @@ export default function WorkerCapture() {
 
     const emptyResults = () => ({
         amount: '',
-        date: new Date().toISOString().split('T')[0],
+        date: todayISO(),
         merchant: '',
         merchant_rut: '',
         document_type: 'boleta',
@@ -210,6 +213,7 @@ export default function WorkerCapture() {
 
     const enterManually = (notice: string) => {
         setOcrNotice(notice);
+        setDateNote(null);
         setResults(emptyResults());
         captureLocation();
     };
@@ -248,11 +252,10 @@ export default function WorkerCapture() {
 
             const { merchant, merchant_rut, document_type, document_number, date, amount, category } = data.data;
 
-            // Aseguramos formato YYYY-MM-DD para el input type="date"
-            let formattedDateForInput = new Date().toISOString().split('T')[0];
-            if (date && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                formattedDateForInput = date;
-            }
+            // El servidor ya validó la fecha: si no es confiable llega vacía y se deja en blanco
+            // para que la persona la escriba (antes se rellenaba con la de hoy sin avisar).
+            const formattedDateForInput = typeof date === 'string' ? date : '';
+            setDateNote(data.data.date_note || null);
 
             // Intentar matchear la categoría extraída con las existentes (o usar la primera como fallback)
             const validCategoryNames = categories.map(c => c.name);
@@ -458,10 +461,13 @@ export default function WorkerCapture() {
                                             <input
                                                 type="date"
                                                 required
+                                                min={dateBounds().min}
+                                                max={dateBounds().max}
                                                 value={results.date}
-                                                onChange={e => setResults({ ...results, date: e.target.value })}
+                                                onChange={e => { setDateNote(null); setResults({ ...results, date: e.target.value }); }}
                                                 className="w-full bg-inset-40 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8CC63F]/50"
                                             />
+                                            <DateHint value={results.date} note={dateNote} />
                                         </div>
                                         <div>
                                             <label className="text-xs text-zinc-400 block mb-1">Monto Total</label>

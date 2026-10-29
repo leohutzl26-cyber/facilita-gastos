@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { parseCLPAmount } from '@/utils/currency';
+import { validateExpenseDate } from '@/utils/expenseDate';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -103,6 +104,14 @@ export async function PATCH(
 
         if (fetchError || !oldReceipt) {
             return NextResponse.json({ error: 'Recibo no encontrado' }, { status: 444 });
+        }
+
+        // Solo se valida si la fecha cambió: reenviar la misma fecha de un gasto antiguo no debe bloquear otras ediciones.
+        if (date !== undefined && date !== oldReceipt.date) {
+            const dateCheck = validateExpenseDate(date);
+            if (!dateCheck.ok) {
+                return NextResponse.json({ error: dateCheck.error }, { status: 400 });
+            }
         }
 
         const updateData: any = {};

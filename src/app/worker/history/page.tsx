@@ -4,6 +4,7 @@ import { Camera, Search, Filter, History, MapPin, Receipt, ArrowLeft, Trash2, Ey
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import ThemeToggle from '@/components/ThemeToggle';
+import DateHint, { dateBounds } from '@/components/DateHint';
 import OfflineStatus from '@/components/worker/OfflineStatus';
 import { useOfflineQueue } from '@/utils/useOfflineQueue';
 import { cacheGet, cacheSet, getCurrentUserId } from '@/utils/offlineQueue';
@@ -650,10 +651,12 @@ function WorkerReceiptDetailModal({
                                             type="date"
                                             required
                                             name="date"
+                                            max={dateBounds().max}
                                             value={formData.date}
                                             onChange={handleInputChange}
                                             className="w-full bg-app border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                         />
+                                        <DateHint value={formData.date} />
                                     </div>
                                     <div>
                                         <label className="text-[10px] text-zinc-500 uppercase block mb-1">Monto Total *</label>

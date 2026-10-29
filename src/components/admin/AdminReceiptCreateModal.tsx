@@ -1,6 +1,8 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { X, Camera, Loader2, UploadCloud, ChevronRight, Sparkles, AlertCircle, CheckCircle } from 'lucide-react';
+import DateHint, { dateBounds } from '@/components/DateHint';
+import { todayISO } from '@/utils/expenseDate';
 
 type AdminReceiptCreateModalProps = {
     onClose: () => void;
@@ -22,6 +24,7 @@ export default function AdminReceiptCreateModal({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
+    const [dateNote, setDateNote] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Form states
@@ -117,10 +120,9 @@ export default function AdminReceiptCreateModal({
 
             const { merchant, merchant_rut, document_type, document_number, date, amount, category } = data.data;
 
-            let formattedDateForInput = new Date().toISOString().split('T')[0];
-            if (date && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                formattedDateForInput = date;
-            }
+            // El servidor ya validó la fecha: si no es confiable llega vacía y se deja en blanco.
+            const formattedDateForInput = typeof date === 'string' ? date : '';
+            setDateNote(data.data.date_note || null);
 
             const validCategoryNames = categories.map(c => c.name);
             let finalCategory = '';
@@ -148,7 +150,7 @@ export default function AdminReceiptCreateModal({
             setErrorMsg("Atención: Falló el reconocimiento automático. Rellena los datos manualmente.");
             setResults({
                 amount: '',
-                date: new Date().toISOString().split('T')[0],
+                date: todayISO(),
                 merchant: '',
                 merchant_rut: '',
                 document_type: 'boleta',
@@ -315,10 +317,13 @@ export default function AdminReceiptCreateModal({
                                             <input
                                                 type="date"
                                                 required
+                                                min={dateBounds().min}
+                                                max={dateBounds().max}
                                                 value={results.date}
-                                                onChange={e => setResults({ ...results, date: e.target.value })}
+                                                onChange={e => { setDateNote(null); setResults({ ...results, date: e.target.value }); }}
                                                 className="w-full bg-inset-30 border border-white/10 text-white rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#8CC63F] outline-none"
                                             />
+                                            <DateHint value={results.date} note={dateNote} />
                                         </div>
                                         <div>
                                             <label className="text-xs text-zinc-400 block mb-1 font-medium">Monto Total *</label>
@@ -432,7 +437,7 @@ export default function AdminReceiptCreateModal({
                                             document_type: 'boleta',
                                             document_number: '',
                                             amount: '',
-                                            date: new Date().toISOString().split('T')[0],
+                                            date: todayISO(),
                                             category: categories.length > 0 ? categories[0].name : '',
                                             project_id: '',
                                             location: ''

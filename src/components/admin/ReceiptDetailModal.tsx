@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { getReceiptBalance } from '@/utils/payments';
 import ReimburseWarningModal from './ReimburseWarningModal';
+import DateHint, { dateBounds } from '@/components/DateHint';
 
 const PAYMENT_SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
     share_target: { label: 'Compartido desde el celular', icon: Share2 },
@@ -554,13 +555,17 @@ export default function ReceiptDetailModal({
                                 <div className="flex-1 min-w-0">
                                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Fecha del Gasto</span>
                                     {isEditing ? (
-                                        <input 
-                                            type="date"
-                                            name="date"
-                                            value={formData.date}
-                                            onChange={handleInputChange}
-                                            className="bg-inset-30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
-                                        />
+                                        <>
+                                            <input
+                                                type="date"
+                                                name="date"
+                                                max={dateBounds().max}
+                                                value={formData.date}
+                                                onChange={handleInputChange}
+                                                className="bg-inset-30 border border-white/10 rounded-lg text-xs text-white px-2 py-0.5 mt-0.5 focus:outline-none w-full"
+                                            />
+                                            <DateHint value={formData.date} />
+                                        </>
                                     ) : (
                                         <p className="text-sm font-medium text-zinc-200">{receipt.date}</p>
                                     )}

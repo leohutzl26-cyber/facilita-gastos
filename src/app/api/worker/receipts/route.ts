@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { parseCLPAmount } from '@/utils/currency';
+import { validateExpenseDate } from '@/utils/expenseDate';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -43,6 +44,11 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { merchant, merchant_rut, document_type, document_number, amount, date, category, imageBase64, project_id, location } = body;
+
+        const dateCheck = validateExpenseDate(date);
+        if (!dateCheck.ok) {
+            return NextResponse.json({ error: dateCheck.error }, { status: 400 });
+        }
 
         let formattedDate = date;
         const parsedAmount = parseCLPAmount(amount);

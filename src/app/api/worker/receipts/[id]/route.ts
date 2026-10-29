@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { parseCLPAmount } from '@/utils/currency';
+import { validateExpenseDate } from '@/utils/expenseDate';
 
 const getAdminSupabase = () => {
     return createSupabaseClient(
@@ -116,6 +117,14 @@ export async function PATCH(
         // 2. Validar que el recibo pertenezca al usuario
         if (receipt.worker_id !== user.id) {
             return NextResponse.json({ error: 'No tienes permisos para modificar este gasto' }, { status: 403 });
+        }
+
+        // Solo se valida si la fecha cambió: reenviar la misma fecha de un gasto antiguo no debe bloquear otras ediciones.
+        if (date !== undefined && date !== receipt.date) {
+            const dateCheck = validateExpenseDate(date);
+            if (!dateCheck.ok) {
+                return NextResponse.json({ error: dateCheck.error }, { status: 400 });
+            }
         }
 
         // 3. Validar estado (sólo Pendiente, Por Visar o Rechazado)

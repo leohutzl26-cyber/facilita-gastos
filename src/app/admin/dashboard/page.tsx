@@ -40,7 +40,7 @@ function AdminDashboardInner() {
 
     const tabs = [
         { id: 'dashboard', label: 'Resumen', icon: LayoutDashboard },
-        { id: 'reports', label: 'Reportes', icon: ReceiptText },
+        { id: 'reports', label: 'Gastos', icon: ReceiptText },
         { id: 'comprobantes', label: 'Comprobantes', icon: Landmark },
         { id: 'workers', label: 'Colaboradores', icon: Users },
         { id: 'projects', label: 'Proyectos', icon: Folder },
@@ -168,7 +168,7 @@ function AdminDashboardInner() {
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="flex items-center gap-2 mb-4">
                             <FileText className="w-5 h-5 text-brand" />
-                            <h2 className="text-xl font-semibold">Reporte General de Gastos</h2>
+                            <h2 className="text-xl font-semibold">Gastos</h2>
                         </div>
                         <div>
                             <AdminReceipts readOnly={readOnly} canApprove={canApprove} canManagePayments={canManagePayments} />

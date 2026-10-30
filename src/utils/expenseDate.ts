@@ -87,6 +87,16 @@ export function formatLongDate(iso: string): string {
     return `${d} de ${month} de ${y}`;
 }
 
+// "2026-09-14" → "14-sep-2026". Si no es una fecha válida devuelve el texto tal cual (o "—" si viene vacío).
+export function formatShortDate(value: unknown): string {
+    if (typeof value !== 'string' || !value) return '—';
+    const iso = value.slice(0, 10);
+    if (!isValidISODate(iso)) return value;
+    const [y, m, d] = iso.split('-').map(Number);
+    const month = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][m - 1];
+    return `${pad(d)}-${month}-${y}`;
+}
+
 function daysAgo(iso: string, today: string): number {
     return Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(iso + 'T00:00:00Z')) / MS_PER_DAY);
 }

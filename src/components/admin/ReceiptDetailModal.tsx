@@ -10,6 +10,7 @@ import {
 import { getReceiptBalance } from '@/utils/payments';
 import ReimburseWarningModal from './ReimburseWarningModal';
 import DateHint, { dateBounds } from '@/components/DateHint';
+import { formatShortDate } from '@/utils/expenseDate';
 
 const PAYMENT_SOURCE_LABELS: Record<string, { label: string; icon: typeof Share2 }> = {
     share_target: { label: 'Compartido desde el celular', icon: Share2 },
@@ -567,7 +568,7 @@ export default function ReceiptDetailModal({
                                             <DateHint value={formData.date} />
                                         </>
                                     ) : (
-                                        <p className="text-sm font-medium text-zinc-200">{receipt.date}</p>
+                                        <p className="text-sm font-medium text-zinc-200">{formatShortDate(receipt.date)}</p>
                                     )}
                                 </div>
                             </div>

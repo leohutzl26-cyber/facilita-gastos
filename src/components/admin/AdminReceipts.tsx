@@ -6,6 +6,7 @@ import AdminReceiptCreateModal from './AdminReceiptCreateModal';
 import ExportModal from './ExportModal';
 import ReimburseWarningModal from './ReimburseWarningModal';
 import { getReceiptBalance } from '@/utils/payments';
+import { formatShortDate } from '@/utils/expenseDate';
 
 export default function AdminReceipts({ readOnly = false, canApprove = false, canManagePayments = false }: { readOnly?: boolean; canApprove?: boolean; canManagePayments?: boolean }) {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -512,7 +513,7 @@ export default function AdminReceipts({ readOnly = false, canApprove = false, ca
                             ) : (
                                 paginatedReceipts.map((receipt) => (
                                     <tr key={receipt.id} className="hover:bg-white/5 transition-colors">
-                                        <td className="px-6 py-4 text-zinc-300 whitespace-nowrap">{receipt.date}</td>
+                                        <td className="px-6 py-4 text-zinc-300 whitespace-nowrap">{formatShortDate(receipt.date)}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
                                                 <span className="text-white font-medium">{receipt.merchant}</span>

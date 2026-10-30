@@ -12,11 +12,23 @@ import {
 import DashboardDrillDown from './DashboardDrillDown';
 import ReceiptDetailModal from './ReceiptDetailModal';
 import {
-    byKeyAsc, byTotalDesc, formatMonth, groupBy,
+    byKeyAsc, byTotalDesc, formatMonth, groupBy, statusGroup,
     type DimKey, type DrillFilters, type Group
 } from '@/utils/dashboardDrill';
 
-type DrillState = { filters: DrillFilters; lastClicked: DimKey; seq: number };
+type KpiId = 'aprobado' | 'reembolsado' | 'pendiente' | 'total' | 'documentos';
+
+// Cada selección viene de un gráfico (sus datos) o de una tarjeta (sus cifras); la
+// tarjeta recuerda cuál es para poder marcarla y cerrar el detalle al pincharla de nuevo.
+type DrillState = { filters: DrillFilters; lastClicked: DimKey; seq: number; kpi?: KpiId };
+
+const KPI_SCOPE: Record<KpiId, { status?: string; scopeLabel?: string; shareLabel: string }> = {
+    aprobado: { status: 'Aprobado', shareLabel: 'del total gasto' },
+    reembolsado: { status: 'Reembolsado', shareLabel: 'del total gasto' },
+    pendiente: { status: 'Pendiente', shareLabel: 'del total gasto' },
+    total: { scopeLabel: 'Total gasto: aprobado + reembolsado + pendiente', shareLabel: 'del total gasto' },
+    documentos: { scopeLabel: 'Todos los documentos (incluye rechazados)', shareLabel: 'de los documentos' },
+};
 
 export default function AdminDashboardCharts({ readOnly = false, canApprove = false, canManagePayments = false }: { readOnly?: boolean; canApprove?: boolean; canManagePayments?: boolean }) {
     const [receipts, setReceipts] = useState<any[]>([]);
@@ -158,6 +170,9 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
 
     const totalDocsCount = kpiFilteredReceipts.length;
 
+    // Documentos que suman en "Total Gasto" (todo menos los rechazados).
+    const kpiExpenseRows = kpiFilteredReceipts.filter(r => ['Aprobado', 'Reembolsado', 'Pendiente'].includes(statusGroup(r.status)));
+
     // Export to CSV function
     const exportCSV = (source: any[], filePrefix: string) => {
         const headers = ["Fecha", "Proveedor", "Categoria", "Proyecto", "Colaborador", "Monto", "Estado", "Tipo Documento"];
@@ -207,9 +222,28 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
         });
     };
 
-    const handleDrillChange = (next: DrillFilters | null, clicked?: DimKey) => {
-        setDrill(prev => next === null ? null : { filters: next, lastClicked: clicked ?? prev?.lastClicked ?? 'month', seq: prev?.seq ?? 0 });
+    // Al pinchar una tarjeta se abre el detalle de las cifras que muestra.
+    const handleKpiSelect = (kpi: KpiId) => {
+        setDrill(prev => {
+            if (prev?.kpi === kpi && Object.keys(prev.filters).length <= (KPI_SCOPE[kpi].status ? 1 : 0)) return null;
+            const status = KPI_SCOPE[kpi].status;
+            return {
+                filters: status ? { status: { key: status, label: status } } : {},
+                lastClicked: 'status',
+                seq: (prev?.seq ?? 0) + 1,
+                kpi,
+            };
+        });
     };
+
+    const handleDrillChange = (next: DrillFilters | null, clicked?: DimKey) => {
+        setDrill(prev => next === null ? null : { filters: next, lastClicked: clicked ?? prev?.lastClicked ?? 'month', seq: prev?.seq ?? 0, kpi: prev?.kpi });
+    };
+
+    const kpiCard = (kpi: KpiId, tone: string) =>
+        `text-left w-full bg-card-40 border ${tone} rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4 cursor-pointer transition-all hover:-translate-y-0.5 ${
+            drill?.kpi === kpi ? 'ring-2 ring-[#8CC63F]' : ''
+        }`;
 
     if (isLoading) {
         return (
@@ -225,6 +259,9 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
     // de rechazados, sin los rechazados. Así el total de un dato pinchado coincide con su detalle.
     const shouldExcludeRechazados = selectedStatusTab !== 'rechazados';
     const chartRows = filteredReceipts.filter(r => r.amount && !(shouldExcludeRechazados && r.status === 'Rechazado'));
+
+    // Gastos sobre los que trabaja el detalle abierto: los de las cifras de la tarjeta, o los de los gráficos.
+    const drillRows = drill?.kpi ? (drill.kpi === 'documentos' ? kpiFilteredReceipts : kpiExpenseRows) : chartRows;
 
     const monthlyData = groupBy(chartRows, 'month', drillCtx)
         .sort(byKeyAsc)
@@ -413,7 +450,7 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {/* Aprobados Card */}
-                <div className="bg-card-40 border border-blue-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <button type="button" onClick={() => handleKpiSelect('aprobado')} aria-pressed={drill?.kpi === 'aprobado'} className={kpiCard('aprobado', 'border-blue-500/15')}>
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Monto Aprobado</p>
                         <p className="text-2xl font-black text-blue-400">${totalApproved.toLocaleString('es-CL')}</p>
@@ -422,10 +459,10 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
                     <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400 shrink-0">
                         <CheckCircle className="w-6 h-6" />
                     </div>
-                </div>
+                </button>
 
                 {/* Reembolsados Card */}
-                <div className="bg-card-40 border border-emerald-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <button type="button" onClick={() => handleKpiSelect('reembolsado')} aria-pressed={drill?.kpi === 'reembolsado'} className={kpiCard('reembolsado', 'border-emerald-500/15')}>
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Monto Reembolsado</p>
                         <p className="text-2xl font-black text-emerald-400">${totalReimbursed.toLocaleString('es-CL')}</p>
@@ -434,10 +471,10 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
                     <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400 shrink-0">
                         <CreditCard className="w-6 h-6" />
                     </div>
-                </div>
+                </button>
 
                 {/* Pendientes Card */}
-                <div className="bg-card-40 border border-yellow-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <button type="button" onClick={() => handleKpiSelect('pendiente')} aria-pressed={drill?.kpi === 'pendiente'} className={kpiCard('pendiente', 'border-yellow-500/15')}>
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Monto Pendiente</p>
                         <p className="text-2xl font-black text-yellow-400">${totalPending.toLocaleString('es-CL')}</p>
@@ -446,10 +483,10 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
                     <div className="p-3 bg-yellow-500/10 rounded-xl text-yellow-400 shrink-0">
                         <Clock className="w-6 h-6" />
                     </div>
-                </div>
+                </button>
 
                 {/* Total Gasto Card */}
-                <div className="bg-card-40 border border-zinc-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4">
+                <button type="button" onClick={() => handleKpiSelect('total')} aria-pressed={drill?.kpi === 'total'} className={kpiCard('total', 'border-zinc-500/15')}>
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Total Gasto</p>
                         <p className="text-2xl font-black text-white">${totalExpense.toLocaleString('es-CL')}</p>
@@ -458,10 +495,10 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
                     <div className="p-3 bg-zinc-500/10 rounded-xl text-zinc-400 shrink-0">
                         <TrendingUp className="w-6 h-6" />
                     </div>
-                </div>
+                </button>
 
                 {/* Total Docs Card */}
-                <div className="bg-card-40 border border-line rounded-2xl p-5 shadow-xl flex items-center justify-between gap-4 col-span-2 md:col-span-1">
+                <button type="button" onClick={() => handleKpiSelect('documentos')} aria-pressed={drill?.kpi === 'documentos'} className={`${kpiCard('documentos', 'border-line')} col-span-2 md:col-span-1`}>
                     <div className="space-y-1">
                         <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Total Documentos</p>
                         <p className="text-2xl font-black text-brand">{totalDocsCount}</p>
@@ -470,7 +507,7 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
                     <div className="p-3 bg-[#8CC63F]/10 rounded-xl text-brand shrink-0">
                         <FileText className="w-6 h-6" />
                     </div>
-                </div>
+                </button>
             </div>
 
             {/* Charts Grid */}
@@ -592,9 +629,12 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
             {drill ? (
                 <DashboardDrillDown
                     key={drill.seq}
-                    rows={chartRows}
+                    rows={drillRows}
                     filters={drill.filters}
                     lastClicked={drill.lastClicked}
+                    scopeLabel={drill.kpi ? KPI_SCOPE[drill.kpi].scopeLabel : undefined}
+                    shareLabel={drill.kpi ? KPI_SCOPE[drill.kpi].shareLabel : undefined}
+                    preferredBreakdown={drill.kpi ? 'status' : undefined}
                     ctx={drillCtx}
                     chartAxis={chartAxis}
                     chartGrid={chartGrid}
@@ -605,7 +645,7 @@ export default function AdminDashboardCharts({ readOnly = false, canApprove = fa
             ) : (
                 <p className="flex items-center justify-center gap-2 text-xs text-zinc-500">
                     <MousePointerClick className="w-4 h-4" />
-                    Pincha una barra, un sector del gráfico o un nombre de la leyenda para ver el detalle de ese dato.
+                    Pincha una tarjeta, una barra, un sector del gráfico o un nombre de la leyenda para ver el detalle de ese dato.
                 </p>
             )}
 

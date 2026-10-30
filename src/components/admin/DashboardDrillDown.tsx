@@ -25,6 +25,9 @@ type Props = {
     rows: any[];                 // los mismos gastos que alimentan los gráficos principales
     filters: DrillFilters;
     lastClicked: DimKey;
+    scopeLabel?: string;         // qué universo se está viendo cuando viene de una tarjeta (no se puede quitar)
+    shareLabel?: string;         // a qué corresponde el porcentaje del resumen
+    preferredBreakdown?: DimKey; // desglose inicial cuando todavía no hay filtros
     ctx: DrillContext;
     chartAxis: string;
     chartGrid: string;
@@ -46,7 +49,7 @@ function EvolutionTooltip({ active, payload }: any) {
     );
 }
 
-export default function DashboardDrillDown({ rows, filters, lastClicked, ctx, chartAxis, chartGrid, onDrill, onOpenReceipt, onExport }: Props) {
+export default function DashboardDrillDown({ rows, filters, lastClicked, scopeLabel, shareLabel = 'del gasto mostrado en los gráficos', preferredBreakdown, ctx, chartAxis, chartGrid, onDrill, onOpenReceipt, onExport }: Props) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimOverride, setDimOverride] = useState<DimKey | null>(null);
     const [showAll, setShowAll] = useState(false);
@@ -72,7 +75,8 @@ export default function DashboardDrillDown({ rows, filters, lastClicked, ctx, ch
     const share = baseTotal > 0 ? (summary.total / baseTotal) * 100 : 0;
 
     // Desglose por categoría, comercio, colaborador… (el que más aclara lo que se pinchó).
-    const suggested = suggestBreakdown(filters, lastClicked);
+    const hasFilters = Object.keys(filters).length > 0;
+    const suggested = !hasFilters && preferredBreakdown ? preferredBreakdown : suggestBreakdown(filters, lastClicked);
     const breakdownDim = dimOverride && !filters[dimOverride] ? dimOverride : suggested;
     const breakdown = useMemo(
         () => (breakdownDim ? groupBy(selected, breakdownDim, ctx, true).sort(byTotalDesc) : []),
@@ -110,7 +114,8 @@ export default function DashboardDrillDown({ rows, filters, lastClicked, ctx, ch
     const removeFilter = (dim: DimKey) => {
         const next = { ...filters };
         delete next[dim];
-        onDrill(Object.keys(next).length ? next : null);
+        // Con una tarjeta de origen se vuelve a ella; sin ella, sin filtros no queda nada que ver.
+        onDrill(Object.keys(next).length || scopeLabel ? next : null);
     };
 
     const toggleSort = (col: 'date' | 'merchant' | 'amount') => {
@@ -139,6 +144,11 @@ export default function DashboardDrillDown({ rows, filters, lastClicked, ctx, ch
                         <h2 className="text-lg font-semibold text-zinc-100">Detalle de la selección</h2>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
+                        {scopeLabel && (
+                            <span className="inline-flex items-center bg-white/5 border border-white/10 text-zinc-300 text-xs font-semibold px-3 py-1 rounded-full">
+                                {scopeLabel}
+                            </span>
+                        )}
                         {activeChips.map(dim => (
                             <span key={dim} className="inline-flex items-center gap-1.5 bg-[#8CC63F]/10 border border-[#8CC63F]/40 text-brand text-xs font-semibold pl-3 pr-1.5 py-1 rounded-full max-w-full">
                                 <span className="truncate">{DIMENSION_LABEL[dim]}: {filters[dim]!.label}</span>
@@ -184,7 +194,7 @@ export default function DashboardDrillDown({ rows, filters, lastClicked, ctx, ch
                         <div className="bg-inset-30 border border-white/5 rounded-xl p-4">
                             <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Total</p>
                             <p className="text-xl font-black text-brand">{money(summary.total)}</p>
-                            <p className="text-[10px] text-zinc-500">{share.toFixed(share < 10 ? 1 : 0)}% del gasto mostrado en los gráficos</p>
+                            <p className="text-[10px] text-zinc-500">{hasFilters ? `${share.toFixed(share < 10 ? 1 : 0)}% ${shareLabel}` : 'suma de todos los documentos'}</p>
                         </div>
                         <div className="bg-inset-30 border border-white/5 rounded-xl p-4">
                             <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Documentos</p>

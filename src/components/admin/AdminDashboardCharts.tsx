@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@/utils/theme';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -7,13 +7,24 @@ import {
 } from 'recharts';
 import {
     TrendingUp, PieChart as PieChartIcon, FileText, CheckCircle,
-    Clock, XCircle, Filter, Download, CreditCard
+    Clock, XCircle, Filter, Download, CreditCard, MousePointerClick
 } from 'lucide-react';
+import DashboardDrillDown from './DashboardDrillDown';
+import ReceiptDetailModal from './ReceiptDetailModal';
+import {
+    byKeyAsc, byTotalDesc, formatMonth, groupBy,
+    type DimKey, type DrillFilters, type Group
+} from '@/utils/dashboardDrill';
 
-export default function AdminDashboardCharts() {
+type DrillState = { filters: DrillFilters; lastClicked: DimKey; seq: number };
+
+export default function AdminDashboardCharts({ readOnly = false, canApprove = false, canManagePayments = false }: { readOnly?: boolean; canApprove?: boolean; canManagePayments?: boolean }) {
     const [receipts, setReceipts] = useState<any[]>([]);
     const [workers, setWorkers] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [drill, setDrill] = useState<DrillState | null>(null);
+    const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
     const { theme } = useTheme();
     const chartAxis = theme === 'light' ? '#586174' : '#a1a1aa';
     const chartGrid = theme === 'light' ? 'rgba(21,35,63,0.08)' : 'rgba(255,255,255,0.05)';
@@ -28,21 +39,41 @@ export default function AdminDashboardCharts() {
     const [filterEndDate, setFilterEndDate] = useState('');
     const [selectedStatusTab, setSelectedStatusTab] = useState('todos');
 
+    // Recarga los gastos (por ejemplo tras asociar un comprobante desde el detalle) y
+    // mantiene sincronizado el modal si está abierto.
+    const fetchReceipts = async () => {
+        try {
+            const res = await fetch('/api/admin/receipts');
+            const data = await res.json();
+            if (res.ok && data.receipts) {
+                setReceipts(data.receipts);
+                setSelectedReceipt((prev: any) => prev ? (data.receipts.find((r: any) => r.id === prev.id) || null) : prev);
+            }
+        } catch (err) {
+            console.error("Error fetching receipts", err);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [resReceipts, resWorkers] = await Promise.all([
+                const [resReceipts, resWorkers, resCategories] = await Promise.all([
                     fetch('/api/admin/receipts'),
-                    fetch('/api/admin/workers')
+                    fetch('/api/admin/workers'),
+                    fetch('/api/admin/categories')
                 ]);
                 const dataReceipts = await resReceipts.json();
                 const dataWorkers = await resWorkers.json();
+                const dataCategories = await resCategories.json();
 
                 if (resReceipts.ok && dataReceipts.receipts) {
                     setReceipts(dataReceipts.receipts);
                 }
                 if (resWorkers.ok && dataWorkers.workers) {
                     setWorkers(dataWorkers.workers);
+                }
+                if (resCategories.ok && dataCategories.categories) {
+                    setCategories(dataCategories.categories);
                 }
             } catch (err) {
                 console.error("Error fetching data for charts", err);
@@ -60,6 +91,7 @@ export default function AdminDashboardCharts() {
         const worker = workers.find(w => w.email === email);
         return worker && worker.name ? worker.name : email.split('@')[0];
     };
+    const drillCtx = useMemo(() => ({ workerName: getWorkerName }), [workers]);
 
     // Filter logic 1: KPIs Filter (ignoring selectedStatusTab to keep all counts visible)
     const kpiFilteredReceipts = receipts.filter(r => {
@@ -127,10 +159,10 @@ export default function AdminDashboardCharts() {
     const totalDocsCount = kpiFilteredReceipts.length;
 
     // Export to CSV function
-    const handleExportCSV = () => {
+    const exportCSV = (source: any[], filePrefix: string) => {
         const headers = ["Fecha", "Proveedor", "Categoria", "Proyecto", "Colaborador", "Monto", "Estado", "Tipo Documento"];
-        
-        const rows = filteredReceipts.map(r => {
+
+        const rows = source.map(r => {
             const dateStr = r.date ? new Date(r.date).toLocaleDateString('es-CL', { timeZone: 'UTC' }) : 'N/A';
             const merchant = r.merchant || 'N/A';
             const category = r.category || 'N/A';
@@ -157,10 +189,26 @@ export default function AdminDashboardCharts() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `reporte_gastos_dashboard_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.setAttribute("download", `${filePrefix}_${new Date().toISOString().slice(0, 10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    };
+
+    const handleExportCSV = () => exportCSV(filteredReceipts, 'reporte_gastos_dashboard');
+
+    // --- Detalle interactivo: al pinchar un dato de un gráfico se abre el desglose ---
+    const handleMainSelect = (dim: DimKey, group: Group | undefined) => {
+        if (!group) return;
+        setDrill(prev => {
+            const alreadyOpen = prev && Object.keys(prev.filters).length === 1 && prev.filters[dim]?.key === group.key;
+            if (alreadyOpen) return null; // pinchar de nuevo lo cierra
+            return { filters: { [dim]: { key: group.key, label: group.label } }, lastClicked: dim, seq: (prev?.seq ?? 0) + 1 };
+        });
+    };
+
+    const handleDrillChange = (next: DrillFilters | null, clicked?: DimKey) => {
+        setDrill(prev => next === null ? null : { filters: next, lastClicked: clicked ?? prev?.lastClicked ?? 'month', seq: prev?.seq ?? 0 });
     };
 
     if (isLoading) {
@@ -173,69 +221,28 @@ export default function AdminDashboardCharts() {
     }
 
     // --- Data Processing for BarChart (Gastos por Mes) ---
-    const monthlyDataMap = new Map<string, { total: number, count: number }>();
+    // Gastos que alimentan los tres gráficos y el detalle: con monto y, salvo en la pestaña
+    // de rechazados, sin los rechazados. Así el total de un dato pinchado coincide con su detalle.
     const shouldExcludeRechazados = selectedStatusTab !== 'rechazados';
+    const chartRows = filteredReceipts.filter(r => r.amount && !(shouldExcludeRechazados && r.status === 'Rechazado'));
 
-    filteredReceipts.forEach(r => {
-        if (!r.amount || !r.date) return;
-        if (shouldExcludeRechazados && r.status === 'Rechazado') return;
+    const monthlyData = groupBy(chartRows, 'month', drillCtx)
+        .sort(byKeyAsc)
+        .map(g => ({ ...g, month: g.key }));
 
-        const dateObj = new Date(r.date);
-        const monthKey = `${dateObj.getUTCFullYear()}-${String(dateObj.getUTCMonth() + 1).padStart(2, '0')}`;
+    const categoryData = groupBy(chartRows, 'category', drillCtx)
+        .sort(byTotalDesc)
+        .map(g => ({ ...g, name: g.label, value: g.total }));
 
-        const current = monthlyDataMap.get(monthKey) || { total: 0, count: 0 };
-        monthlyDataMap.set(monthKey, {
-            total: current.total + Number(r.amount),
-            count: current.count + 1
-        });
-    });
+    const documentTypeData = groupBy(chartRows, 'docType', drillCtx)
+        .sort(byTotalDesc)
+        .map(g => ({ ...g, name: g.label, value: g.total }));
 
-    const monthlyData = Array.from(monthlyDataMap, ([month, data]) => ({
-        month,
-        total: data.total,
-        count: data.count
-    })).sort((a, b) => a.month.localeCompare(b.month));
-
-
-    // --- Data Processing for PieChart (Gastos por Categoría) ---
-    const categoryDataMap = new Map<string, { total: number, count: number }>();
-    filteredReceipts.forEach(r => {
-        if (!r.amount || !r.category) return;
-        if (shouldExcludeRechazados && r.status === 'Rechazado') return;
-
-        const current = categoryDataMap.get(r.category) || { total: 0, count: 0 };
-        categoryDataMap.set(r.category, {
-            total: current.total + Number(r.amount),
-            count: current.count + 1
-        });
-    });
-
-    const categoryData = Array.from(categoryDataMap, ([name, data]) => ({
-        name,
-        value: data.total,
-        count: data.count
-    })).sort((a, b) => b.value - a.value);
-
-
-    // --- Data Processing for PieChart (Gastos por Tipo de Documento) ---
-    const documentTypeDataMap = new Map<string, { total: number, count: number }>();
-    filteredReceipts.forEach(r => {
-        if (!r.amount || !r.document_type) return;
-        if (shouldExcludeRechazados && r.status === 'Rechazado') return;
-
-        const type = r.document_type.charAt(0).toUpperCase() + r.document_type.slice(1);
-        const current = documentTypeDataMap.get(type) || { total: 0, count: 0 };
-        documentTypeDataMap.set(type, {
-            total: current.total + Number(r.amount),
-            count: current.count + 1
-        });
-    });
-
-    const documentTypeData = Array.from(documentTypeDataMap, ([name, data]) => ({
-        name,
-        value: data.total,
-        count: data.count
-    })).sort((a, b) => b.value - a.value);
+    // Lo ya elegido en el detalle se resalta en los gráficos y el resto se atenúa.
+    const dimmed = (dim: DimKey, key: string) => {
+        const picked = drill?.filters[dim]?.key;
+        return picked && picked !== key ? 0.3 : 1;
+    };
 
     // Chart Colors
     const COLORS = ['#8CC63F', '#3EAE49', '#4DAFD6', '#F5A623', '#D0021B', '#9B9B9B', '#1C2D54'];
@@ -245,12 +252,13 @@ export default function AdminDashboardCharts() {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             const value = payload[0].value;
-            const name = payload[0].name || data.month || data.name;
+            const name = data.label || payload[0].name || data.name;
             return (
                 <div className="bg-app border border-[#8CC63F] p-3 rounded-xl shadow-xl text-xs space-y-1">
                     <p className="font-bold text-white uppercase tracking-wider">{name}</p>
                     <p className="text-brand font-semibold">Total: ${Number(value).toLocaleString('es-CL')}</p>
                     <p className="text-zinc-400">Cantidad: {data.count} {data.count === 1 ? 'documento' : 'documentos'}</p>
+                    <p className="text-zinc-500">Clic para ver el detalle</p>
                 </div>
             );
         }
@@ -478,10 +486,20 @@ export default function AdminDashboardCharts() {
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={monthlyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
-                                    <XAxis dataKey="month" stroke={chartAxis} fontSize={11} tickLine={false} />
+                                    <XAxis dataKey="month" stroke={chartAxis} fontSize={11} tickLine={false} tickFormatter={formatMonth} />
                                     <YAxis stroke={chartAxis} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value.toLocaleString()}`} />
                                     <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: chartGrid }} />
-                                    <Bar dataKey="total" fill="#8CC63F" radius={[4, 4, 0, 0]} />
+                                    <Bar
+                                        dataKey="total"
+                                        fill="#8CC63F"
+                                        radius={[4, 4, 0, 0]}
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={(_: any, index: number) => handleMainSelect('month', monthlyData[index])}
+                                    >
+                                        {monthlyData.map(entry => (
+                                            <Cell key={`month-${entry.key}`} fill="#8CC63F" fillOpacity={dimmed('month', entry.key)} />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
@@ -509,13 +527,19 @@ export default function AdminDashboardCharts() {
                                         paddingAngle={5}
                                         dataKey="value"
                                         stroke="rgba(0,0,0,0)"
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={(_: any, index: number) => handleMainSelect('category', categoryData[index])}
                                     >
                                         {categoryData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} fillOpacity={dimmed('category', entry.key)} />
                                         ))}
                                     </Pie>
                                     <RechartsTooltip content={<CustomTooltip />} />
-                                    <Legend wrapperStyle={{ fontSize: '10px', color: chartAxis }} formatter={(value) => <span style={{ color: chartAxis }}>{value}</span>} />
+                                    <Legend
+                                        wrapperStyle={{ fontSize: '10px', color: chartAxis, cursor: 'pointer' }}
+                                        onClick={(e: any) => handleMainSelect('category', categoryData.find(c => c.name === e?.value))}
+                                        formatter={(value) => <span style={{ color: chartAxis }}>{value}</span>}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (
@@ -543,13 +567,19 @@ export default function AdminDashboardCharts() {
                                         paddingAngle={5}
                                         dataKey="value"
                                         stroke="rgba(0,0,0,0)"
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={(_: any, index: number) => handleMainSelect('docType', documentTypeData[index])}
                                     >
                                         {documentTypeData.map((entry, index) => (
-                                            <Cell key={`cell-doc-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
+                                            <Cell key={`cell-doc-${index}`} fill={COLORS[(index + 3) % COLORS.length]} fillOpacity={dimmed('docType', entry.key)} />
                                         ))}
                                     </Pie>
                                     <RechartsTooltip content={<CustomTooltip />} />
-                                    <Legend wrapperStyle={{ fontSize: '10px', color: chartAxis }} formatter={(value) => <span style={{ color: chartAxis }}>{value}</span>} />
+                                    <Legend
+                                        wrapperStyle={{ fontSize: '10px', color: chartAxis, cursor: 'pointer' }}
+                                        onClick={(e: any) => handleMainSelect('docType', documentTypeData.find(c => c.name === e?.value))}
+                                        formatter={(value) => <span style={{ color: chartAxis }}>{value}</span>}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (
@@ -558,6 +588,50 @@ export default function AdminDashboardCharts() {
                     </div>
                 </div>
             </div>
+
+            {drill ? (
+                <DashboardDrillDown
+                    key={drill.seq}
+                    rows={chartRows}
+                    filters={drill.filters}
+                    lastClicked={drill.lastClicked}
+                    ctx={drillCtx}
+                    chartAxis={chartAxis}
+                    chartGrid={chartGrid}
+                    onDrill={handleDrillChange}
+                    onOpenReceipt={setSelectedReceipt}
+                    onExport={(rows) => exportCSV(rows, 'detalle_seleccion_dashboard')}
+                />
+            ) : (
+                <p className="flex items-center justify-center gap-2 text-xs text-zinc-500">
+                    <MousePointerClick className="w-4 h-4" />
+                    Pincha una barra, un sector del gráfico o un nombre de la leyenda para ver el detalle de ese dato.
+                </p>
+            )}
+
+            {selectedReceipt && (
+                <ReceiptDetailModal
+                    receipt={selectedReceipt}
+                    readOnly={readOnly}
+                    canApprove={canApprove}
+                    canManagePayments={canManagePayments}
+                    onClose={() => setSelectedReceipt(null)}
+                    onUpdate={(updated) => {
+                        // Merge para no perder relaciones anidadas (projects, payment_receipts)
+                        // que el PATCH no devuelve en su respuesta.
+                        setReceipts(prev => prev.map(r => r.id === updated.id ? { ...r, ...updated } : r));
+                        setSelectedReceipt((prev: any) => prev ? { ...prev, ...updated } : updated);
+                    }}
+                    onDelete={(id) => {
+                        setReceipts(prev => prev.filter(r => r.id !== id));
+                        setSelectedReceipt(null);
+                    }}
+                    onRequestRefresh={fetchReceipts}
+                    categories={categories}
+                    projects={uniqueProjects}
+                    workers={workers}
+                />
+            )}
         </div>
     );
 }

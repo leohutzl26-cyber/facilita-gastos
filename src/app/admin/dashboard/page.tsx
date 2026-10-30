@@ -114,7 +114,7 @@ function AdminDashboardInner() {
             <main className="max-w-7xl mx-auto px-6 py-8">
                 {activeTab === 'dashboard' && (
                     <div className="animate-in fade-in duration-300">
-                        <AdminDashboardCharts />
+                        <AdminDashboardCharts readOnly={readOnly} canApprove={canApprove} canManagePayments={canManagePayments} />
                     </div>
                 )}
 
